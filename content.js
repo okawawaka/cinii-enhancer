@@ -14,7 +14,6 @@
   // Settings state (synced with storage)
   let userSettings = {
     unpaywallEmail: 'academic-reader@example.com',
-    enableFilter: true,
     enableSearchQuickCopy: true,
     enableSearchPdfDirect: true,
     enableDetailToolbar: true,
@@ -28,7 +27,6 @@
     CHECK: `<svg class="cinii-enh-icon cinii-enh-icon-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`,
     PDF: `<svg class="cinii-enh-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>`,
     EXTERNAL: `<svg class="cinii-enh-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>`,
-    FILTER: `<svg class="cinii-enh-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>`,
     SPINNER: `<svg class="cinii-enh-icon cinii-enh-spinner" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10" stroke-opacity="0.25"/><path d="M12 2a10 10 0 0 1 10 10" stroke-linecap="round"/></svg>`,
     CLOSE: `<svg class="cinii-enh-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`
   };
@@ -675,75 +673,10 @@
     const resultItems = document.querySelectorAll('.listitem, .search-result-item');
     if (resultItems.length === 0) return;
 
-    // 1. Inject Instant Filter Bar if enabled
-    if (userSettings.enableFilter) {
-      injectFilterBar(resultItems);
-    }
-
-    // 2. Enhance each result item
+    // Enhance each result item
     resultItems.forEach((item) => {
       enhanceSearchCard(item);
     });
-
-    updateFilterCounts();
-  }
-
-  function injectFilterBar(resultItems) {
-    if (document.getElementById('cinii-enh-filter-bar')) return;
-
-    // Locate resultlist container or first item
-    const firstItem = resultItems[0];
-    const parentContainer =
-      document.querySelector('.resultlist, .listContainer') ||
-      firstItem.closest('ul, ol, div.listContainer') ||
-      firstItem.parentNode;
-
-    if (!parentContainer) return;
-
-    const bar = document.createElement('div');
-    bar.id = 'cinii-enh-filter-bar';
-    bar.className = 'cinii-enh-filter-bar';
-
-    bar.innerHTML = `
-      <div class="cinii-enh-filter-left">
-        <span class="cinii-enh-filter-icon">${SVGS.FILTER}</span>
-        <span class="cinii-enh-filter-title">文献フィルター:</span>
-        <button type="button" id="cinii-enh-btn-filter-oa" class="cinii-enh-btn cinii-enh-btn-toggle">
-          <span>本文・PDFあり のみ表示</span>
-        </button>
-      </div>
-      <div class="cinii-enh-filter-right">
-        <span id="cinii-enh-filter-count" class="cinii-enh-filter-count"></span>
-      </div>
-    `;
-
-    parentContainer.parentNode.insertBefore(bar, parentContainer);
-
-    const toggleBtn = bar.querySelector('#cinii-enh-btn-filter-oa');
-    toggleBtn.addEventListener('click', () => {
-      toggleBtn.classList.toggle('is-active');
-      const isActive = toggleBtn.classList.contains('is-active');
-      document.body.classList.toggle('cinii-enh-filter-oa-active', isActive);
-      updateFilterCounts();
-    });
-  }
-
-  function updateFilterCounts() {
-    const countEl = document.getElementById('cinii-enh-filter-count');
-    if (!countEl) return;
-
-    const allCards = document.querySelectorAll('.cinii-enh-card-enhanced');
-    const oaCards = document.querySelectorAll('.cinii-enh-card-enhanced[data-has-fulltext="true"]');
-
-    const total = allCards.length;
-    const oaCount = oaCards.length;
-
-    const isActive = document.body.classList.contains('cinii-enh-filter-oa-active');
-    if (isActive) {
-      countEl.textContent = `本文あり ${oaCount} 件を表示中（全 ${total} 件中）`;
-    } else {
-      countEl.textContent = `全 ${total} 件中、本文・PDFあり: ${oaCount} 件`;
-    }
   }
 
   function enhanceSearchCard(item) {

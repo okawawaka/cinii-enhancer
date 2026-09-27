@@ -4,7 +4,6 @@
 
 const DEFAULT_SETTINGS = {
   unpaywallEmail: 'academic-reader@example.com',
-  enableFilter: true,
   enableSearchQuickCopy: true,
   enableSearchPdfDirect: true,
   enableDetailToolbar: true,
@@ -18,7 +17,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   const enableDetailToolbarInput = document.getElementById('enableDetailToolbar');
   const enableSearchPdfDirectInput = document.getElementById('enableSearchPdfDirect');
   const enableSearchQuickCopyInput = document.getElementById('enableSearchQuickCopy');
-  const enableFilterInput = document.getElementById('enableFilter');
   const preferredCitationInput = document.getElementById('preferredCitation');
   const saveBtn = document.getElementById('saveBtn');
   const saveStatus = document.getElementById('saveStatus');
@@ -30,7 +28,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     enableDetailToolbarInput.checked = Boolean(current.enableDetailToolbar);
     enableSearchPdfDirectInput.checked = Boolean(current.enableSearchPdfDirect);
     enableSearchQuickCopyInput.checked = Boolean(current.enableSearchQuickCopy);
-    enableFilterInput.checked = Boolean(current.enableFilter);
     if (current.preferredCitation) {
       preferredCitationInput.value = current.preferredCitation;
     }
@@ -45,7 +42,6 @@ document.addEventListener('DOMContentLoaded', async () => {
       enableDetailToolbar: enableDetailToolbarInput.checked,
       enableSearchPdfDirect: enableSearchPdfDirectInput.checked,
       enableSearchQuickCopy: enableSearchQuickCopyInput.checked,
-      enableFilter: enableFilterInput.checked,
       preferredCitation: preferredCitationInput.value
     };
 

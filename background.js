@@ -5,7 +5,6 @@
 
 const DEFAULT_SETTINGS = {
   unpaywallEmail: 'academic-reader@example.com',
-  enableFilter: true,
   enableSearchQuickCopy: true,
   enableSearchPdfDirect: true,
   enableDetailToolbar: true,

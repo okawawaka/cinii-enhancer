@@ -223,74 +223,7 @@ a.cinii-enh-btn-pdf span {
 }
 
 /* ------------------------------------------------------------------------------
- * 5. Search Results Instant Filter Bar (Only on search view)
- * ------------------------------------------------------------------------------ */
-.cinii-enh-filter-bar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 10px;
-  padding: 8px 14px;
-  margin: 12px 0 16px 0;
-  background-color: #ffffff;
-  border: 1px solid var(--cinii-border-medium);
-  border-radius: var(--cinii-radius-sm);
-  font-family: var(--cinii-font);
-  font-size: 13px;
-  box-shadow: var(--cinii-shadow-sm);
-}
-
-.cinii-enh-filter-left {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.cinii-enh-filter-icon {
-  color: var(--cinii-blue);
-  display: flex;
-  align-items: center;
-}
-
-.cinii-enh-filter-title {
-  font-weight: 600;
-  color: var(--cinii-slate-dark);
-}
-
-.cinii-enh-btn-toggle {
-  background-color: #f1f5f9;
-  border: 1px solid var(--cinii-border-medium);
-  color: var(--cinii-slate-text);
-  padding: 4px 10px;
-  font-size: 12px;
-  border-radius: var(--cinii-radius-sm);
-  cursor: pointer;
-  transition: all 0.15s ease-in-out;
-}
-
-.cinii-enh-btn-toggle:hover {
-  border-color: var(--cinii-blue);
-  color: var(--cinii-blue);
-}
-
-.cinii-enh-btn-toggle.is-active {
-  background-color: var(--cinii-blue) !important;
-  border-color: var(--cinii-blue) !important;
-  color: #ffffff !important;
-}
-
-.cinii-enh-filter-count {
-  font-size: 12px;
-  color: var(--cinii-slate-muted);
-}
-
-body.cinii-enh-filter-oa-active .cinii-enh-card-enhanced[data-has-fulltext="false"] {
-  display: none !important;
-}
-
-/* ------------------------------------------------------------------------------
- * 6. Centered Modal Dialog (画面のど真ん中に配置)
+ * 5. Centered Modal Dialog (画面のど真ん中に配置)
  * ------------------------------------------------------------------------------ */
 .cinii-enh-modal-overlay {
   position: fixed;
