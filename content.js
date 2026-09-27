@@ -18,7 +18,9 @@
     enableSearchPdfDirect: true,
     enableDetailToolbar: true,
     enableAbstractCleanup: true,
-    preferredCitation: 'bibtex'
+    preferredCitation: 'bibtex',
+    customTemplate: '{authors} ({year})「{title}」『{journal}』{volume}({issue}), pp.{pages}. {url}',
+    customTemplateLabel: 'カスタム'
   };
 
   // SVGs (Strictly NO EMOJIS, scholarly vector icons)
@@ -31,7 +33,8 @@
     CLEAN: `<svg class="cinii-enh-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>`,
     CODE: `<svg class="cinii-enh-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>`,
     SPINNER: `<svg class="cinii-enh-icon cinii-enh-spinner" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10" stroke-opacity="0.25"/><path d="M12 2a10 10 0 0 1 10 10" stroke-linecap="round"/></svg>`,
-    CLOSE: `<svg class="cinii-enh-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`
+    CLOSE: `<svg class="cinii-enh-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`,
+    GEAR: `<svg class="cinii-enh-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1Z"/></svg>`
   };
 
   // Toast Notification
@@ -485,31 +488,77 @@
     return `${headers.join('\t')}\n${row.join('\t')}`;
   }
 
-  function generateAllCitations(meta) {
-    return {
-      bibtex: { label: 'BibTeX', text: generateBibTeX(meta) },
-      sist02: { label: 'SIST02 (和文標準)', text: generateSIST02(meta) },
-      apa: { label: 'APA (第7版)', text: generateAPA(meta) },
-      ris: { label: 'RIS (EndNote / Mendeley)', text: generateRIS(meta) },
-      markdown: { label: 'Markdown', text: generateMarkdown(meta) },
-      mla: { label: 'MLA (第9版)', text: generateMLA(meta) },
-      chicago: { label: 'Chicago (著者-日付)', text: generateChicago(meta) }
+  function generateCustomCitation(meta, templateStr) {
+    const tmpl = templateStr || userSettings.customTemplate || '{authors} ({year})「{title}」『{journal}』{volume}({issue}), pp.{pages}. {url}';
+    const authorsStr = (meta.authors && meta.authors.length > 0) ? meta.authors.join(', ') : '著者不明';
+    const firstAuthor = (meta.authors && meta.authors[0]) ? meta.authors[0] : '著者不明';
+
+    const replacements = {
+      '{title}': meta.title || '',
+      '{authors}': authorsStr,
+      '{firstAuthor}': firstAuthor,
+      '{year}': meta.year || '',
+      '{journal}': meta.journal || '',
+      '{volume}': meta.volume || '',
+      '{issue}': meta.issue || '',
+      '{pages}': meta.pages || '',
+      '{firstPage}': meta.firstPage || '',
+      '{lastPage}': meta.lastPage || '',
+      '{doi}': meta.doi ? `https://doi.org/${meta.doi}` : '',
+      '{url}': meta.url || '',
+      '{publisher}': meta.publisher || ''
     };
+
+    let result = tmpl;
+    for (const [key, val] of Object.entries(replacements)) {
+      result = result.split(key).join(val);
+    }
+
+    // Clean up empty parentheses or punctuation left by empty fields like () or , ,
+    result = result
+      .replace(/\(\s*\)/g, '')
+      .replace(/\[\s*\]/g, '')
+      .replace(/『\s*』/g, '')
+      .replace(/「\s*」/g, '')
+      .replace(/pp\.\s*(?=[,\.\s]|$)/g, '')
+      .replace(/,\s*,/g, ',')
+      .replace(/\s{2,}/g, ' ')
+      .trim();
+
+    return result;
   }
 
-  const CITATION_LABELS = {
-    bibtex: 'BibTeX',
-    sist02: 'SIST02',
-    apa: 'APA',
-    ris: 'RIS',
-    markdown: 'Markdown',
-    mla: 'MLA',
-    chicago: 'Chicago'
-  };
+  function generateAllCitations(meta) {
+    const citations = {};
+
+    // 1. Custom format (if configured or enabled)
+    const customLabel = userSettings.customTemplateLabel || 'カスタム形式';
+    citations.custom = {
+      label: customLabel,
+      text: generateCustomCitation(meta, userSettings.customTemplate)
+    };
+
+    // 2. Standard formats
+    citations.bibtex = { label: 'BibTeX', text: generateBibTeX(meta) };
+    citations.sist02 = { label: 'SIST02 (和文標準)', text: generateSIST02(meta) };
+    citations.apa = { label: 'APA (第7版)', text: generateAPA(meta) };
+    citations.ris = { label: 'RIS (EndNote / Mendeley)', text: generateRIS(meta) };
+    citations.markdown = { label: 'Markdown', text: generateMarkdown(meta) };
+    citations.mla = { label: 'MLA (第9版)', text: generateMLA(meta) };
+    citations.chicago = { label: 'Chicago (著者-日付)', text: generateChicago(meta) };
+
+    return citations;
+  }
 
   function getPreferredCitation(meta, formatKey) {
     const key = formatKey || userSettings.preferredCitation || 'bibtex';
     switch (key) {
+      case 'custom':
+        return {
+          key: 'custom',
+          label: userSettings.customTemplateLabel || 'カスタム',
+          text: generateCustomCitation(meta, userSettings.customTemplate)
+        };
       case 'bibtex': return { key: 'bibtex', label: 'BibTeX', text: generateBibTeX(meta) };
       case 'sist02': return { key: 'sist02', label: 'SIST02', text: generateSIST02(meta) };
       case 'apa': return { key: 'apa', label: 'APA', text: generateAPA(meta) };
@@ -523,7 +572,8 @@
 
   function createQuickCopyButton(metaProvider, extraClasses = '') {
     const prefKey = userSettings.preferredCitation || 'bibtex';
-    const prefLabel = CITATION_LABELS[prefKey] || 'BibTeX';
+    const prefItem = getPreferredCitation({ authors: [] }, prefKey);
+    const prefLabel = prefItem.label;
 
     const btn = document.createElement('button');
     btn.type = 'button';
@@ -538,7 +588,7 @@
       const meta = typeof metaProvider === 'function' ? metaProvider() : metaProvider;
       if (!meta) return;
 
-      const pref = getPreferredCitation(meta, prefKey);
+      const pref = getPreferredCitation(meta, userSettings.preferredCitation || 'bibtex');
       const originalHtml = btn.innerHTML;
 
       const success = await copyText(pref.text, `${pref.label} をクリップボードにコピーしました`);
@@ -642,8 +692,268 @@
   }
 
   // ==========================================
-  // Detail Page Enhancement (詳細画面のみ実行)
+  // Settings Modal Dialog (CiNiiヘッダー歯車から開く設定画面)
   // ==========================================
+
+  function updateAllQuickCopyButtons() {
+    const prefItem = getPreferredCitation({ authors: [] }, userSettings.preferredCitation || 'bibtex');
+    document.querySelectorAll('.cinii-enh-btn-cite-quick').forEach((btn) => {
+      btn.title = `設定済みフォーマット (${prefItem.label}) をワンクリックで直接コピー`;
+      btn.innerHTML = `${SVGS.COPY}<span>${escapeHtml(prefItem.label)}</span>`;
+    });
+  }
+
+  function openSettingsModal() {
+    document.querySelectorAll('.cinii-enh-modal-overlay').forEach((el) => el.remove());
+
+    const overlay = document.createElement('div');
+    overlay.className = 'cinii-enh-modal-overlay';
+
+    const modal = document.createElement('div');
+    modal.className = 'cinii-enh-modal cinii-enh-settings-modal';
+
+    // Sample metadata for live preview
+    const sampleMeta = {
+      title: 'CiNii Researchにおける文献情報管理と引用機能の高度化',
+      authors: ['情報 太郎', '学術 花子'],
+      year: '2026',
+      journal: '情報知識学会誌',
+      volume: '36',
+      issue: '2',
+      pages: '120-135',
+      firstPage: '120',
+      lastPage: '135',
+      doi: '10.1234/example.2026.001',
+      url: 'https://cir.nii.ac.jp/crid/1390000000000000000'
+    };
+
+    modal.innerHTML = `
+      <div class="cinii-enh-modal-header">
+        <div class="cinii-enh-modal-header-info">
+          <span class="cinii-enh-modal-badge">CiNii Enhancer</span>
+          <h2 class="cinii-enh-modal-title">拡張機能設定</h2>
+        </div>
+        <button type="button" class="cinii-enh-modal-close" aria-label="閉じる">${SVGS.CLOSE}</button>
+      </div>
+      <div class="cinii-enh-modal-body cinii-enh-settings-body">
+        <!-- 1. Preferred Citation Format -->
+        <div class="cinii-enh-form-group">
+          <label class="cinii-enh-form-label" for="setting-preferred-format">
+            クイックコピー優先フォーマット
+          </label>
+          <div class="cinii-enh-form-help">
+            タイトル右横のボタン（例:「BibTeX」）をクリックした際に、1クリックで即時コピーされる形式です。
+          </div>
+          <select id="setting-preferred-format" class="cinii-enh-form-select">
+            <option value="bibtex">BibTeX (LaTeX / Typst)</option>
+            <option value="sist02">SIST02 (和文論文標準)</option>
+            <option value="apa">APA (第7版)</option>
+            <option value="ris">RIS (EndNote / Mendeley / Zotero)</option>
+            <option value="markdown">Markdown (URL付き)</option>
+            <option value="mla">MLA (第9版)</option>
+            <option value="chicago">Chicago (著者-日付形式)</option>
+            <option value="custom">カスタム形式 (下記テンプレート)</option>
+          </select>
+        </div>
+
+        <!-- 2. Custom Citation Template Editor -->
+        <div class="cinii-enh-form-group cinii-enh-custom-template-section">
+          <div class="cinii-enh-form-header-row">
+            <label class="cinii-enh-form-label" for="setting-custom-template">
+              カスタム引用テンプレート設定
+            </label>
+            <div class="cinii-enh-template-label-input-wrap">
+              <span class="cinii-enh-sublabel">ボタン表示名:</span>
+              <input type="text" id="setting-custom-label" class="cinii-enh-form-input cinii-enh-form-input-sm" value="${escapeHtml(userSettings.customTemplateLabel || 'カスタム')}" placeholder="ボタン名 (例: カスタム)">
+            </div>
+          </div>
+          <div class="cinii-enh-form-help">
+            波括弧の変数（例: <code>{title}</code>）が文献情報に自動置換されます。
+          </div>
+
+          <!-- Variable insertion chips -->
+          <div class="cinii-enh-chips-bar">
+            <span class="cinii-enh-chips-title">変数を挿入:</span>
+            <button type="button" class="cinii-enh-chip" data-var="{title}">{title} タイトル</button>
+            <button type="button" class="cinii-enh-chip" data-var="{authors}">{authors} 著者一覧</button>
+            <button type="button" class="cinii-enh-chip" data-var="{firstAuthor}">{firstAuthor} 筆頭著者</button>
+            <button type="button" class="cinii-enh-chip" data-var="{year}">{year} 出版年</button>
+            <button type="button" class="cinii-enh-chip" data-var="{journal}">{journal} 収録誌名</button>
+            <button type="button" class="cinii-enh-chip" data-var="{volume}">{volume} 巻</button>
+            <button type="button" class="cinii-enh-chip" data-var="{issue}">{issue} 号</button>
+            <button type="button" class="cinii-enh-chip" data-var="{pages}">{pages} ページ</button>
+            <button type="button" class="cinii-enh-chip" data-var="{doi}">{doi} DOI</button>
+            <button type="button" class="cinii-enh-chip" data-var="{url}">{url} URL</button>
+          </div>
+
+          <textarea id="setting-custom-template" class="cinii-enh-form-textarea" rows="3" placeholder="{authors} ({year})「{title}」『{journal}』{volume}({issue}), pp.{pages}. {url}">${escapeHtml(userSettings.customTemplate || '')}</textarea>
+
+          <!-- Presets -->
+          <div class="cinii-enh-presets-row">
+            <span class="cinii-enh-sublabel">プリセット:</span>
+            <button type="button" class="cinii-enh-btn-preset" data-preset="{authors} ({year})「{title}」『{journal}』{volume}({issue}), pp.{pages}. {url}">和文（一般）</button>
+            <button type="button" class="cinii-enh-btn-preset" data-preset="- [{title}]({url}) - {authors} ({year})">Markdownメモ</button>
+            <button type="button" class="cinii-enh-btn-preset" data-preset="{authors}, &quot;{title},&quot; {journal}, vol. {volume}, no. {issue}, pp. {pages}, {year}.">英文論文調</button>
+          </div>
+
+          <!-- Live Preview -->
+          <div class="cinii-enh-preview-box">
+            <div class="cinii-enh-preview-title">リアルタイムプレビュー:</div>
+            <div id="cinii-enh-template-preview" class="cinii-enh-preview-content"></div>
+          </div>
+        </div>
+
+        <!-- 3. Toggles -->
+        <div class="cinii-enh-form-group">
+          <label class="cinii-enh-form-label">機能のオン/オフ</label>
+          <div class="cinii-enh-toggle-list">
+            <label class="cinii-enh-checkbox-item">
+              <input type="checkbox" id="setting-enable-quick-copy" ${userSettings.enableSearchQuickCopy ? 'checked' : ''}>
+              <span>検索結果カードに引用ボタンを表示</span>
+            </label>
+            <label class="cinii-enh-checkbox-item">
+              <input type="checkbox" id="setting-enable-abstract-cleanup" ${userSettings.enableAbstractCleanup ? 'checked' : ''}>
+              <span>抄録・検索結果のHTMLタグを自動整形</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- 4. Unpaywall Email -->
+        <div class="cinii-enh-form-group">
+          <label class="cinii-enh-form-label" for="setting-unpaywall-email">
+            Unpaywall 照会用メールアドレス
+          </label>
+          <input type="email" id="setting-unpaywall-email" class="cinii-enh-form-input" value="${escapeHtml(userSettings.unpaywallEmail || '')}" placeholder="your-email@example.com">
+        </div>
+      </div>
+
+      <div class="cinii-enh-modal-footer">
+        <span id="cinii-enh-setting-save-msg" class="cinii-enh-save-message"></span>
+        <button type="button" id="cinii-enh-save-settings-btn" class="cinii-enh-btn cinii-enh-btn-primary">
+          ${SVGS.CHECK}<span>設定を保存</span>
+        </button>
+      </div>
+    `;
+
+    overlay.appendChild(modal);
+    document.body.appendChild(overlay);
+
+    const formatSelect = modal.querySelector('#setting-preferred-format');
+    const templateTextarea = modal.querySelector('#setting-custom-template');
+    const labelInput = modal.querySelector('#setting-custom-label');
+    const previewEl = modal.querySelector('#cinii-enh-template-preview');
+
+    formatSelect.value = userSettings.preferredCitation || 'bibtex';
+
+    const updatePreview = () => {
+      const tmpl = templateTextarea.value || '';
+      previewEl.textContent = generateCustomCitation(sampleMeta, tmpl);
+    };
+    updatePreview();
+
+    templateTextarea.addEventListener('input', updatePreview);
+
+    // Variable insertion chips
+    modal.querySelectorAll('.cinii-enh-chip').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const v = btn.getAttribute('data-var');
+        const start = templateTextarea.selectionStart;
+        const end = templateTextarea.selectionEnd;
+        const val = templateTextarea.value;
+        templateTextarea.value = val.substring(0, start) + v + val.substring(end);
+        templateTextarea.focus();
+        templateTextarea.selectionStart = templateTextarea.selectionEnd = start + v.length;
+        updatePreview();
+      });
+    });
+
+    // Preset buttons
+    modal.querySelectorAll('.cinii-enh-btn-preset').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        templateTextarea.value = btn.getAttribute('data-preset');
+        updatePreview();
+      });
+    });
+
+    // Close handler
+    const closeModal = () => {
+      overlay.remove();
+      document.removeEventListener('keydown', onKeyDown);
+    };
+
+    modal.querySelector('.cinii-enh-modal-close').addEventListener('click', closeModal);
+    overlay.addEventListener('click', (e) => {
+      if (e.target === overlay) closeModal();
+    });
+
+    const onKeyDown = (e) => {
+      if (e.key === 'Escape') closeModal();
+    };
+    document.addEventListener('keydown', onKeyDown);
+
+    // Save handler
+    const saveBtn = modal.querySelector('#cinii-enh-save-settings-btn');
+    saveBtn.addEventListener('click', () => {
+      const newSettings = {
+        preferredCitation: formatSelect.value,
+        customTemplate: templateTextarea.value.trim() || '{authors} ({year})「{title}」『{journal}』{volume}({issue}), pp.{pages}. {url}',
+        customTemplateLabel: labelInput.value.trim() || 'カスタム',
+        enableSearchQuickCopy: modal.querySelector('#setting-enable-quick-copy').checked,
+        enableAbstractCleanup: modal.querySelector('#setting-enable-abstract-cleanup').checked,
+        unpaywallEmail: modal.querySelector('#setting-unpaywall-email').value.trim() || 'academic-reader@example.com'
+      };
+
+      userSettings = { ...userSettings, ...newSettings };
+
+      if (chrome.runtime && chrome.runtime.sendMessage) {
+        chrome.runtime.sendMessage({ action: 'SAVE_SETTINGS', settings: newSettings }, () => {
+          showToast('設定を保存しました');
+          closeModal();
+          updateAllQuickCopyButtons();
+        });
+      } else {
+        showToast('設定を保存しました');
+        closeModal();
+        updateAllQuickCopyButtons();
+      }
+    });
+  }
+
+  // ==========================================
+  // Header Settings Button Injection (CiNiiヘッダーの歯車ボタン)
+  // ==========================================
+
+  function injectHeaderSettingsButton() {
+    if (document.getElementById('cinii-enh-header-settings-btn')) return;
+
+    // Search for header navigation container
+    const headerNav =
+      document.querySelector('.header .nav, .header ul, .header-nav, #header ul, .navbar-nav, .user-menu, .globalNav, header .container, #header, .header, header');
+
+    if (!headerNav) return;
+
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.id = 'cinii-enh-header-settings-btn';
+    btn.className = 'cinii-enh-header-settings-btn';
+    btn.title = 'CiNii Enhancer 設定（引用形式・カスタムテンプレート等）';
+    btn.innerHTML = `${SVGS.GEAR}<span>設定</span>`;
+
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      e.preventDefault();
+      openSettingsModal();
+    });
+
+    if (headerNav.tagName === 'UL') {
+      const li = document.createElement('li');
+      li.className = 'cinii-enh-header-settings-li';
+      li.appendChild(btn);
+      headerNav.appendChild(li);
+    } else {
+      headerNav.appendChild(btn);
+    }
+  }
 
   // ==========================================
   // Detail Page Enhancement (詳細画面のみ実行)
@@ -1356,6 +1666,7 @@
   // ==========================================
 
   function runEnhancer() {
+    injectHeaderSettingsButton();
     if (isDetailPage()) {
       enhanceDetailPage();
       enhanceExportSection();
@@ -1384,7 +1695,8 @@
           target.closest('.cinii-enh-abstract-container') ||
           target.closest('.cinii-enh-modal-overlay') ||
           target.closest('.cinii-enh-detail-title-actions') ||
-          target.closest('.cinii-enh-btn-export-copy')
+          target.closest('.cinii-enh-btn-export-copy') ||
+          target.closest('.cinii-enh-header-settings-btn')
         )
       );
     });

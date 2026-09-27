@@ -8,7 +8,9 @@ const DEFAULT_SETTINGS = {
   enableSearchPdfDirect: true,
   enableDetailToolbar: true,
   enableAbstractCleanup: true,
-  preferredCitation: 'bibtex'
+  preferredCitation: 'bibtex',
+  customTemplate: '{authors} ({year})「{title}」『{journal}』{volume}({issue}), pp.{pages}. {url}',
+  customTemplateLabel: 'カスタム'
 };
 
 document.addEventListener('DOMContentLoaded', async () => {
