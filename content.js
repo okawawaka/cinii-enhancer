@@ -117,9 +117,11 @@
 
   function detectFullTextInElement(element) {
     if (!element) return null;
+    const targetEl = element === document ? (document.body || document.documentElement) : element;
+    if (!targetEl) return null;
 
     // 1. Direct PDF link
-    const pdfLinks = element.querySelectorAll('a[href*=".pdf"]');
+    const pdfLinks = targetEl.querySelectorAll('a[href*=".pdf"]');
     for (const a of pdfLinks) {
       const href = a.getAttribute('href') || '';
       if (href && !href.startsWith('javascript:')) {
@@ -128,19 +130,19 @@
     }
 
     // 2. J-STAGE link (any J-STAGE URL)
-    const jstageLinks = element.querySelectorAll('a[href*="jstage.jst.go.jp"]');
+    const jstageLinks = targetEl.querySelectorAll('a[href*="jstage.jst.go.jp"]');
     if (jstageLinks.length > 0) {
       return { url: jstageLinks[0].href, label: 'J-STAGE' };
     }
 
     // 3. Institutional repository link
-    const repoLinks = element.querySelectorAll('a[href*="repository"], a[href*="repo."], a[href*="ir.lib."]');
+    const repoLinks = targetEl.querySelectorAll('a[href*="repository"], a[href*="repo."], a[href*="ir.lib."]');
     if (repoLinks.length > 0) {
       return { url: repoLinks[0].href, label: '機関リポジトリ' };
     }
 
     // 4. CiNii specific bodypdf / fulltext buttons
-    const bodyPdf = element.querySelector('.bodypdf, a.bodylink');
+    const bodyPdf = targetEl.querySelector('.bodypdf, a.bodylink');
     if (bodyPdf) {
       const href = bodyPdf.getAttribute('href') || bodyPdf.querySelector('a')?.getAttribute('href');
       if (href && !href.startsWith('javascript:')) {
@@ -148,7 +150,7 @@
       }
     }
 
-    const cftBtn = element.querySelector('.cfullTextBtn, .fulltextitem a');
+    const cftBtn = targetEl.querySelector('.cfullTextBtn, .fulltextitem a');
     if (cftBtn) {
       const href = cftBtn.getAttribute('href') || cftBtn.closest('a')?.getAttribute('href');
       if (href && !href.startsWith('javascript:')) {
@@ -157,12 +159,12 @@
     }
 
     // 5. Open Access tags / classes
-    if (element.querySelector('.tag-oa, [class*="openaccess"], [class*="open-access"]')) {
+    if (targetEl.querySelector('.tag-oa, [class*="openaccess"], [class*="open-access"]')) {
       return { url: null, label: 'オープンアクセス' };
     }
 
     // 6. General text check for OA or full text
-    const text = element.textContent;
+    const text = targetEl.textContent || '';
     if (
       text.includes('オープンアクセス') ||
       text.includes('本文あり') ||
@@ -683,13 +685,16 @@
   function isCiteableItem(item, titleLink) {
     if (!item || !titleLink) return false;
 
+    const itemHtml = item.innerHTML || '';
+    const href = titleLink.href || '';
+
     // 1. Exclude Persons / Researchers (人物・研究者)
     const isPerson = Boolean(
       item.querySelector('.author_class, [class*="author_class"], [class*="person_class"], dl.author_class') ||
       item.classList.contains('author_class') ||
-      item.innerHTML.includes('classIcon-author.svg') ||
-      item.innerHTML.includes('tagIcon-person.svg') ||
-      (titleLink.href && titleLink.href.includes('/nrid/'))
+      itemHtml.includes('classIcon-author.svg') ||
+      itemHtml.includes('tagIcon-person.svg') ||
+      href.includes('/nrid/')
     );
     if (isPerson) return false;
 
@@ -698,8 +703,9 @@
       item.querySelector('.research_class, .project_class, dl.research_class, dl.project_class') ||
       item.classList.contains('research_class') ||
       item.classList.contains('project_class') ||
-      item.innerHTML.includes('classIcon-research1.svg') ||
-      (titleLink.href && (titleLink.href.includes('/kaken/') || titleLink.href.includes('/projects/')))
+      itemHtml.includes('classIcon-research1.svg') ||
+      href.includes('/kaken/') ||
+      href.includes('/projects/')
     );
     if (isProject) return false;
 
@@ -707,7 +713,7 @@
     const isData = Boolean(
       item.querySelector('.data_class, dl.data_class') ||
       item.classList.contains('data_class') ||
-      item.innerHTML.includes('classIcon-data.svg')
+      itemHtml.includes('classIcon-data.svg')
     );
     if (isData) return false;
 
@@ -717,15 +723,15 @@
       item.classList.contains('paper_class') ||
       item.classList.contains('book_class') ||
       item.classList.contains('paper-dissertation_class') ||
-      item.innerHTML.includes('classIcon-article.svg') ||
-      item.innerHTML.includes('classIcon-book.svg') ||
-      item.innerHTML.includes('classIcon-dissertation.svg')
+      itemHtml.includes('classIcon-article.svg') ||
+      itemHtml.includes('classIcon-book.svg') ||
+      itemHtml.includes('classIcon-dissertation.svg')
     );
     if (isExplicitCiteable) return true;
 
     // 5. Fallback: If it has an author list and is a publication CRID, treat as citeable
     const hasAuthors = Boolean(item.querySelector('.authorslist, .author-name, .item-creator'));
-    const isCrid = Boolean(titleLink.href && titleLink.href.includes('/crid/'));
+    const isCrid = Boolean(href && href.includes('/crid/'));
     return hasAuthors && isCrid;
   }
 
@@ -819,10 +825,10 @@
       titleLink.parentNode.insertBefore(titleActions, titleLink.nextSibling);
     }
 
-    // 3. Clean title and snippets in this card (Plan A: Inline smart clean)
+    // 3. Clean title and snippets in this card (Plan A: Inline clean)
     if (userSettings.enableAbstractCleanup) {
       if (titleLink) {
-        const rawTitle = titleLink.innerHTML;
+        const rawTitle = titleLink.innerHTML || '';
         if (rawTitle.includes('&lt;') || rawTitle.includes('<jats:') || /<[a-z0-9_-]+:[a-z0-9_-]+/i.test(rawTitle)) {
           const cleanedTitle = cleanSearchSnippetHtml(rawTitle);
           if (cleanedTitle && cleanedTitle !== rawTitle) {
@@ -835,8 +841,8 @@
         '.item_subData, .description, .snippet, .item-abstract, [class*="description"], [class*="snippet"], p'
       );
       snippetTargets.forEach((el) => {
-        if (el.closest('.cinii-enh-item-toolbar')) return;
-        const rawSnippet = el.innerHTML;
+        if (!el || el.closest('.cinii-enh-item-toolbar')) return;
+        const rawSnippet = el.innerHTML || '';
         const hasTags =
           rawSnippet.includes('&lt;') ||
           rawSnippet.includes('&amp;lt;') ||
@@ -1024,8 +1030,8 @@
 
     // Also scan paragraphs or blocks that contain raw tag signatures
     document.querySelectorAll('.maincontents p, .maincontents div, .item_subData').forEach((el) => {
-      if (elements.includes(el) || el.closest('.cinii-enh-abstract-container')) return;
-      const text = el.textContent;
+      if (!el || elements.includes(el) || el.closest('.cinii-enh-abstract-container')) return;
+      const text = el.textContent || '';
       if (
         text.includes('<jats:') ||
         text.includes('&lt;jats:') ||
@@ -1038,11 +1044,11 @@
     });
 
     elements.forEach((el) => {
-      if (el.classList.contains('cinii-enh-abstract-processed') || el.closest('.cinii-enh-abstract-container')) {
+      if (!el || el.classList.contains('cinii-enh-abstract-processed') || el.closest('.cinii-enh-abstract-container')) {
         return;
       }
 
-      const rawContent = el.innerHTML;
+      const rawContent = el.innerHTML || '';
       const hasTags =
         rawContent.includes('&lt;') ||
         rawContent.includes('&amp;lt;') ||
