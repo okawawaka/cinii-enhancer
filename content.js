@@ -451,11 +451,46 @@
     return res.trim();
   }
 
+  function generateRIS(meta) {
+    const lines = [
+      'TY  - JOUR',
+      `TI  - ${meta.title || 'Untitled'}`
+    ];
+    (meta.authors || []).forEach((a) => lines.push(`AU  - ${a}`));
+    if (meta.journal) lines.push(`JO  - ${meta.journal}`);
+    if (meta.year) lines.push(`PY  - ${meta.year}`);
+    if (meta.volume) lines.push(`VL  - ${meta.volume}`);
+    if (meta.issue) lines.push(`IS  - ${meta.issue}`);
+    if (meta.firstPage) lines.push(`SP  - ${meta.firstPage}`);
+    if (meta.lastPage) lines.push(`EP  - ${meta.lastPage}`);
+    if (meta.doi) lines.push(`DO  - ${meta.doi}`);
+    if (meta.url) lines.push(`UR  - ${meta.url}`);
+    lines.push('ER  - ');
+    return lines.join('\n');
+  }
+
+  function generateTSV(meta) {
+    const headers = ['タイトル', '著者', '収録刊行物', '巻', '号', 'ページ', '出版年', 'DOI', 'URL'];
+    const row = [
+      meta.title || '',
+      (meta.authors || []).join('; '),
+      meta.journal || '',
+      meta.volume || '',
+      meta.issue || '',
+      meta.pages || '',
+      meta.year || '',
+      meta.doi || '',
+      meta.url || ''
+    ];
+    return `${headers.join('\t')}\n${row.join('\t')}`;
+  }
+
   function generateAllCitations(meta) {
     return {
       bibtex: { label: 'BibTeX', text: generateBibTeX(meta) },
       sist02: { label: 'SIST02 (和文標準)', text: generateSIST02(meta) },
       apa: { label: 'APA (第7版)', text: generateAPA(meta) },
+      ris: { label: 'RIS (EndNote / Mendeley)', text: generateRIS(meta) },
       markdown: { label: 'Markdown', text: generateMarkdown(meta) },
       mla: { label: 'MLA (第9版)', text: generateMLA(meta) },
       chicago: { label: 'Chicago (著者-日付)', text: generateChicago(meta) }
@@ -552,40 +587,38 @@
   // Detail Page Enhancement (詳細画面のみ実行)
   // ==========================================
 
+  // ==========================================
+  // Detail Page Enhancement (詳細画面のみ実行)
+  // ==========================================
+
   function enhanceDetailPage() {
     if (!userSettings.enableDetailToolbar) return;
-    if (document.getElementById('cinii-enh-detail-toolbar')) return;
+    if (document.getElementById('cinii-enh-detail-title-actions')) return;
 
     const meta = extractDetailMetadata();
     if (!meta.title) return;
 
-    // Anchor: right after heading
-    const anchor =
-      document.querySelector('.itemheading') ||
+    // Locate the main title element
+    const titleEl =
       document.querySelector('.item_mainTitle') ||
+      document.querySelector('.itemheading h1') ||
+      document.querySelector('.itemheading') ||
       document.querySelector('h1') ||
-      document.querySelector('#main, .main-content');
+      document.querySelector('#main h1, .main-content h1');
 
-    if (!anchor) return;
+    if (!titleEl) return;
 
-    const toolbar = document.createElement('div');
-    toolbar.id = 'cinii-enh-detail-toolbar';
-    toolbar.className = 'cinii-enh-detail-toolbar';
+    // Compact, inline action container directly to the right of the title
+    const actionsWrapper = document.createElement('span');
+    actionsWrapper.id = 'cinii-enh-detail-title-actions';
+    actionsWrapper.className = 'cinii-enh-detail-title-actions';
 
-    // Toolbar Brand Label
-    const brand = document.createElement('div');
-    brand.className = 'cinii-enh-toolbar-brand';
-    brand.innerHTML = `<span class="cinii-enh-brand-label">CiNii Enhancer</span>`;
-    toolbar.appendChild(brand);
-
-    const btnGroup = document.createElement('div');
-    btnGroup.className = 'cinii-enh-btn-group';
-
-    // 1. Citation Modal Trigger Button
+    // 1. Citation Button (Simple, clean, matching CiNii aesthetic)
     const citeBtn = document.createElement('button');
     citeBtn.type = 'button';
-    citeBtn.className = 'cinii-enh-btn cinii-enh-btn-primary';
-    citeBtn.innerHTML = `${SVGS.QUOTE}<span>引用をコピー</span>`;
+    citeBtn.className = 'cinii-enh-btn cinii-enh-btn-sm cinii-enh-btn-outline cinii-enh-btn-detail-cite';
+    citeBtn.innerHTML = `${SVGS.QUOTE}<span>引用</span>`;
+    citeBtn.title = '引用フォーマット（BibTeX, SIST02, APA, RIS等）をコピー';
 
     citeBtn.addEventListener('click', (e) => {
       e.stopPropagation();
@@ -593,52 +626,44 @@
       openCitationModal(citations, meta.title);
     });
 
-    btnGroup.appendChild(citeBtn);
+    actionsWrapper.appendChild(citeBtn);
 
-    // 2. Full-Text / PDF Direct Button
-    const pdfContainer = document.createElement('div');
+    // 2. Direct PDF button next to title if available
+    const pdfContainer = document.createElement('span');
     pdfContainer.className = 'cinii-enh-pdf-wrapper';
 
     if (meta.pdfUrl) {
       const pdfBtn = document.createElement('a');
-      pdfBtn.className = 'cinii-enh-btn cinii-enh-btn-pdf';
+      pdfBtn.className = 'cinii-enh-btn cinii-enh-btn-sm cinii-enh-btn-pdf';
       pdfBtn.href = meta.pdfUrl;
       pdfBtn.target = '_blank';
       pdfBtn.rel = 'noopener noreferrer';
-      const label = meta.fullTextLabel ? `PDF / 本文 (${meta.fullTextLabel})` : 'PDFを閲覧';
+      const label = meta.fullTextLabel ? `PDF (${meta.fullTextLabel})` : 'PDF';
       pdfBtn.innerHTML = `${SVGS.PDF}<span>${escapeHtml(label)}</span>${SVGS.EXTERNAL}`;
       pdfContainer.appendChild(pdfBtn);
     } else if (meta.doi) {
-      // Query Unpaywall API via background worker
-      const checkingBtn = document.createElement('button');
-      checkingBtn.type = 'button';
-      checkingBtn.className = 'cinii-enh-btn cinii-enh-btn-muted';
-      checkingBtn.innerHTML = `${SVGS.SPINNER}<span>PDF確認中...</span>`;
-      checkingBtn.disabled = true;
-      pdfContainer.appendChild(checkingBtn);
-
       chrome.runtime.sendMessage(
         { action: 'CHECK_UNPAYWALL', doi: meta.doi },
         (res) => {
           pdfContainer.innerHTML = '';
           if (res && res.success && res.is_oa && res.pdf_url) {
             const pdfBtn = document.createElement('a');
-            pdfBtn.className = 'cinii-enh-btn cinii-enh-btn-pdf';
+            pdfBtn.className = 'cinii-enh-btn cinii-enh-btn-sm cinii-enh-btn-pdf';
             pdfBtn.href = res.pdf_url;
             pdfBtn.target = '_blank';
             pdfBtn.rel = 'noopener noreferrer';
-            const badgeType = res.host_type === 'repository' ? '機関OA' : 'オープンアクセス';
+            const badgeType = res.host_type === 'repository' ? '機関OA' : 'OA';
             pdfBtn.innerHTML = `${SVGS.PDF}<span>PDF (${badgeType})</span>${SVGS.EXTERNAL}`;
             pdfContainer.appendChild(pdfBtn);
           } else {
             const domDirect = detectFullTextInElement(document);
             if (domDirect && domDirect.url) {
               const linkBtn = document.createElement('a');
-              linkBtn.className = 'cinii-enh-btn cinii-enh-btn-pdf';
+              linkBtn.className = 'cinii-enh-btn cinii-enh-btn-sm cinii-enh-btn-pdf';
               linkBtn.href = domDirect.url;
               linkBtn.target = '_blank';
               linkBtn.rel = 'noopener noreferrer';
-              linkBtn.innerHTML = `${SVGS.EXTERNAL}<span>${escapeHtml(domDirect.label || '本文リンク')}</span>`;
+              linkBtn.innerHTML = `${SVGS.EXTERNAL}<span>${escapeHtml(domDirect.label || '本文')}</span>`;
               pdfContainer.appendChild(linkBtn);
             }
           }
@@ -648,19 +673,123 @@
       const domDirect = detectFullTextInElement(document);
       if (domDirect && domDirect.url) {
         const linkBtn = document.createElement('a');
-        linkBtn.className = 'cinii-enh-btn cinii-enh-btn-pdf';
+        linkBtn.className = 'cinii-enh-btn cinii-enh-btn-sm cinii-enh-btn-pdf';
         linkBtn.href = domDirect.url;
         linkBtn.target = '_blank';
         linkBtn.rel = 'noopener noreferrer';
-        linkBtn.innerHTML = `${SVGS.EXTERNAL}<span>${escapeHtml(domDirect.label)}</span>`;
+        linkBtn.innerHTML = `${SVGS.EXTERNAL}<span>${escapeHtml(domDirect.label || '本文')}</span>`;
         pdfContainer.appendChild(linkBtn);
       }
     }
 
-    btnGroup.appendChild(pdfContainer);
-    toolbar.appendChild(btnGroup);
+    actionsWrapper.appendChild(pdfContainer);
 
-    anchor.parentNode.insertBefore(toolbar, anchor.nextSibling);
+    // Append to title element so it renders neatly to its right
+    titleEl.appendChild(actionsWrapper);
+  }
+
+  // ==========================================
+  // Export Section Quick Copy (書き出しセクションの直接コピー)
+  // ==========================================
+
+  function enhanceExportSection() {
+    // Search for export / display links in detail page
+    // Patterns: "○○に書き出し", "○○で表示", "Export to ...", "Display in ..."
+    const candidates = document.querySelectorAll('a, button, [role="button"]');
+
+    candidates.forEach((el) => {
+      if (el.classList.contains('cinii-enh-export-processed')) return;
+      if (el.closest('.cinii-enh-modal')) return;
+
+      const text = (el.textContent || '').trim();
+      const isExportLink = /(?:に書き出し|で表示|Export to|Display in)/i.test(text);
+      if (!isExportLink) return;
+
+      el.classList.add('cinii-enh-export-processed');
+
+      const copyBtn = document.createElement('button');
+      copyBtn.type = 'button';
+      copyBtn.className = 'cinii-enh-btn cinii-enh-btn-sm cinii-enh-btn-outline cinii-enh-btn-export-copy';
+      copyBtn.title = `${text} のデータを直接クリップボードにコピー`;
+      copyBtn.innerHTML = `${SVGS.COPY}<span>コピー</span>`;
+
+      copyBtn.addEventListener('click', async (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+
+        const originalHtml = copyBtn.innerHTML;
+        copyBtn.disabled = true;
+        copyBtn.innerHTML = `${SVGS.SPINNER}<span>取得中</span>`;
+
+        try {
+          let copied = false;
+          const href = el.getAttribute('href');
+
+          // 1. Fetch live export data from CiNii endpoint if valid URL
+          if (href && !href.startsWith('javascript:') && !href.startsWith('#')) {
+            try {
+              const fullUrl = href.startsWith('http') ? href : window.location.origin + href;
+              const res = await fetch(fullUrl, { credentials: 'same-origin' });
+              if (res.ok) {
+                const fetchedData = await res.text();
+                if (fetchedData && fetchedData.trim().length > 0) {
+                  await copyText(fetchedData, `${text} の内容をコピーしました`);
+                  copied = true;
+                }
+              }
+            } catch (fetchErr) {
+              console.warn('[CiNii Enhancer] Direct export fetch failed, falling back to local generator:', fetchErr);
+            }
+          }
+
+          // 2. High-precision local fallback generator
+          if (!copied) {
+            const meta = extractDetailMetadata();
+            let fallbackText = '';
+
+            if (/bibtex/i.test(text)) {
+              fallbackText = generateBibTeX(meta);
+            } else if (/(?:ris|endnote|refworks|mendeley)/i.test(text)) {
+              fallbackText = generateRIS(meta);
+            } else if (/tsv/i.test(text)) {
+              fallbackText = generateTSV(meta);
+            } else {
+              fallbackText = generateSIST02(meta);
+            }
+
+            if (fallbackText) {
+              await copyText(fallbackText, `${text} の内容をコピーしました`);
+              copied = true;
+            }
+          }
+
+          if (copied) {
+            copyBtn.classList.add('is-copied');
+            copyBtn.innerHTML = `${SVGS.CHECK}<span>完了</span>`;
+            setTimeout(() => {
+              copyBtn.classList.remove('is-copied');
+              copyBtn.innerHTML = originalHtml;
+              copyBtn.disabled = false;
+            }, 1600);
+          } else {
+            copyBtn.innerHTML = originalHtml;
+            copyBtn.disabled = false;
+          }
+        } catch (err) {
+          console.error('[CiNii Enhancer] Export copy failed:', err);
+          copyBtn.innerHTML = originalHtml;
+          copyBtn.disabled = false;
+          showToast('コピーに失敗しました');
+        }
+      });
+
+      // Insert immediately after the export link/button
+      if (el.nextSibling) {
+        el.parentNode.insertBefore(copyBtn, el.nextSibling);
+      } else {
+        el.parentNode.appendChild(copyBtn);
+      }
+    });
   }
 
   // ==========================================
@@ -1010,43 +1139,43 @@
   function enhanceAbstracts() {
     if (!userSettings.enableAbstractCleanup) return;
 
-    // Find abstract / description candidate elements
-    const selectors = [
+    // Target elements specifically designated for abstracts / descriptions
+    const baseSelectors = [
       '.abstract',
       '.abstracttextjpn',
       '.abstracttexteng',
       '.item_abstract',
       '[itemprop="description"]',
-      '.biblio-contents',
-      '.biblio-note',
-      '.avlItem-note',
-      '.toc-body',
       '#abstract',
-      '.detailSection .text',
-      '.dataSection .text'
+      '.avlItem-note',
+      '.toc-body'
     ];
 
-    const elements = Array.from(document.querySelectorAll(selectors.join(', ')));
+    const elements = Array.from(document.querySelectorAll(baseSelectors.join(', ')));
 
-    // Also scan paragraphs or blocks that contain raw tag signatures
-    document.querySelectorAll('.maincontents p, .maincontents div, .item_subData').forEach((el) => {
-      if (!el || elements.includes(el) || el.closest('.cinii-enh-abstract-container')) return;
-      const text = el.textContent || '';
-      if (
-        text.includes('<jats:') ||
-        text.includes('&lt;jats:') ||
-        text.includes('&lt;p&gt;') ||
-        text.includes('&lt;b&gt;') ||
-        text.includes('&lt;i&gt;')
-      ) {
-        elements.push(el);
+    // Target sections explicitly labeled "説明", "抄録", "概要", "Abstract", "Description" in CiNii data grids
+    document.querySelectorAll('.dataSection, .detailSection, dl, section').forEach((section) => {
+      const titleEl = section.querySelector('.listSectionTitle, dt, h2, h3, .sectionTitle');
+      if (!titleEl) return;
+      const titleText = (titleEl.textContent || '').trim();
+      if (/(?:説明|抄録|概要|Abstract|Description)/i.test(titleText)) {
+        const bodyCandidates = section.querySelectorAll('dd, .text, p, [class*="body"]');
+        bodyCandidates.forEach((b) => {
+          if (!elements.includes(b)) elements.push(b);
+        });
       }
     });
 
     elements.forEach((el) => {
-      if (!el || el.classList.contains('cinii-enh-abstract-processed') || el.closest('.cinii-enh-abstract-container')) {
-        return;
-      }
+      if (!el) return;
+      // 1. Skip already processed elements
+      if (el.classList.contains('cinii-enh-abstract-processed')) return;
+      // 2. Skip elements inside an existing abstract container
+      if (el.closest('.cinii-enh-abstract-container')) return;
+      // 3. Skip ancestor/parent elements that contain an abstract container (avoids collateral damage!)
+      if (el.querySelector('.cinii-enh-abstract-container')) return;
+      // 4. Skip elements that contain large structural children (not a text block)
+      if (el.querySelectorAll('div, section, article, table, dl, form').length > 1) return;
 
       const rawContent = el.innerHTML || '';
       const hasTags =
@@ -1124,6 +1253,7 @@
   function runEnhancer() {
     if (isDetailPage()) {
       enhanceDetailPage();
+      enhanceExportSection();
     } else if (isSearchPage()) {
       enhanceSearchResults();
     }
@@ -1140,7 +1270,21 @@
 
   // Watch for dynamic DOM changes (CiNii pagination / tab switches)
   let observerDebounce = null;
-  const observer = new MutationObserver(() => {
+  const observer = new MutationObserver((mutations) => {
+    // Ignore mutations occurring purely inside enhancer widgets
+    const isPurelyInternal = mutations.every((m) => {
+      const target = m.target;
+      return Boolean(
+        target && target.closest && (
+          target.closest('.cinii-enh-abstract-container') ||
+          target.closest('.cinii-enh-modal-overlay') ||
+          target.closest('.cinii-enh-detail-title-actions') ||
+          target.closest('.cinii-enh-btn-export-copy')
+        )
+      );
+    });
+    if (isPurelyInternal) return;
+
     if (observerDebounce) clearTimeout(observerDebounce);
     observerDebounce = setTimeout(() => {
       runEnhancer();
