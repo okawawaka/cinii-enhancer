@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CiNii Research Enhancer</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <header class="popup-header">
+    <div class="header-brand">
+      <div class="brand-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
+          <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+        </svg>
+      </div>
+      <div class="brand-text">
+        <h1>CiNii Enhancer</h1>
+        <span class="brand-version">v1.0.0</span>
+      </div>
+    </div>
+  </header>
+
+  <main class="popup-main">
+    <section class="settings-group">
+      <h2 class="group-title">オープンアクセス照会設定</h2>
+      <div class="form-item">
+        <label for="unpaywallEmail" class="form-label">Unpaywall 照会用メールアドレス</label>
+        <input type="email" id="unpaywallEmail" class="form-input" placeholder="your-email@example.com">
+        <p class="form-help">DOIからオープンアクセスPDFを自動検出する Unpaywall API の利用規約に基づき照会元として使用されます。</p>
+      </div>
+    </section>
+
+    <section class="settings-group">
+      <h2 class="group-title">表示・機能設定</h2>
+      
+      <label class="toggle-item">
+        <span class="toggle-label">詳細画面の拡張ツールバーを表示</span>
+        <input type="checkbox" id="enableDetailToolbar">
+        <span class="toggle-slider"></span>
+      </label>
+
+      <label class="toggle-item">
+        <span class="toggle-label">検索結果にPDF直行ボタン・バッジを表示</span>
+        <input type="checkbox" id="enableSearchPdfDirect">
+        <span class="toggle-slider"></span>
+      </label>
+
+      <label class="toggle-item">
+        <span class="toggle-label">検索結果にワンクリック引用ボタンを表示</span>
+        <input type="checkbox" id="enableSearchQuickCopy">
+        <span class="toggle-slider"></span>
+      </label>
+
+      <label class="toggle-item">
+        <span class="toggle-label">検索結果に本文・PDF絞り込みバーを表示</span>
+        <input type="checkbox" id="enableFilter">
+        <span class="toggle-slider"></span>
+      </label>
+    </section>
+
+    <section class="settings-group">
+      <h2 class="group-title">優先引用フォーマット</h2>
+      <div class="form-item">
+        <select id="preferredCitation" class="form-select">
+          <option value="bibtex">BibTeX (LaTeX / Typst)</option>
+          <option value="sist02">SIST02 (和文論文標準)</option>
+          <option value="apa">APA 第7版</option>
+          <option value="markdown">Markdown (URL付き)</option>
+          <option value="mla">MLA 第9版</option>
+          <option value="chicago">Chicago 著者-日付形式</option>
+        </select>
+      </div>
+    </section>
+
+    <div class="save-area">
+      <button type="button" id="saveBtn" class="btn-save">設定を保存</button>
+      <span id="saveStatus" class="save-status"></span>
+    </div>
+  </main>
+
+  <footer class="popup-footer">
+    <a href="https://github.com/okawawaka/cinii-enhancer" target="_blank" rel="noopener noreferrer" class="footer-link">
+      <svg class="footer-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/>
+      </svg>
+      GitHub リポジトリ
+    </a>
+  </footer>
+
+  <script src="popup.js"></script>
+</body>
+</html>

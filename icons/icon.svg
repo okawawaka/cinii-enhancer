@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+  <defs>
+    <linearGradient id="ciniiBg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#003580"/>
+      <stop offset="100%" stop-color="#001f4d"/>
+    </linearGradient>
+  </defs>
+  <!-- Background Rounded Shield -->
+  <rect x="8" y="8" width="112" height="112" rx="20" fill="url(#ciniiBg)"/>
+  
+  <!-- Outer Subtle Border -->
+  <rect x="8.5" y="8.5" width="111" height="111" rx="19.5" fill="none" stroke="#2563eb" stroke-width="2" stroke-opacity="0.4"/>
+  
+  <!-- Document Page Base -->
+  <path d="M34 26 H80 L94 40 V102 H34 Z" fill="#ffffff" stroke="#cbd5e1" stroke-width="2" stroke-linejoin="round"/>
+  
+  <!-- Folded Corner -->
+  <path d="M80 26 V40 H94 Z" fill="#e2e8f0" stroke="#cbd5e1" stroke-width="1.5" stroke-linejoin="round"/>
+  
+  <!-- Document Content Text Lines -->
+  <line x1="44" y1="46" x2="70" y2="46" stroke="#94a3b8" stroke-width="3" stroke-linecap="round"/>
+  <line x1="44" y1="56" x2="84" y2="56" stroke="#cbd5e1" stroke-width="2.5" stroke-linecap="round"/>
+  <line x1="44" y1="64" x2="84" y2="64" stroke="#cbd5e1" stroke-width="2.5" stroke-linecap="round"/>
+  <line x1="44" y1="72" x2="72" y2="72" stroke="#cbd5e1" stroke-width="2.5" stroke-linecap="round"/>
+  
+  <!-- Academic Badge: Citation Symbol (Quotation marks) in CiNii Blue -->
+  <circle cx="82" cy="82" r="18" fill="#004098" stroke="#ffffff" stroke-width="2.5"/>
+  <!-- Quote 1 -->
+  <path d="M75 80 C75 76 77 74 80 74 V77 C78 77 77.5 78 77.5 80 H80 V85 H75 Z" fill="#ffffff"/>
+  <!-- Quote 2 -->
+  <path d="M83 80 C83 76 85 74 88 74 V77 C86 77 85.5 78 85.5 80 H88 V85 H83 Z" fill="#ffffff"/>
+</svg>

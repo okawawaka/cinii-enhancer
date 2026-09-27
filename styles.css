@@ -1,0 +1,449 @@
+/* ==============================================================================
+ * CiNii Research Enhancer - Academic Style System
+ * Designed to seamlessly blend with CiNii Research's scholarly aesthetic.
+ * Strict Rule: No Unicode emojis. Clean typography and subtle geometric icons.
+ * ============================================================================== */
+
+/* ------------------------------------------------------------------------------
+ * 1. Base Variables & Icons
+ * ------------------------------------------------------------------------------ */
+:root {
+  --cinii-blue: #004098;
+  --cinii-blue-hover: #002d6b;
+  --cinii-blue-light: #ebf3ff;
+  --cinii-teal: #0f766e;
+  --cinii-teal-hover: #115e59;
+  --cinii-teal-light: #f0fdfa;
+  --cinii-teal-border: #99f6e4;
+  --cinii-slate-dark: #1e293b;
+  --cinii-slate-text: #334155;
+  --cinii-slate-muted: #64748b;
+  --cinii-bg-neutral: #f8fafc;
+  --cinii-border-light: #e2e8f0;
+  --cinii-border-medium: #cbd5e1;
+  --cinii-shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --cinii-shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.08), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+  --cinii-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.05);
+  --cinii-radius-sm: 3px;
+  --cinii-radius-md: 4px;
+  --cinii-font: -apple-system, BlinkMacSystemFont, "Segoe UI", "Hiragino Kaku Gothic ProN", "BIZ UDPGothic", Meiryo, sans-serif;
+  --cinii-font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+}
+
+.cinii-enh-icon {
+  width: 14px;
+  height: 14px;
+  display: inline-block;
+  vertical-align: -2px;
+  flex-shrink: 0;
+}
+
+.cinii-enh-spinner {
+  animation: cinii-enh-spin 1s linear infinite;
+}
+
+@keyframes cinii-enh-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* ------------------------------------------------------------------------------
+ * 2. Academic Buttons & Badges
+ * ------------------------------------------------------------------------------ */
+.cinii-enh-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  font-family: var(--cinii-font);
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.4;
+  border-radius: var(--cinii-radius-sm);
+  border: 1px solid transparent;
+  cursor: pointer;
+  text-decoration: none;
+  background: #ffffff;
+  color: var(--cinii-slate-text);
+  box-shadow: var(--cinii-shadow-sm);
+  transition: all 0.15s ease-in-out;
+  user-select: none;
+  white-space: nowrap;
+}
+
+.cinii-enh-btn:hover {
+  text-decoration: none;
+}
+
+.cinii-enh-btn-sm {
+  padding: 3px 8px;
+  font-size: 12px;
+  gap: 4px;
+}
+
+.cinii-enh-btn-primary {
+  background-color: var(--cinii-blue);
+  color: #ffffff;
+  border-color: var(--cinii-blue);
+}
+
+.cinii-enh-btn-primary:hover {
+  background-color: var(--cinii-blue-hover);
+  border-color: var(--cinii-blue-hover);
+  color: #ffffff;
+}
+
+.cinii-enh-btn-success {
+  background-color: var(--cinii-teal);
+  color: #ffffff;
+  border-color: var(--cinii-teal);
+}
+
+.cinii-enh-btn-success:hover {
+  background-color: var(--cinii-teal-hover);
+  border-color: var(--cinii-teal-hover);
+  color: #ffffff;
+}
+
+.cinii-enh-btn-outline {
+  background-color: #ffffff;
+  color: var(--cinii-blue);
+  border-color: var(--cinii-border-medium);
+}
+
+.cinii-enh-btn-outline:hover {
+  background-color: var(--cinii-blue-light);
+  border-color: var(--cinii-blue);
+  color: var(--cinii-blue-hover);
+}
+
+.cinii-enh-btn-muted {
+  background-color: var(--cinii-bg-neutral);
+  color: var(--cinii-slate-muted);
+  border-color: var(--cinii-border-light);
+  cursor: default;
+}
+
+/* Badges */
+.cinii-enh-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 7px;
+  font-size: 11px;
+  font-weight: 500;
+  border-radius: var(--cinii-radius-sm);
+  border: 1px solid transparent;
+  line-height: 1.4;
+  white-space: nowrap;
+}
+
+.cinii-enh-badge-oa {
+  background-color: var(--cinii-teal-light);
+  color: var(--cinii-teal);
+  border-color: var(--cinii-teal-border);
+}
+
+.cinii-enh-badge-gray,
+.cinii-enh-badge-muted {
+  background-color: #f1f5f9;
+  color: var(--cinii-slate-muted);
+  border-color: var(--cinii-border-light);
+}
+
+/* ------------------------------------------------------------------------------
+ * 3. Detail Page Toolbar
+ * ------------------------------------------------------------------------------ */
+.cinii-enh-detail-toolbar {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin: 16px 0 20px 0;
+  padding: 10px 16px;
+  background-color: var(--cinii-bg-neutral);
+  border: 1px solid var(--cinii-border-light);
+  border-left: 4px solid var(--cinii-blue);
+  border-radius: var(--cinii-radius-sm);
+  box-shadow: var(--cinii-shadow-sm);
+  font-family: var(--cinii-font);
+}
+
+.cinii-enh-toolbar-brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.cinii-enh-brand-label {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--cinii-blue);
+}
+
+.cinii-enh-btn-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.cinii-enh-pdf-wrapper {
+  display: inline-flex;
+  align-items: center;
+}
+
+/* ------------------------------------------------------------------------------
+ * 4. Citation Popover Menu
+ * ------------------------------------------------------------------------------ */
+.cinii-enh-popover {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: 99999;
+  width: 480px;
+  max-width: 95vw;
+  background: #ffffff;
+  border: 1px solid var(--cinii-border-medium);
+  border-radius: var(--cinii-radius-md);
+  box-shadow: var(--cinii-shadow-lg);
+  font-family: var(--cinii-font);
+  color: var(--cinii-slate-text);
+  text-align: left;
+  animation: cinii-enh-popin 0.15s ease-out;
+}
+
+@keyframes cinii-enh-popin {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.cinii-enh-popover-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  background-color: #f8fafc;
+  border-bottom: 1px solid var(--cinii-border-light);
+}
+
+.cinii-enh-popover-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--cinii-slate-dark);
+}
+
+.cinii-enh-popover-close {
+  background: none;
+  border: none;
+  color: var(--cinii-slate-muted);
+  cursor: pointer;
+  padding: 4px;
+  border-radius: var(--cinii-radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.15s;
+}
+
+.cinii-enh-popover-close:hover {
+  color: var(--cinii-slate-dark);
+  background-color: var(--cinii-border-light);
+}
+
+.cinii-enh-popover-list {
+  padding: 6px 0;
+  max-height: 420px;
+  overflow-y: auto;
+}
+
+.cinii-enh-popover-item {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 14px;
+  border-bottom: 1px solid #f1f5f9;
+  transition: background-color 0.12s;
+}
+
+.cinii-enh-popover-item:last-child {
+  border-bottom: none;
+}
+
+.cinii-enh-popover-item:hover {
+  background-color: #f8fafc;
+}
+
+.cinii-enh-popover-label-col {
+  flex: 1;
+  min-width: 0;
+}
+
+.cinii-enh-popover-label-col strong {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--cinii-slate-dark);
+  margin-bottom: 2px;
+}
+
+.cinii-enh-popover-preview {
+  font-size: 11px;
+  font-family: var(--cinii-font-mono);
+  color: var(--cinii-slate-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 320px;
+  line-height: 1.4;
+}
+
+.cinii-enh-btn-copy-item {
+  padding: 4px 8px;
+  font-size: 11px;
+  background-color: #ffffff;
+  border: 1px solid var(--cinii-border-medium);
+  color: var(--cinii-slate-text);
+  border-radius: var(--cinii-radius-sm);
+  flex-shrink: 0;
+}
+
+.cinii-enh-btn-copy-item:hover {
+  background-color: var(--cinii-blue-light);
+  border-color: var(--cinii-blue);
+  color: var(--cinii-blue);
+}
+
+.cinii-enh-btn-copy-item.is-copied {
+  background-color: var(--cinii-teal-light);
+  border-color: var(--cinii-teal);
+  color: var(--cinii-teal);
+}
+
+/* ------------------------------------------------------------------------------
+ * 5. Search Results Enhancement & Instant Filter Bar
+ * ------------------------------------------------------------------------------ */
+.cinii-enh-filter-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 8px 14px;
+  margin-bottom: 16px;
+  background-color: #ffffff;
+  border: 1px solid var(--cinii-border-medium);
+  border-radius: var(--cinii-radius-sm);
+  font-family: var(--cinii-font);
+  font-size: 13px;
+  box-shadow: var(--cinii-shadow-sm);
+}
+
+.cinii-enh-filter-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.cinii-enh-filter-icon {
+  color: var(--cinii-blue);
+  display: flex;
+  align-items: center;
+}
+
+.cinii-enh-filter-title {
+  font-weight: 600;
+  color: var(--cinii-slate-dark);
+}
+
+.cinii-enh-btn-toggle {
+  background-color: #f1f5f9;
+  border: 1px solid var(--cinii-border-medium);
+  color: var(--cinii-slate-text);
+  padding: 4px 10px;
+  font-size: 12px;
+  border-radius: var(--cinii-radius-sm);
+  cursor: pointer;
+  transition: all 0.15s ease-in-out;
+}
+
+.cinii-enh-btn-toggle:hover {
+  border-color: var(--cinii-blue);
+  color: var(--cinii-blue);
+}
+
+.cinii-enh-btn-toggle.is-active {
+  background-color: var(--cinii-blue);
+  border-color: var(--cinii-blue);
+  color: #ffffff;
+}
+
+.cinii-enh-filter-count {
+  font-size: 12px;
+  color: var(--cinii-slate-muted);
+}
+
+/* Card-level actions in search results */
+.cinii-enh-card-enhanced {
+  position: relative;
+}
+
+.cinii-enh-card-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+  padding-top: 6px;
+  position: relative;
+}
+
+/* Filter visibility toggle rule */
+body.cinii-enh-filter-oa-active .cinii-enh-card-enhanced[data-has-fulltext="false"] {
+  display: none !important;
+}
+
+/* ------------------------------------------------------------------------------
+ * 6. Academic Toast Notification
+ * ------------------------------------------------------------------------------ */
+.cinii-enh-toast {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 1000000;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 18px;
+  background-color: var(--cinii-slate-dark);
+  color: #ffffff;
+  font-family: var(--cinii-font);
+  font-size: 13px;
+  font-weight: 500;
+  border-radius: var(--cinii-radius-sm);
+  box-shadow: var(--cinii-shadow-lg);
+  opacity: 0;
+  transform: translateY(12px);
+  pointer-events: none;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.cinii-enh-toast.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.cinii-enh-toast-icon {
+  color: #34d399; /* Crisp emerald check */
+  display: flex;
+  align-items: center;
+}

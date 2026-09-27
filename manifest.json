@@ -1,0 +1,46 @@
+{
+  "manifest_version": 3,
+  "name": "CiNii Research Enhancer",
+  "short_name": "CiNii Enhancer",
+  "version": "1.0.0",
+  "description": "CiNii Researchにワンクリック引用コピー、PDF直接アクセス、検索結果の絞り込み機能を提供する学術支援拡張機能",
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "action": {
+    "default_popup": "popup/popup.html",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    },
+    "default_title": "CiNii Research Enhancer 設定"
+  },
+  "permissions": [
+    "storage",
+    "clipboardWrite"
+  ],
+  "host_permissions": [
+    "https://cir.nii.ac.jp/*",
+    "https://api.unpaywall.org/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://cir.nii.ac.jp/*"
+      ],
+      "js": [
+        "content.js"
+      ],
+      "css": [
+        "styles.css"
+      ],
+      "run_at": "document_idle"
+    }
+  ]
+}

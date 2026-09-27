@@ -1,0 +1,258 @@
+/* ==============================================================================
+ * CiNii Research Enhancer - Popup Stylesheet
+ * Scholarly, crisp, academic design system
+ * ============================================================================== */
+
+:root {
+  --cinii-blue: #004098;
+  --cinii-blue-hover: #002d6b;
+  --cinii-blue-subtle: #f0f5fc;
+  --slate-dark: #0f172a;
+  --slate-body: #334155;
+  --slate-muted: #64748b;
+  --slate-light: #f8fafc;
+  --border-light: #e2e8f0;
+  --border-medium: #cbd5e1;
+  --emerald: #0f766e;
+  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", "Hiragino Kaku Gothic ProN", "BIZ UDPGothic", Meiryo, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  width: 340px;
+  font-family: var(--font-sans);
+  background-color: #ffffff;
+  color: var(--slate-body);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+/* Header */
+.popup-header {
+  background-color: var(--cinii-blue);
+  color: #ffffff;
+  padding: 14px 16px;
+  border-bottom: 2px solid #002966;
+}
+
+.header-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.brand-icon {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(255, 255, 255, 0.15);
+  border-radius: 4px;
+}
+
+.brand-icon svg {
+  width: 18px;
+  height: 18px;
+  color: #ffffff;
+}
+
+.brand-text h1 {
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+}
+
+.brand-version {
+  font-size: 10px;
+  color: #bfdbfe;
+  font-weight: 400;
+}
+
+/* Main */
+.popup-main {
+  padding: 14px 16px;
+}
+
+.settings-group {
+  margin-bottom: 16px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--border-light);
+}
+
+.settings-group:last-of-type {
+  border-bottom: none;
+  margin-bottom: 8px;
+}
+
+.group-title {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--cinii-blue);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  margin-bottom: 10px;
+}
+
+/* Form inputs */
+.form-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.form-label {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--slate-dark);
+}
+
+.form-input,
+.form-select {
+  width: 100%;
+  padding: 6px 10px;
+  font-family: var(--font-sans);
+  font-size: 12px;
+  border: 1px solid var(--border-medium);
+  border-radius: 3px;
+  background-color: #ffffff;
+  color: var(--slate-dark);
+  transition: border-color 0.15s;
+}
+
+.form-input:focus,
+.form-select:focus {
+  outline: none;
+  border-color: var(--cinii-blue);
+}
+
+.form-help {
+  font-size: 11px;
+  color: var(--slate-muted);
+  line-height: 1.4;
+  margin-top: 2px;
+}
+
+/* Toggle item */
+.toggle-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 5px 0;
+  cursor: pointer;
+  user-select: none;
+}
+
+.toggle-label {
+  font-size: 12px;
+  color: var(--slate-dark);
+}
+
+.toggle-item input {
+  display: none;
+}
+
+.toggle-slider {
+  position: relative;
+  width: 34px;
+  height: 18px;
+  background-color: var(--border-medium);
+  border-radius: 18px;
+  transition: background-color 0.2s;
+  flex-shrink: 0;
+}
+
+.toggle-slider::after {
+  content: "";
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 14px;
+  height: 14px;
+  background-color: #ffffff;
+  border-radius: 50%;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+  transition: transform 0.2s;
+}
+
+.toggle-item input:checked + .toggle-slider {
+  background-color: var(--cinii-blue);
+}
+
+.toggle-item input:checked + .toggle-slider::after {
+  transform: translateX(16px);
+}
+
+/* Save Area */
+.save-area {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 12px;
+  padding-top: 8px;
+}
+
+.btn-save {
+  padding: 7px 16px;
+  background-color: var(--cinii-blue);
+  color: #ffffff;
+  font-family: var(--font-sans);
+  font-size: 12px;
+  font-weight: 500;
+  border: 1px solid var(--cinii-blue);
+  border-radius: 3px;
+  cursor: pointer;
+  transition: background-color 0.15s;
+}
+
+.btn-save:hover {
+  background-color: var(--cinii-blue-hover);
+}
+
+.save-status {
+  font-size: 11px;
+  color: var(--emerald);
+  font-weight: 500;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.save-status.is-visible {
+  opacity: 1;
+}
+
+/* Footer */
+.popup-footer {
+  padding: 10px 16px;
+  background-color: var(--slate-light);
+  border-top: 1px solid var(--border-light);
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.footer-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  color: var(--slate-muted);
+  text-decoration: none;
+  transition: color 0.15s;
+}
+
+.footer-link:hover {
+  color: var(--cinii-blue);
+  text-decoration: underline;
+}
+
+.footer-icon {
+  width: 13px;
+  height: 13px;
+}
