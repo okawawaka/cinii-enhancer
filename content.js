@@ -771,6 +771,40 @@
     // Look for item_data or insert at the end of item
     const targetAnchor = item.querySelector('.item_data, .item_subData, .articletitle') || item;
     targetAnchor.parentNode.insertBefore(toolbar, targetAnchor.nextSibling);
+
+    // 3. Clean title and snippets in this card (Plan A: Inline smart clean)
+    if (userSettings.enableAbstractCleanup) {
+      if (titleLink) {
+        const rawTitle = titleLink.innerHTML;
+        if (rawTitle.includes('&lt;') || rawTitle.includes('<jats:') || /<[a-z0-9_-]+:[a-z0-9_-]+/i.test(rawTitle)) {
+          const cleanedTitle = cleanSearchSnippetHtml(rawTitle);
+          if (cleanedTitle && cleanedTitle !== rawTitle) {
+            titleLink.innerHTML = cleanedTitle;
+          }
+        }
+      }
+
+      const snippetTargets = item.querySelectorAll(
+        '.item_subData, .description, .snippet, .item-abstract, [class*="description"], [class*="snippet"], p'
+      );
+      snippetTargets.forEach((el) => {
+        if (el.closest('.cinii-enh-item-toolbar')) return;
+        const rawSnippet = el.innerHTML;
+        const hasTags =
+          rawSnippet.includes('&lt;') ||
+          rawSnippet.includes('&amp;lt;') ||
+          rawSnippet.includes('<jats:') ||
+          rawSnippet.includes('</jats:') ||
+          /<[a-z0-9_-]+:[a-z0-9_-]+/i.test(rawSnippet);
+
+        if (hasTags) {
+          const cleanedSnippet = cleanSearchSnippetHtml(rawSnippet);
+          if (cleanedSnippet && cleanedSnippet !== rawSnippet) {
+            el.innerHTML = cleanedSnippet;
+          }
+        }
+      });
+    }
   }
 
   // ==========================================
@@ -839,6 +873,85 @@
 
     Array.from(root.childNodes).forEach(sanitizeNode);
     return root.innerHTML.trim();
+  }
+
+  function cleanSearchSnippetHtml(raw) {
+    if (!raw) return '';
+    let text = raw;
+
+    // Check if escaped tags exist
+    if (text.includes('&lt;') || text.includes('&amp;lt;')) {
+      text = text
+        .replace(/&amp;lt;/gi, '<')
+        .replace(/&amp;gt;/gi, '>')
+        .replace(/&amp;quot;/gi, '"')
+        .replace(/&amp;amp;/gi, '&')
+        .replace(/&lt;/gi, '<')
+        .replace(/&gt;/gi, '>')
+        .replace(/&quot;/gi, '"');
+    }
+
+    // Normalize JATS tags to inline styles
+    text = text
+      .replace(/<\/?jats:italic[^>]*>/gi, (m) => m.startsWith('</') ? '</i>' : '<i>')
+      .replace(/<\/?jats:bold[^>]*>/gi, (m) => m.startsWith('</') ? '</b>' : '<b>')
+      .replace(/<\/?jats:sup[^>]*>/gi, (m) => m.startsWith('</') ? '</sup>' : '<sup>')
+      .replace(/<\/?jats:sub[^>]*>/gi, (m) => m.startsWith('</') ? '</sub>' : '<sub>')
+      .replace(/<\/?jats:underline[^>]*>/gi, (m) => m.startsWith('</') ? '</u>' : '<u>')
+      .replace(/<jats:title[^>]*>/gi, '<strong>')
+      .replace(/<\/jats:title>/gi, '</strong>: ')
+      .replace(/<\/?jats:p[^>]*>/gi, ' ')
+      .replace(/<\/?jats:[a-zA-Z0-9_-]+[^>]*>/gi, '');
+
+    // Flatten structural blocks into inline flow
+    text = text
+      .replace(/<\/?(?:sec|section|article|div|header|footer)[^>]*>/gi, ' ')
+      .replace(/<p[^>]*>/gi, ' ')
+      .replace(/<\/p>/gi, ' ')
+      .replace(/<\/?font[^>]*>/gi, '')
+      .replace(/<\/?(?:script|style|iframe|object)[^>]*>/gi, '');
+
+    // Sanitize via DOMParser
+    const parsedDoc = new DOMParser().parseFromString(`<span>${text}</span>`, 'text/html');
+    const root = parsedDoc.body.firstElementChild;
+    if (!root) return text;
+
+    const ALLOWED_TAGS = new Set(['B', 'STRONG', 'I', 'EM', 'SUB', 'SUP', 'U', 'MARK', 'SPAN', 'BR']);
+    const REMOVE_TAGS = new Set(['SCRIPT', 'STYLE', 'IFRAME', 'OBJECT', 'EMBED']);
+
+    function sanitizeNode(node) {
+      if (node.nodeType === Node.ELEMENT_NODE) {
+        const tag = node.tagName.toUpperCase();
+        if (REMOVE_TAGS.has(tag)) {
+          node.remove();
+          return;
+        }
+
+        const cls = node.getAttribute('class') || '';
+        const isHighlight = cls.includes('highlight') || cls.includes('keyword') || tag === 'MARK';
+
+        while (node.attributes.length > 0) {
+          node.removeAttribute(node.attributes[0].name);
+        }
+
+        if (isHighlight) {
+          node.setAttribute('class', 'cinii-enh-highlight');
+        }
+
+        const children = Array.from(node.childNodes);
+        children.forEach(sanitizeNode);
+
+        if (!ALLOWED_TAGS.has(tag)) {
+          while (node.firstChild) {
+            node.parentNode.insertBefore(node.firstChild, node);
+          }
+          node.remove();
+        }
+      }
+    }
+
+    Array.from(root.childNodes).forEach(sanitizeNode);
+    return root.innerHTML.replace(/\s{2,}/g, ' ').trim();
   }
 
   function enhanceAbstracts() {

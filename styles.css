@@ -543,3 +543,12 @@ a.cinii-enh-btn-pdf span {
   white-space: pre-wrap;
   word-break: break-all;
 }
+
+/* Search snippet highlight */
+.cinii-enh-highlight {
+  font-weight: 700;
+  color: var(--cinii-blue);
+  background-color: rgba(0, 64, 152, 0.08);
+  padding: 1px 3px;
+  border-radius: 2px;
+}
