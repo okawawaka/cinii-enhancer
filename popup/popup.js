@@ -7,6 +7,7 @@ const DEFAULT_SETTINGS = {
   enableSearchQuickCopy: true,
   enableSearchPdfDirect: true,
   enableDetailToolbar: true,
+  enableAbstractCleanup: true,
   preferredCitation: 'bibtex'
 };
 
@@ -17,6 +18,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const enableDetailToolbarInput = document.getElementById('enableDetailToolbar');
   const enableSearchPdfDirectInput = document.getElementById('enableSearchPdfDirect');
   const enableSearchQuickCopyInput = document.getElementById('enableSearchQuickCopy');
+  const enableAbstractCleanupInput = document.getElementById('enableAbstractCleanup');
   const preferredCitationInput = document.getElementById('preferredCitation');
   const saveBtn = document.getElementById('saveBtn');
   const saveStatus = document.getElementById('saveStatus');
@@ -28,6 +30,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     enableDetailToolbarInput.checked = Boolean(current.enableDetailToolbar);
     enableSearchPdfDirectInput.checked = Boolean(current.enableSearchPdfDirect);
     enableSearchQuickCopyInput.checked = Boolean(current.enableSearchQuickCopy);
+    enableAbstractCleanupInput.checked = Boolean(current.enableAbstractCleanup);
     if (current.preferredCitation) {
       preferredCitationInput.value = current.preferredCitation;
     }
@@ -42,6 +45,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       enableDetailToolbar: enableDetailToolbarInput.checked,
       enableSearchPdfDirect: enableSearchPdfDirectInput.checked,
       enableSearchQuickCopy: enableSearchQuickCopyInput.checked,
+      enableAbstractCleanup: enableAbstractCleanupInput.checked,
       preferredCitation: preferredCitationInput.value
     };
 

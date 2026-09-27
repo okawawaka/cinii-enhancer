@@ -17,6 +17,7 @@
     enableSearchQuickCopy: true,
     enableSearchPdfDirect: true,
     enableDetailToolbar: true,
+    enableAbstractCleanup: true,
     preferredCitation: 'bibtex'
   };
 
@@ -27,6 +28,8 @@
     CHECK: `<svg class="cinii-enh-icon cinii-enh-icon-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`,
     PDF: `<svg class="cinii-enh-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>`,
     EXTERNAL: `<svg class="cinii-enh-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>`,
+    CLEAN: `<svg class="cinii-enh-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>`,
+    CODE: `<svg class="cinii-enh-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>`,
     SPINNER: `<svg class="cinii-enh-icon cinii-enh-spinner" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10" stroke-opacity="0.25"/><path d="M12 2a10 10 0 0 1 10 10" stroke-linecap="round"/></svg>`,
     CLOSE: `<svg class="cinii-enh-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`
   };
@@ -771,6 +774,184 @@
   }
 
   // ==========================================
+  // Abstract / Description HTML Cleaner (案3: スマート整形 + 原文切替)
+  // ==========================================
+
+  function cleanAbstractHtml(raw) {
+    if (!raw) return '';
+    let text = raw;
+
+    // 1. Decode entities if HTML tags were escaped
+    if (text.includes('&lt;') || text.includes('&amp;lt;')) {
+      const doc = new DOMParser().parseFromString(text, 'text/html');
+      text = doc.body.textContent || text;
+      if (text.includes('&lt;')) {
+        const doc2 = new DOMParser().parseFromString(text, 'text/html');
+        text = doc2.body.textContent || text;
+      }
+    }
+
+    // 2. Normalize JATS XML tags to standard HTML tags
+    text = text
+      .replace(/<\/?jats:p[^>]*>/gi, (m) => m.startsWith('</') ? '</p>' : '<p>')
+      .replace(/<\/?jats:italic[^>]*>/gi, (m) => m.startsWith('</') ? '</i>' : '<i>')
+      .replace(/<\/?jats:bold[^>]*>/gi, (m) => m.startsWith('</') ? '</b>' : '<b>')
+      .replace(/<\/?jats:sup[^>]*>/gi, (m) => m.startsWith('</') ? '</sup>' : '<sup>')
+      .replace(/<\/?jats:sub[^>]*>/gi, (m) => m.startsWith('</') ? '</sub>' : '<sub>')
+      .replace(/<\/?jats:underline[^>]*>/gi, (m) => m.startsWith('</') ? '</u>' : '<u>')
+      .replace(/<\/?jats:title[^>]*>/gi, (m) => m.startsWith('</') ? '</strong><br>' : '<strong>')
+      .replace(/<\/?jats:[a-zA-Z0-9_-]+[^>]*>/gi, '');
+
+    // 3. Parse and sanitize via DOMParser
+    const parsedDoc = new DOMParser().parseFromString(`<div>${text}</div>`, 'text/html');
+    const root = parsedDoc.body.firstElementChild;
+    if (!root) return text;
+
+    const ALLOWED_TAGS = new Set([
+      'P', 'BR', 'B', 'STRONG', 'I', 'EM', 'SUB', 'SUP', 'U', 'CODE', 'UL', 'OL', 'LI'
+    ]);
+    const REMOVE_TAGS = new Set(['SCRIPT', 'STYLE', 'IFRAME', 'OBJECT', 'EMBED']);
+
+    function sanitizeNode(node) {
+      if (node.nodeType === Node.ELEMENT_NODE) {
+        const tag = node.tagName.toUpperCase();
+
+        if (REMOVE_TAGS.has(tag)) {
+          node.remove();
+          return;
+        }
+
+        while (node.attributes.length > 0) {
+          node.removeAttribute(node.attributes[0].name);
+        }
+
+        const children = Array.from(node.childNodes);
+        children.forEach(sanitizeNode);
+
+        if (!ALLOWED_TAGS.has(tag)) {
+          while (node.firstChild) {
+            node.parentNode.insertBefore(node.firstChild, node);
+          }
+          node.remove();
+        }
+      }
+    }
+
+    Array.from(root.childNodes).forEach(sanitizeNode);
+    return root.innerHTML.trim();
+  }
+
+  function enhanceAbstracts() {
+    if (!userSettings.enableAbstractCleanup) return;
+
+    // Find abstract / description candidate elements
+    const selectors = [
+      '.abstract',
+      '.abstracttextjpn',
+      '.abstracttexteng',
+      '.item_abstract',
+      '[itemprop="description"]',
+      '.biblio-contents',
+      '.biblio-note',
+      '.avlItem-note',
+      '.toc-body',
+      '#abstract',
+      '.detailSection .text',
+      '.dataSection .text'
+    ];
+
+    const elements = Array.from(document.querySelectorAll(selectors.join(', ')));
+
+    // Also scan paragraphs or blocks that contain raw tag signatures
+    document.querySelectorAll('.maincontents p, .maincontents div, .item_subData').forEach((el) => {
+      if (elements.includes(el) || el.closest('.cinii-enh-abstract-container')) return;
+      const text = el.textContent;
+      if (
+        text.includes('<jats:') ||
+        text.includes('&lt;jats:') ||
+        text.includes('&lt;p&gt;') ||
+        text.includes('&lt;b&gt;') ||
+        text.includes('&lt;i&gt;')
+      ) {
+        elements.push(el);
+      }
+    });
+
+    elements.forEach((el) => {
+      if (el.classList.contains('cinii-enh-abstract-processed') || el.closest('.cinii-enh-abstract-container')) {
+        return;
+      }
+
+      const rawContent = el.innerHTML;
+      const hasTags =
+        rawContent.includes('&lt;') ||
+        rawContent.includes('&amp;lt;') ||
+        rawContent.includes('<jats:') ||
+        rawContent.includes('</jats:') ||
+        /<[a-z0-9_-]+:[a-z0-9_-]+/i.test(rawContent) ||
+        /<(?:p|b|i|font|span|div|sec|br)[>\s]/i.test(rawContent);
+
+      if (!hasTags) return;
+
+      const cleanedContent = cleanAbstractHtml(rawContent);
+      if (cleanedContent === rawContent) return;
+
+      el.classList.add('cinii-enh-abstract-processed');
+
+      // Build Container
+      const container = document.createElement('div');
+      container.className = 'cinii-enh-abstract-container';
+
+      // Header Toolbar
+      const toolbar = document.createElement('div');
+      toolbar.className = 'cinii-enh-abstract-toolbar';
+
+      const statusBadge = document.createElement('span');
+      statusBadge.className = 'cinii-enh-abstract-status';
+      statusBadge.innerHTML = `${SVGS.CLEAN}<span>抄録をスマート整形中</span>`;
+
+      const toggleBtn = document.createElement('button');
+      toggleBtn.type = 'button';
+      toggleBtn.className = 'cinii-enh-btn cinii-enh-btn-sm cinii-enh-btn-outline cinii-enh-toggle-view';
+      toggleBtn.innerHTML = `${SVGS.CODE}<span>原文を表示</span>`;
+
+      toolbar.appendChild(statusBadge);
+      toolbar.appendChild(toggleBtn);
+
+      // Content Box
+      const contentBox = document.createElement('div');
+      contentBox.className = 'cinii-enh-abstract-content is-formatted';
+      contentBox.innerHTML = cleanedContent;
+
+      let isFormatted = true;
+
+      toggleBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        isFormatted = !isFormatted;
+        if (isFormatted) {
+          contentBox.className = 'cinii-enh-abstract-content is-formatted';
+          contentBox.innerHTML = cleanedContent;
+          statusBadge.innerHTML = `${SVGS.CLEAN}<span>抄録をスマート整形中</span>`;
+          toggleBtn.innerHTML = `${SVGS.CODE}<span>原文を表示</span>`;
+          toggleBtn.classList.remove('is-raw');
+        } else {
+          contentBox.className = 'cinii-enh-abstract-content is-raw';
+          contentBox.textContent = rawContent;
+          statusBadge.innerHTML = `${SVGS.CODE}<span>原文（生データ）を表示中</span>`;
+          toggleBtn.innerHTML = `${SVGS.CLEAN}<span>整形表示に戻す</span>`;
+          toggleBtn.classList.add('is-raw');
+        }
+      });
+
+      // Insert container in place of element
+      el.parentNode.insertBefore(container, el);
+      container.appendChild(toolbar);
+      container.appendChild(contentBox);
+      el.style.display = 'none';
+    });
+  }
+
+  // ==========================================
   // Initialization & Dynamic Page Watcher
   // ==========================================
 
@@ -780,6 +961,7 @@
     } else if (isSearchPage()) {
       enhanceSearchResults();
     }
+    enhanceAbstracts();
   }
 
   // Load user settings first

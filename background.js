@@ -8,6 +8,7 @@ const DEFAULT_SETTINGS = {
   enableSearchQuickCopy: true,
   enableSearchPdfDirect: true,
   enableDetailToolbar: true,
+  enableAbstractCleanup: true,
   preferredCitation: 'bibtex'
 };
 

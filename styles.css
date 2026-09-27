@@ -444,3 +444,102 @@ a.cinii-enh-btn-pdf span {
   display: flex;
   align-items: center;
 }
+
+/* ------------------------------------------------------------------------------
+ * 8. Abstract & Description Cleaner (スマート整形 & 原文切替)
+ * ------------------------------------------------------------------------------ */
+.cinii-enh-abstract-container {
+  margin: 10px 0 16px 0;
+  padding: 12px 16px;
+  background-color: #ffffff;
+  border: 1px solid var(--cinii-border-light);
+  border-radius: var(--cinii-radius-sm);
+  box-shadow: var(--cinii-shadow-sm);
+  font-family: var(--cinii-font);
+}
+
+.cinii-enh-abstract-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+  padding-bottom: 8px;
+  border-bottom: 1px dashed var(--cinii-border-medium);
+}
+
+.cinii-enh-abstract-status {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--cinii-blue);
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.cinii-enh-toggle-view {
+  font-size: 11px;
+  padding: 3px 8px;
+}
+
+.cinii-enh-toggle-view.is-raw {
+  background-color: var(--cinii-blue-light) !important;
+  color: var(--cinii-blue) !important;
+  border-color: var(--cinii-blue) !important;
+}
+
+.cinii-enh-abstract-content.is-formatted {
+  font-size: 13.5px;
+  line-height: 1.85;
+  color: var(--cinii-slate-text);
+  word-break: break-word;
+  text-align: justify;
+}
+
+.cinii-enh-abstract-content.is-formatted p {
+  margin: 0 0 0.85em 0;
+}
+
+.cinii-enh-abstract-content.is-formatted p:last-child {
+  margin-bottom: 0;
+}
+
+.cinii-enh-abstract-content.is-formatted b,
+.cinii-enh-abstract-content.is-formatted strong {
+  font-weight: 700;
+  color: var(--cinii-slate-dark);
+}
+
+.cinii-enh-abstract-content.is-formatted i,
+.cinii-enh-abstract-content.is-formatted em {
+  font-style: italic;
+}
+
+.cinii-enh-abstract-content.is-formatted sup {
+  font-size: 75%;
+  line-height: 0;
+  position: relative;
+  vertical-align: baseline;
+  top: -0.5em;
+}
+
+.cinii-enh-abstract-content.is-formatted sub {
+  font-size: 75%;
+  line-height: 0;
+  position: relative;
+  vertical-align: baseline;
+  bottom: -0.25em;
+}
+
+.cinii-enh-abstract-content.is-raw {
+  font-family: var(--cinii-font-mono);
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--cinii-slate-muted);
+  background-color: var(--cinii-bg-neutral);
+  padding: 10px 12px;
+  border: 1px solid var(--cinii-border-light);
+  border-radius: var(--cinii-radius-sm);
+  white-space: pre-wrap;
+  word-break: break-all;
+}
