@@ -676,6 +676,59 @@
     });
   }
 
+  /**
+   * Determines if a search result card represents a citeable academic publication
+   * (e.g. paper, article, book, dissertation) rather than a person or research project.
+   */
+  function isCiteableItem(item, titleLink) {
+    if (!item || !titleLink) return false;
+
+    // 1. Exclude Persons / Researchers (人物・研究者)
+    const isPerson = Boolean(
+      item.querySelector('.author_class, [class*="author_class"], [class*="person_class"], dl.author_class') ||
+      item.classList.contains('author_class') ||
+      item.innerHTML.includes('classIcon-author.svg') ||
+      item.innerHTML.includes('tagIcon-person.svg') ||
+      (titleLink.href && titleLink.href.includes('/nrid/'))
+    );
+    if (isPerson) return false;
+
+    // 2. Exclude Research Projects / KAKEN (研究課題・プロジェクト)
+    const isProject = Boolean(
+      item.querySelector('.research_class, .project_class, dl.research_class, dl.project_class') ||
+      item.classList.contains('research_class') ||
+      item.classList.contains('project_class') ||
+      item.innerHTML.includes('classIcon-research1.svg') ||
+      (titleLink.href && (titleLink.href.includes('/kaken/') || titleLink.href.includes('/projects/')))
+    );
+    if (isProject) return false;
+
+    // 3. Exclude Research Data / Datasets (研究データ)
+    const isData = Boolean(
+      item.querySelector('.data_class, dl.data_class') ||
+      item.classList.contains('data_class') ||
+      item.innerHTML.includes('classIcon-data.svg')
+    );
+    if (isData) return false;
+
+    // 4. Positive matches for papers, dissertations, and books
+    const isExplicitCiteable = Boolean(
+      item.querySelector('.paper_class, .book_class, .paper-dissertation_class, dl.paper_class, dl.book_class, dl.paper-dissertation_class') ||
+      item.classList.contains('paper_class') ||
+      item.classList.contains('book_class') ||
+      item.classList.contains('paper-dissertation_class') ||
+      item.innerHTML.includes('classIcon-article.svg') ||
+      item.innerHTML.includes('classIcon-book.svg') ||
+      item.innerHTML.includes('classIcon-dissertation.svg')
+    );
+    if (isExplicitCiteable) return true;
+
+    // 5. Fallback: If it has an author list and is a publication CRID, treat as citeable
+    const hasAuthors = Boolean(item.querySelector('.authorslist, .author-name, .item-creator'));
+    const isCrid = Boolean(titleLink.href && titleLink.href.includes('/crid/'));
+    return hasAuthors && isCrid;
+  }
+
   function enhanceSearchCard(item) {
     if (item.classList.contains('cinii-enh-card-enhanced')) return;
     item.classList.add('cinii-enh-card-enhanced');
@@ -726,8 +779,8 @@
     const titleActions = document.createElement('span');
     titleActions.className = 'cinii-enh-title-actions';
 
-    // 1. Citation Button (placed to the right of title)
-    if (userSettings.enableSearchQuickCopy) {
+    // 1. Citation Button (only for citeable materials: papers, books, dissertations)
+    if (userSettings.enableSearchQuickCopy && isCiteableItem(item, titleLink)) {
       const citeBtn = document.createElement('button');
       citeBtn.type = 'button';
       citeBtn.className = 'cinii-enh-btn cinii-enh-btn-cite-title';
