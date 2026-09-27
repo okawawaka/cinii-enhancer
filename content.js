@@ -161,13 +161,7 @@
       return { url: null, label: 'オープンアクセス' };
     }
 
-    // 6. DOI link
-    const doiLinks = element.querySelectorAll('a[href*="doi.org/"]');
-    if (doiLinks.length > 0) {
-      return { url: doiLinks[0].href, label: 'DOI' };
-    }
-
-    // 7. General text check for OA or full text
+    // 6. General text check for OA or full text
     const text = element.textContent;
     if (
       text.includes('オープンアクセス') ||
@@ -728,49 +722,49 @@
       url: titleLink.href.split('?')[0].split('#')[0]
     };
 
-    // Dedicated, clearly bounded toolbar for this card
-    const toolbar = document.createElement('div');
-    toolbar.className = 'cinii-enh-item-toolbar';
+    // Actions placed right next to the title link
+    const titleActions = document.createElement('span');
+    titleActions.className = 'cinii-enh-title-actions';
 
-    // 1. Citation Button
+    // 1. Citation Button (placed to the right of title)
     if (userSettings.enableSearchQuickCopy) {
       const citeBtn = document.createElement('button');
       citeBtn.type = 'button';
-      citeBtn.className = 'cinii-enh-btn cinii-enh-btn-sm cinii-enh-btn-outline';
+      citeBtn.className = 'cinii-enh-btn cinii-enh-btn-cite-title';
       citeBtn.innerHTML = `${SVGS.QUOTE}<span>引用</span>`;
 
       citeBtn.addEventListener('click', (e) => {
         e.stopPropagation();
+        e.preventDefault();
         const citations = generateAllCitations(cardMeta);
         openCitationModal(citations, cardMeta.title);
       });
 
-      toolbar.appendChild(citeBtn);
+      titleActions.appendChild(citeBtn);
     }
 
-    // 2. PDF / Full-Text Link Button (only if full text is available)
-    if (userSettings.enableSearchPdfDirect) {
-      if (fullTextInfo && fullTextInfo.url) {
+    // 2. PDF / Full-Text Link Button (only if valid full text link is available)
+    if (userSettings.enableSearchPdfDirect && fullTextInfo) {
+      if (fullTextInfo.url) {
         const pdfBtn = document.createElement('a');
-        pdfBtn.className = 'cinii-enh-btn cinii-enh-btn-sm cinii-enh-btn-pdf';
+        pdfBtn.className = 'cinii-enh-btn cinii-enh-btn-pdf';
         pdfBtn.href = fullTextInfo.url;
         pdfBtn.target = '_blank';
         pdfBtn.rel = 'noopener noreferrer';
         const label = fullTextInfo.label || 'PDF';
         pdfBtn.innerHTML = `${SVGS.PDF}<span>${escapeHtml(label)}</span>${SVGS.EXTERNAL}`;
-        toolbar.appendChild(pdfBtn);
-      } else if (fullTextInfo) {
+        titleActions.appendChild(pdfBtn);
+      } else {
         const badge = document.createElement('span');
         badge.className = 'cinii-enh-badge cinii-enh-badge-oa';
         badge.textContent = fullTextInfo.label || '本文あり';
-        toolbar.appendChild(badge);
+        titleActions.appendChild(badge);
       }
     }
 
-    // Append toolbar to the card
-    // Look for item_data or insert at the end of item
-    const targetAnchor = item.querySelector('.item_data, .item_subData, .articletitle') || item;
-    targetAnchor.parentNode.insertBefore(toolbar, targetAnchor.nextSibling);
+    if (titleActions.children.length > 0 && titleLink.parentNode) {
+      titleLink.parentNode.insertBefore(titleActions, titleLink.nextSibling);
+    }
 
     // 3. Clean title and snippets in this card (Plan A: Inline smart clean)
     if (userSettings.enableAbstractCleanup) {
