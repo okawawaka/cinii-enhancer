@@ -855,7 +855,7 @@
   }
 
   // ==========================================
-  // Abstract / Description HTML Cleaner (案3: スマート整形 + 原文切替)
+  // Abstract / Description HTML Cleaner (案3: HTMLタグ整形 + 原文切替)
   // ==========================================
 
   function cleanAbstractHtml(raw) {
@@ -1068,7 +1068,7 @@
 
       const statusBadge = document.createElement('span');
       statusBadge.className = 'cinii-enh-abstract-status';
-      statusBadge.innerHTML = `${SVGS.CLEAN}<span>抄録をスマート整形中</span>`;
+      statusBadge.innerHTML = `${SVGS.CLEAN}<span>HTMLタグを整形中</span>`;
 
       const toggleBtn = document.createElement('button');
       toggleBtn.type = 'button';
@@ -1091,13 +1091,13 @@
         if (isFormatted) {
           contentBox.className = 'cinii-enh-abstract-content is-formatted';
           contentBox.innerHTML = cleanedContent;
-          statusBadge.innerHTML = `${SVGS.CLEAN}<span>抄録をスマート整形中</span>`;
+          statusBadge.innerHTML = `${SVGS.CLEAN}<span>HTMLタグを整形中</span>`;
           toggleBtn.innerHTML = `${SVGS.CODE}<span>原文を表示</span>`;
           toggleBtn.classList.remove('is-raw');
         } else {
           contentBox.className = 'cinii-enh-abstract-content is-raw';
           contentBox.textContent = rawContent;
-          statusBadge.innerHTML = `${SVGS.CODE}<span>原文（生データ）を表示中</span>`;
+          statusBadge.innerHTML = `${SVGS.CODE}<span>原文（タグ未整形）を表示中</span>`;
           toggleBtn.innerHTML = `${SVGS.CLEAN}<span>整形表示に戻す</span>`;
           toggleBtn.classList.add('is-raw');
         }

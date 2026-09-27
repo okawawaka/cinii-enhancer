@@ -1,34 +1,60 @@
 /* ==============================================================================
  * CiNii Research Enhancer - Academic Style System
- * Blends seamlessly with CiNii Research's scholarly aesthetic.
- * Strict Rule: No Unicode emojis. Clean typography and subtle geometric icons.
+ * Designed to integrate authentically with CiNii Research (National Institute of Informatics).
+ * Strict Rules:
+ *  - NO Unicode emojis
+ *  - Authentic scholarly design tokens (sharp 2px border radius, institutional palette)
+ *  - NO modern SaaS/AI aesthetics (no backdrop blur, no generic slate/indigo/teal, no pill shapes)
  * ============================================================================== */
 
 /* ------------------------------------------------------------------------------
- * 1. Base Variables & Icons
+ * 1. Design Tokens & Variables (Authentic Academic Palette)
  * ------------------------------------------------------------------------------ */
 :root {
+  /* CiNii / NII Blue */
   --cinii-blue: #004098;
   --cinii-blue-hover: #002d6b;
-  --cinii-blue-light: #ebf3ff;
-  --cinii-green-dark: #065f46;
-  --cinii-green-border: #047857;
-  --cinii-green-light: #f0fdf4;
-  --cinii-slate-dark: #0f172a;
-  --cinii-slate-text: #334155;
-  --cinii-slate-muted: #64748b;
-  --cinii-bg-neutral: #f8fafc;
-  --cinii-border-light: #e2e8f0;
-  --cinii-border-medium: #cbd5e1;
-  --cinii-shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-  --cinii-shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.08), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
-  --cinii-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.05);
-  --cinii-radius-sm: 3px;
-  --cinii-radius-md: 5px;
+  --cinii-blue-subtle: #f0f5fc;
+  --cinii-blue-border: #004098;
+
+  /* Classic Scholarly Grayscale (Replacing modern Tailwind Slate) */
+  --cinii-text-main: #333333;
+  --cinii-text-heading: #111111;
+  --cinii-text-muted: #555555;
+  --cinii-text-subtle: #777777;
+
+  /* Academic Backgrounds */
+  --cinii-bg-pure: #ffffff;
+  --cinii-bg-neutral: #f6f6f6;
+  --cinii-bg-subtle: #fcfcfc;
+  --cinii-bg-hover: #eef3f9;
+
+  /* Traditional Borders */
+  --cinii-border-light: #e5e5e5;
+  --cinii-border-medium: #cccccc;
+  --cinii-border-dark: #999999;
+
+  /* Academic Open Access Green (Replacing Tailwind Emerald/Teal) */
+  --cinii-green-dark: #1b5e20;
+  --cinii-green-hover: #0d3b13;
+  --cinii-green-light: #eef7ee;
+  --cinii-green-border: #4caf50;
+
+  /* Sharp Geometry (Authentic Japanese Institutional UI) */
+  --cinii-radius-sm: 2px;
+  --cinii-radius-md: 2px;
+
+  /* Subtle, Traditional Shadows */
+  --cinii-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.08);
+  --cinii-shadow-modal: 0 4px 18px rgba(0, 0, 0, 0.25);
+  --cinii-shadow-toast: 0 2px 8px rgba(0, 0, 0, 0.28);
+
+  /* Typography */
   --cinii-font: -apple-system, BlinkMacSystemFont, "Segoe UI", "Hiragino Kaku Gothic ProN", "BIZ UDPGothic", Meiryo, sans-serif;
-  --cinii-font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+  --cinii-font-mono: Consolas, "Courier New", Courier, Monaco, monospace;
 }
 
+/* Base Icon Styling */
 .cinii-enh-icon {
   width: 14px;
   height: 14px;
@@ -47,23 +73,23 @@
 }
 
 /* ------------------------------------------------------------------------------
- * 2. Academic Buttons (High Contrast & Overriding CiNii global links)
+ * 2. Academic Buttons (High Contrast & CiNii Native Integration)
  * ------------------------------------------------------------------------------ */
 .cinii-enh-btn {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 6px 12px;
+  gap: 5px;
+  padding: 5px 10px;
   font-family: var(--cinii-font);
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 500;
   line-height: 1.4;
   border-radius: var(--cinii-radius-sm);
-  border: 1px solid transparent;
+  border: 1px solid var(--cinii-border-medium);
   cursor: pointer;
   text-decoration: none !important;
-  box-shadow: var(--cinii-shadow-sm);
-  transition: all 0.15s ease-in-out;
+  box-shadow: none;
+  transition: background-color 0.12s ease, border-color 0.12s ease, color 0.12s ease;
   user-select: none;
   white-space: nowrap;
 }
@@ -73,12 +99,12 @@
 }
 
 .cinii-enh-btn-sm {
-  padding: 3px 8px;
-  font-size: 12px;
-  gap: 5px;
+  padding: 2px 7px;
+  font-size: 11px;
+  gap: 4px;
 }
 
-/* Primary Navy Button */
+/* Primary NII Blue Button */
 .cinii-enh-btn-primary {
   background-color: var(--cinii-blue) !important;
   color: #ffffff !important;
@@ -91,7 +117,7 @@
   color: #ffffff !important;
 }
 
-/* High-Contrast PDF / J-STAGE Direct Button (WCAG AAA compliance > 7:1) */
+/* High-Contrast PDF / J-STAGE Direct Button */
 a.cinii-enh-btn-pdf,
 a.cinii-enh-btn-pdf:link,
 a.cinii-enh-btn-pdf:visited,
@@ -99,14 +125,14 @@ a.cinii-enh-btn-pdf:hover,
 a.cinii-enh-btn-pdf:active {
   background-color: var(--cinii-green-dark) !important;
   color: #ffffff !important;
-  border: 1px solid var(--cinii-green-border) !important;
+  border: 1px solid var(--cinii-green-dark) !important;
   font-weight: 600 !important;
   text-decoration: none !important;
 }
 
 a.cinii-enh-btn-pdf:hover {
-  background-color: #044e3a !important;
-  border-color: #023829 !important;
+  background-color: var(--cinii-green-hover) !important;
+  border-color: var(--cinii-green-hover) !important;
   color: #ffffff !important;
 }
 
@@ -124,14 +150,14 @@ a.cinii-enh-btn-pdf span {
 }
 
 .cinii-enh-btn-outline:hover {
-  background-color: var(--cinii-blue-light) !important;
+  background-color: var(--cinii-blue-subtle) !important;
   border-color: var(--cinii-blue) !important;
   color: var(--cinii-blue-hover) !important;
 }
 
 .cinii-enh-btn-muted {
   background-color: var(--cinii-bg-neutral) !important;
-  color: var(--cinii-slate-muted) !important;
+  color: var(--cinii-text-muted) !important;
   border-color: var(--cinii-border-light) !important;
   cursor: default;
 }
@@ -140,7 +166,7 @@ a.cinii-enh-btn-pdf span {
 .cinii-enh-badge {
   display: inline-flex;
   align-items: center;
-  padding: 3px 8px;
+  padding: 2px 6px;
   font-size: 11px;
   font-weight: 600;
   border-radius: var(--cinii-radius-sm);
@@ -152,46 +178,44 @@ a.cinii-enh-btn-pdf span {
 .cinii-enh-badge-oa {
   background-color: var(--cinii-green-light);
   color: var(--cinii-green-dark);
-  border-color: #a7f3d0;
+  border-color: var(--cinii-green-border);
 }
 
 /* ------------------------------------------------------------------------------
- * 3. Detail Page Toolbar (Only injected on detail view)
+ * 3. Detail Page Toolbar (Injected only on detail view)
  * ------------------------------------------------------------------------------ */
 .cinii-enh-detail-toolbar {
   display: flex;
   align-items: center;
   justify-content: space-between;
   flex-wrap: wrap;
-  gap: 12px;
-  margin: 14px 0 18px 0;
-  padding: 10px 16px;
+  gap: 10px;
+  margin: 12px 0 16px 0;
+  padding: 8px 14px;
   background-color: var(--cinii-bg-neutral);
-  border: 1px solid var(--cinii-border-light);
-  border-left: 4px solid var(--cinii-blue);
+  border: 1px solid var(--cinii-border-medium);
+  border-left: 3px solid var(--cinii-blue);
   border-radius: var(--cinii-radius-sm);
-  box-shadow: var(--cinii-shadow-sm);
   font-family: var(--cinii-font);
 }
 
 .cinii-enh-toolbar-brand {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
 }
 
 .cinii-enh-brand-label {
   font-size: 11px;
   font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+  letter-spacing: 0.04em;
   color: var(--cinii-blue);
 }
 
 .cinii-enh-btn-group {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   flex-wrap: wrap;
 }
 
@@ -217,7 +241,7 @@ a.cinii-enh-btn-pdf span {
 }
 
 .cinii-enh-btn-cite-title {
-  padding: 2px 8px;
+  padding: 2px 7px;
   font-size: 11px;
   font-weight: 500;
   line-height: 1.3;
@@ -229,13 +253,13 @@ a.cinii-enh-btn-pdf span {
 }
 
 .cinii-enh-btn-cite-title:hover {
-  background-color: var(--cinii-blue-light) !important;
+  background-color: var(--cinii-blue-subtle) !important;
   border-color: var(--cinii-blue) !important;
   color: var(--cinii-blue-hover) !important;
 }
 
 .cinii-enh-title-actions .cinii-enh-btn-pdf {
-  padding: 2px 8px;
+  padding: 2px 7px;
   font-size: 11px;
   font-weight: 600;
   line-height: 1.3;
@@ -243,19 +267,18 @@ a.cinii-enh-btn-pdf span {
 }
 
 /* ------------------------------------------------------------------------------
- * 5. Centered Modal Dialog (画面のど真ん中に配置)
+ * 5. Centered Modal Dialog (Authentic Academic Dialog, No Backdrop Blur)
  * ------------------------------------------------------------------------------ */
 .cinii-enh-modal-overlay {
   position: fixed;
   inset: 0;
   z-index: 9999999;
-  background-color: rgba(15, 23, 42, 0.6);
-  backdrop-filter: blur(2px);
+  background-color: rgba(0, 0, 0, 0.45);
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 16px;
-  animation: cinii-enh-fadein 0.15s ease-out;
+  animation: cinii-enh-fadein 0.12s ease-out;
 }
 
 @keyframes cinii-enh-fadein {
@@ -269,24 +292,24 @@ a.cinii-enh-btn-pdf span {
   max-width: 95vw;
   max-height: 85vh;
   background-color: #ffffff;
-  border: 1px solid var(--cinii-border-medium);
+  border: 1px solid var(--cinii-border-dark);
   border-radius: var(--cinii-radius-md);
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.25), 0 10px 10px -5px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--cinii-shadow-modal);
   display: flex;
   flex-direction: column;
   overflow: hidden;
   font-family: var(--cinii-font);
-  animation: cinii-enh-modal-scale 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+  animation: cinii-enh-modal-appear 0.15s ease-out;
 }
 
-@keyframes cinii-enh-modal-scale {
+@keyframes cinii-enh-modal-appear {
   from {
     opacity: 0;
-    transform: scale(0.96) translateY(8px);
+    transform: scale(0.98);
   }
   to {
     opacity: 1;
-    transform: scale(1) translateY(0);
+    transform: scale(1);
   }
 }
 
@@ -294,10 +317,10 @@ a.cinii-enh-btn-pdf span {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 16px;
-  padding: 16px 20px;
-  background-color: #f8fafc;
-  border-bottom: 1px solid var(--cinii-border-light);
+  gap: 14px;
+  padding: 12px 18px;
+  background-color: var(--cinii-bg-neutral);
+  border-bottom: 1px solid var(--cinii-border-medium);
 }
 
 .cinii-enh-modal-header-info {
@@ -307,26 +330,24 @@ a.cinii-enh-btn-pdf span {
 
 .cinii-enh-modal-badge {
   display: inline-block;
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
   color: var(--cinii-blue);
-  margin-bottom: 4px;
+  margin-bottom: 3px;
 }
 
 .cinii-enh-modal-title {
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 700;
-  color: var(--cinii-slate-dark);
+  color: var(--cinii-text-heading);
   margin: 0;
-  line-height: 1.3;
+  line-height: 1.35;
 }
 
 .cinii-enh-modal-paper-title {
   font-size: 12px;
-  color: var(--cinii-slate-muted);
-  margin-top: 6px;
+  color: var(--cinii-text-muted);
+  margin-top: 5px;
   line-height: 1.4;
   max-height: 2.8em;
   overflow: hidden;
@@ -337,25 +358,26 @@ a.cinii-enh-btn-pdf span {
 
 .cinii-enh-modal-close {
   background: none;
-  border: none;
-  color: var(--cinii-slate-muted);
+  border: 1px solid transparent;
+  color: var(--cinii-text-muted);
   cursor: pointer;
-  padding: 6px;
+  padding: 4px;
   border-radius: var(--cinii-radius-sm);
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.15s ease;
+  transition: all 0.12s ease;
   flex-shrink: 0;
 }
 
 .cinii-enh-modal-close:hover {
-  color: var(--cinii-slate-dark);
+  color: var(--cinii-text-heading);
   background-color: var(--cinii-border-light);
+  border-color: var(--cinii-border-medium);
 }
 
 .cinii-enh-modal-body {
-  padding: 14px 20px;
+  padding: 14px 18px;
   overflow-y: auto;
   flex: 1;
 }
@@ -363,24 +385,24 @@ a.cinii-enh-btn-pdf span {
 .cinii-enh-modal-list {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
 }
 
 .cinii-enh-modal-item {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
-  padding: 10px 14px;
+  gap: 14px;
+  padding: 9px 12px;
   background-color: #ffffff;
   border: 1px solid var(--cinii-border-light);
   border-radius: var(--cinii-radius-sm);
-  transition: all 0.15s ease-in-out;
+  transition: border-color 0.12s ease, background-color 0.12s ease;
 }
 
 .cinii-enh-modal-item:hover {
   border-color: var(--cinii-blue);
-  background-color: #f8fafc;
+  background-color: var(--cinii-bg-subtle);
 }
 
 .cinii-enh-modal-item-info {
@@ -391,14 +413,14 @@ a.cinii-enh-btn-pdf span {
 .cinii-enh-modal-item-label {
   font-size: 12px;
   font-weight: 700;
-  color: var(--cinii-slate-dark);
+  color: var(--cinii-text-heading);
   margin-bottom: 2px;
 }
 
 .cinii-enh-modal-item-preview {
   font-size: 11px;
   font-family: var(--cinii-font-mono);
-  color: var(--cinii-slate-muted);
+  color: var(--cinii-text-subtle);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -407,18 +429,18 @@ a.cinii-enh-btn-pdf span {
 }
 
 .cinii-enh-btn-copy-action {
-  padding: 5px 12px;
-  font-size: 12px;
+  padding: 4px 10px;
+  font-size: 11px;
   font-weight: 500;
   background-color: #ffffff !important;
   border: 1px solid var(--cinii-border-medium) !important;
-  color: var(--cinii-slate-text) !important;
+  color: var(--cinii-text-main) !important;
   border-radius: var(--cinii-radius-sm);
   flex-shrink: 0;
 }
 
 .cinii-enh-btn-copy-action:hover {
-  background-color: var(--cinii-blue-light) !important;
+  background-color: var(--cinii-blue-subtle) !important;
   border-color: var(--cinii-blue) !important;
   color: var(--cinii-blue) !important;
 }
@@ -430,7 +452,7 @@ a.cinii-enh-btn-pdf span {
 }
 
 /* ------------------------------------------------------------------------------
- * 7. Academic Toast Notification
+ * 6. Academic Toast Notification
  * ------------------------------------------------------------------------------ */
 .cinii-enh-toast {
   position: fixed;
@@ -440,18 +462,18 @@ a.cinii-enh-btn-pdf span {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  padding: 10px 18px;
-  background-color: var(--cinii-slate-dark);
+  padding: 8px 16px;
+  background-color: var(--cinii-text-main);
   color: #ffffff;
   font-family: var(--cinii-font);
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 500;
   border-radius: var(--cinii-radius-sm);
-  box-shadow: var(--cinii-shadow-lg);
+  box-shadow: var(--cinii-shadow-toast);
   opacity: 0;
-  transform: translateY(12px);
+  transform: translateY(10px);
   pointer-events: none;
-  transition: opacity 0.2s ease, transform 0.2s ease;
+  transition: opacity 0.15s ease, transform 0.15s ease;
 }
 
 .cinii-enh-toast.is-visible {
@@ -460,22 +482,31 @@ a.cinii-enh-btn-pdf span {
 }
 
 .cinii-enh-toast-icon {
-  color: #34d399;
+  color: #a5d6a7;
   display: flex;
   align-items: center;
 }
 
 /* ------------------------------------------------------------------------------
- * 8. Abstract & Description Cleaner (スマート整形 & 原文切替)
+ * 7. Abstract & Description Cleaner (HTMLタグ整形 & 原文切替)
  * ------------------------------------------------------------------------------ */
 .cinii-enh-abstract-container {
-  margin: 10px 0 16px 0;
-  padding: 12px 16px;
-  background-color: #ffffff;
-  border: 1px solid var(--cinii-border-light);
+  margin: 12px 0 18px 24px; /* 左インデントを確保して左端開始の違和感を解消 */
+  padding: 12px 18px;
+  background-color: var(--cinii-bg-pure);
+  border: 1px solid var(--cinii-border-medium);
+  border-left: 3px solid var(--cinii-blue);
   border-radius: var(--cinii-radius-sm);
   box-shadow: var(--cinii-shadow-sm);
   font-family: var(--cinii-font);
+}
+
+@media (max-width: 768px) {
+  .cinii-enh-abstract-container {
+    margin-left: 4px;
+    margin-right: 4px;
+    padding: 10px 12px;
+  }
 }
 
 .cinii-enh-abstract-toolbar {
@@ -485,7 +516,7 @@ a.cinii-enh-btn-pdf span {
   gap: 12px;
   margin-bottom: 10px;
   padding-bottom: 8px;
-  border-bottom: 1px dashed var(--cinii-border-medium);
+  border-bottom: 1px solid var(--cinii-border-light);
 }
 
 .cinii-enh-abstract-status {
@@ -499,25 +530,25 @@ a.cinii-enh-btn-pdf span {
 
 .cinii-enh-toggle-view {
   font-size: 11px;
-  padding: 3px 8px;
+  padding: 2px 7px;
 }
 
 .cinii-enh-toggle-view.is-raw {
-  background-color: var(--cinii-blue-light) !important;
+  background-color: var(--cinii-blue-subtle) !important;
   color: var(--cinii-blue) !important;
   border-color: var(--cinii-blue) !important;
 }
 
 .cinii-enh-abstract-content.is-formatted {
   font-size: 13.5px;
-  line-height: 1.85;
-  color: var(--cinii-slate-text);
+  line-height: 1.8;
+  color: var(--cinii-text-main);
   word-break: break-word;
   text-align: justify;
 }
 
 .cinii-enh-abstract-content.is-formatted p {
-  margin: 0 0 0.85em 0;
+  margin: 0 0 0.75em 0;
 }
 
 .cinii-enh-abstract-content.is-formatted p:last-child {
@@ -527,7 +558,7 @@ a.cinii-enh-btn-pdf span {
 .cinii-enh-abstract-content.is-formatted b,
 .cinii-enh-abstract-content.is-formatted strong {
   font-weight: 700;
-  color: var(--cinii-slate-dark);
+  color: var(--cinii-text-heading);
 }
 
 .cinii-enh-abstract-content.is-formatted i,
@@ -555,7 +586,7 @@ a.cinii-enh-btn-pdf span {
   font-family: var(--cinii-font-mono);
   font-size: 12px;
   line-height: 1.6;
-  color: var(--cinii-slate-muted);
+  color: var(--cinii-text-muted);
   background-color: var(--cinii-bg-neutral);
   padding: 10px 12px;
   border: 1px solid var(--cinii-border-light);
@@ -570,5 +601,5 @@ a.cinii-enh-btn-pdf span {
   color: var(--cinii-blue);
   background-color: rgba(0, 64, 152, 0.08);
   padding: 1px 3px;
-  border-radius: 2px;
+  border-radius: var(--cinii-radius-sm);
 }
