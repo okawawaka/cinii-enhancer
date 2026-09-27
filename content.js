@@ -591,6 +591,69 @@
   // Detail Page Enhancement (詳細画面のみ実行)
   // ==========================================
 
+  // Locate the actual paper/book title element (strictly excluding author sections)
+  function findDetailTitleElement(metaTitle) {
+    const cleanMeta = (metaTitle || '').trim().replace(/\s+/g, ' ');
+
+    function isAuthorOrNonTitle(el) {
+      if (!el) return true;
+      return Boolean(
+        el.closest('.authorslist, .author-name, .creator-name, .item-creator, .authors, [class*="author"], [class*="creator"]') ||
+        el.querySelector('a[href*="/nrid/"], a[href*="/author/"]') ||
+        el.classList.contains('authorslist') ||
+        el.classList.contains('author') ||
+        el.closest('.cinii-enh-modal')
+      );
+    }
+
+    // 1. High-priority CiNii title selectors
+    const titleSelectors = [
+      '.item_mainTitle',
+      'h1.item-title',
+      'h1.title',
+      '.itemTitle',
+      '[property="dc:title"]',
+      '[itemprop="headline"]',
+      '[itemprop="name"]',
+      '.detail-title',
+      '.article-title',
+      '.itemheading h1'
+    ];
+
+    for (const sel of titleSelectors) {
+      const candidates = document.querySelectorAll(sel);
+      for (const el of candidates) {
+        if (isAuthorOrNonTitle(el)) continue;
+        const text = el.textContent.trim().replace(/\s+/g, ' ');
+        if (!cleanMeta || text === cleanMeta || text.includes(cleanMeta) || cleanMeta.includes(text)) {
+          return el;
+        }
+      }
+    }
+
+    // 2. Headings that specifically match the paper/book title text
+    if (cleanMeta) {
+      const headings = document.querySelectorAll('h1, h2, h3, .title');
+      for (const h of headings) {
+        if (isAuthorOrNonTitle(h)) continue;
+        const text = h.textContent.trim().replace(/\s+/g, ' ');
+        if (text === cleanMeta || text.includes(cleanMeta) || (cleanMeta.length > 5 && text.length > 5 && (cleanMeta.startsWith(text) || text.startsWith(cleanMeta)))) {
+          return h;
+        }
+      }
+    }
+
+    // 3. Fallback: First h1 or heading that is not an author or header/nav element
+    const allH1 = document.querySelectorAll('h1');
+    for (const h of allH1) {
+      if (!isAuthorOrNonTitle(h) && !h.closest('#header, header, nav')) {
+        return h;
+      }
+    }
+
+    return null;
+  }
+
   function enhanceDetailPage() {
     if (!userSettings.enableDetailToolbar) return;
     if (document.getElementById('cinii-enh-detail-title-actions')) return;
@@ -598,14 +661,8 @@
     const meta = extractDetailMetadata();
     if (!meta.title) return;
 
-    // Locate the main title element
-    const titleEl =
-      document.querySelector('.item_mainTitle') ||
-      document.querySelector('.itemheading h1') ||
-      document.querySelector('.itemheading') ||
-      document.querySelector('h1') ||
-      document.querySelector('#main h1, .main-content h1');
-
+    // Locate the strictly identified title element
+    const titleEl = findDetailTitleElement(meta.title);
     if (!titleEl) return;
 
     // Compact, inline action container directly to the right of the title
