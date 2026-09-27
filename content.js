@@ -497,6 +497,64 @@
     };
   }
 
+  const CITATION_LABELS = {
+    bibtex: 'BibTeX',
+    sist02: 'SIST02',
+    apa: 'APA',
+    ris: 'RIS',
+    markdown: 'Markdown',
+    mla: 'MLA',
+    chicago: 'Chicago'
+  };
+
+  function getPreferredCitation(meta, formatKey) {
+    const key = formatKey || userSettings.preferredCitation || 'bibtex';
+    switch (key) {
+      case 'bibtex': return { key: 'bibtex', label: 'BibTeX', text: generateBibTeX(meta) };
+      case 'sist02': return { key: 'sist02', label: 'SIST02', text: generateSIST02(meta) };
+      case 'apa': return { key: 'apa', label: 'APA', text: generateAPA(meta) };
+      case 'ris': return { key: 'ris', label: 'RIS', text: generateRIS(meta) };
+      case 'markdown': return { key: 'markdown', label: 'Markdown', text: generateMarkdown(meta) };
+      case 'mla': return { key: 'mla', label: 'MLA', text: generateMLA(meta) };
+      case 'chicago': return { key: 'chicago', label: 'Chicago', text: generateChicago(meta) };
+      default: return { key: 'bibtex', label: 'BibTeX', text: generateBibTeX(meta) };
+    }
+  }
+
+  function createQuickCopyButton(metaProvider, extraClasses = '') {
+    const prefKey = userSettings.preferredCitation || 'bibtex';
+    const prefLabel = CITATION_LABELS[prefKey] || 'BibTeX';
+
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = `cinii-enh-btn cinii-enh-btn-cite-quick ${extraClasses}`;
+    btn.title = `設定済みフォーマット (${prefLabel}) をワンクリックで直接コピー`;
+    btn.innerHTML = `${SVGS.COPY}<span>${escapeHtml(prefLabel)}</span>`;
+
+    btn.addEventListener('click', async (e) => {
+      e.stopPropagation();
+      e.preventDefault();
+
+      const meta = typeof metaProvider === 'function' ? metaProvider() : metaProvider;
+      if (!meta) return;
+
+      const pref = getPreferredCitation(meta, prefKey);
+      const originalHtml = btn.innerHTML;
+
+      const success = await copyText(pref.text, `${pref.label} をクリップボードにコピーしました`);
+      if (success) {
+        btn.classList.add('is-copied');
+        btn.innerHTML = `${SVGS.CHECK}<span>完了</span>`;
+        setTimeout(() => {
+          btn.classList.remove('is-copied');
+          btn.innerHTML = originalHtml;
+        }, 1600);
+      }
+    });
+
+    return btn;
+  }
+
   // ==========================================
   // Centered Modal Dialog Builder (画面中央モーダル)
   // ==========================================
@@ -670,12 +728,16 @@
     actionsWrapper.id = 'cinii-enh-detail-title-actions';
     actionsWrapper.className = 'cinii-enh-detail-title-actions';
 
-    // 1. Citation Button (Simple, clean, matching CiNii aesthetic)
+    // 1. Quick Copy Button (One-click copy of preferred format e.g. BibTeX)
+    const quickBtn = createQuickCopyButton(() => meta, 'cinii-enh-btn-sm');
+    actionsWrapper.appendChild(quickBtn);
+
+    // 2. Citation Modal Trigger Button
     const citeBtn = document.createElement('button');
     citeBtn.type = 'button';
     citeBtn.className = 'cinii-enh-btn cinii-enh-btn-sm cinii-enh-btn-outline cinii-enh-btn-detail-cite';
     citeBtn.innerHTML = `${SVGS.QUOTE}<span>引用</span>`;
-    citeBtn.title = '引用フォーマット（BibTeX, SIST02, APA, RIS等）をコピー';
+    citeBtn.title = '全引用フォーマット（BibTeX, SIST02, APA, RIS等）の一覧を表示';
 
     citeBtn.addEventListener('click', (e) => {
       e.stopPropagation();
@@ -967,16 +1029,21 @@
       url: titleLink.href.split('?')[0].split('#')[0]
     };
 
-    // Actions placed right next to the title link
+    // Actions placed right next to the title link (Citations ONLY, no redundant PDF/OA buttons)
     const titleActions = document.createElement('span');
     titleActions.className = 'cinii-enh-title-actions';
 
-    // 1. Citation Button (only for citeable materials: papers, books, dissertations)
     if (userSettings.enableSearchQuickCopy && isCiteableItem(item, titleLink)) {
+      // Button 1: Quick Copy Button (Single click to copy preferred format e.g. BibTeX)
+      const quickBtn = createQuickCopyButton(cardMeta, 'cinii-enh-btn-sm');
+      titleActions.appendChild(quickBtn);
+
+      // Button 2: Citation Modal Trigger Button
       const citeBtn = document.createElement('button');
       citeBtn.type = 'button';
-      citeBtn.className = 'cinii-enh-btn cinii-enh-btn-cite-title';
+      citeBtn.className = 'cinii-enh-btn cinii-enh-btn-sm cinii-enh-btn-cite-title';
       citeBtn.innerHTML = `${SVGS.QUOTE}<span>引用</span>`;
+      citeBtn.title = '全引用フォーマット（BibTeX, SIST02, APA, RIS等）の一覧を表示';
 
       citeBtn.addEventListener('click', (e) => {
         e.stopPropagation();
@@ -986,25 +1053,6 @@
       });
 
       titleActions.appendChild(citeBtn);
-    }
-
-    // 2. PDF / Full-Text Link Button (only if valid full text link is available)
-    if (userSettings.enableSearchPdfDirect && fullTextInfo) {
-      if (fullTextInfo.url) {
-        const pdfBtn = document.createElement('a');
-        pdfBtn.className = 'cinii-enh-btn cinii-enh-btn-pdf';
-        pdfBtn.href = fullTextInfo.url;
-        pdfBtn.target = '_blank';
-        pdfBtn.rel = 'noopener noreferrer';
-        const label = fullTextInfo.label || 'PDF';
-        pdfBtn.innerHTML = `${SVGS.PDF}<span>${escapeHtml(label)}</span>${SVGS.EXTERNAL}`;
-        titleActions.appendChild(pdfBtn);
-      } else {
-        const badge = document.createElement('span');
-        badge.className = 'cinii-enh-badge cinii-enh-badge-oa';
-        badge.textContent = fullTextInfo.label || '本文あり';
-        titleActions.appendChild(badge);
-      }
     }
 
     if (titleActions.children.length > 0 && titleLink.parentNode) {
