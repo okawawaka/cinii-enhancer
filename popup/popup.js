@@ -3,9 +3,7 @@
  */
 
 const DEFAULT_SETTINGS = {
-  unpaywallEmail: 'academic-reader@example.com',
   enableSearchQuickCopy: true,
-  enableSearchPdfDirect: true,
   enableDetailToolbar: true,
   enableAbstractCleanup: true,
   preferredCitation: 'bibtex',
