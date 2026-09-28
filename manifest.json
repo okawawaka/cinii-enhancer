@@ -4,6 +4,7 @@
   "short_name": "CiNii Enhancer",
   "version": "1.0.0",
   "description": "CiNii Researchの文献情報コピー、文献種別別引用テンプレート生成、抄録HTML整形を行う拡張機能",
+  "homepage_url": "https://github.com/okawawaka/cinii-enhancer",
   "icons": {
     "16": "icons/icon16.png",
     "48": "icons/icon48.png",

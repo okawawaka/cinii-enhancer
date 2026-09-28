@@ -284,6 +284,10 @@ header .cinii-enh-header-settings-btn {
 /* ------------------------------------------------------------------------------
  * 5. Modal Dialogs (Citation Modal & Settings Modal)
  * ------------------------------------------------------------------------------ */
+body.cinii-enh-modal-open {
+  overflow: hidden !important;
+}
+
 .cinii-enh-modal-overlay {
   position: fixed;
   inset: 0;

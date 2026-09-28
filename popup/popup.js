@@ -29,6 +29,17 @@ document.addEventListener('DOMContentLoaded', async () => {
   const badgeSearchCopy = document.getElementById('badge-search-copy');
   const badgeAbstractCleanup = document.getElementById('badge-abstract-cleanup');
 
+  let statusTimeout = null;
+  const showStatus = (text, isError = false) => {
+    if (!saveStatus) return;
+    saveStatus.textContent = text;
+    saveStatus.className = 'save-status is-visible' + (isError ? ' error' : '');
+    if (statusTimeout) clearTimeout(statusTimeout);
+    statusTimeout = setTimeout(() => {
+      saveStatus.classList.remove('is-visible');
+    }, 1800);
+  };
+
   const updateBadge = (checkbox, badge) => {
     if (!checkbox || !badge) return;
     if (checkbox.checked) {
@@ -40,28 +51,62 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   };
 
-  // Wire badge update events
+  let loadedSettings = { ...DEFAULT_SETTINGS };
+
+  const saveCurrentSettings = async (showFeedback = true) => {
+    const newSettings = {
+      ...loadedSettings,
+      enableDetailToolbar: Boolean(enableDetailToolbarInput?.checked),
+      enableSearchQuickCopy: Boolean(enableSearchQuickCopyInput?.checked),
+      enableAbstractCleanup: Boolean(enableAbstractCleanupInput?.checked),
+      preferredCitation: preferredCitationInput?.value || 'bibtex'
+    };
+
+    try {
+      await storage.set(newSettings);
+      loadedSettings = newSettings;
+      if (showFeedback) showStatus('設定を保存しました');
+    } catch (err) {
+      console.error('Failed to save settings:', err);
+      if (showFeedback) showStatus('保存エラー', true);
+    }
+  };
+
+  // Wire badge update and auto-save events
   if (enableDetailToolbarInput && badgeDetailToolbar) {
-    enableDetailToolbarInput.addEventListener('change', () => updateBadge(enableDetailToolbarInput, badgeDetailToolbar));
+    enableDetailToolbarInput.addEventListener('change', () => {
+      updateBadge(enableDetailToolbarInput, badgeDetailToolbar);
+      saveCurrentSettings(true);
+    });
   }
   if (enableSearchQuickCopyInput && badgeSearchCopy) {
-    enableSearchQuickCopyInput.addEventListener('change', () => updateBadge(enableSearchQuickCopyInput, badgeSearchCopy));
+    enableSearchQuickCopyInput.addEventListener('change', () => {
+      updateBadge(enableSearchQuickCopyInput, badgeSearchCopy);
+      saveCurrentSettings(true);
+    });
   }
   if (enableAbstractCleanupInput && badgeAbstractCleanup) {
-    enableAbstractCleanupInput.addEventListener('change', () => updateBadge(enableAbstractCleanupInput, badgeAbstractCleanup));
+    enableAbstractCleanupInput.addEventListener('change', () => {
+      updateBadge(enableAbstractCleanupInput, badgeAbstractCleanup);
+      saveCurrentSettings(true);
+    });
+  }
+  if (preferredCitationInput) {
+    preferredCitationInput.addEventListener('change', () => {
+      saveCurrentSettings(true);
+    });
   }
 
   // Load current settings
-  let loadedSettings = { ...DEFAULT_SETTINGS };
   try {
     const current = await storage.get(DEFAULT_SETTINGS);
     loadedSettings = { ...DEFAULT_SETTINGS, ...current };
 
-    enableDetailToolbarInput.checked = Boolean(loadedSettings.enableDetailToolbar);
-    enableSearchQuickCopyInput.checked = Boolean(loadedSettings.enableSearchQuickCopy);
-    enableAbstractCleanupInput.checked = Boolean(loadedSettings.enableAbstractCleanup);
+    if (enableDetailToolbarInput) enableDetailToolbarInput.checked = Boolean(loadedSettings.enableDetailToolbar);
+    if (enableSearchQuickCopyInput) enableSearchQuickCopyInput.checked = Boolean(loadedSettings.enableSearchQuickCopy);
+    if (enableAbstractCleanupInput) enableAbstractCleanupInput.checked = Boolean(loadedSettings.enableAbstractCleanup);
 
-    if (loadedSettings.preferredCitation) {
+    if (preferredCitationInput && loadedSettings.preferredCitation) {
       preferredCitationInput.value = loadedSettings.preferredCitation;
     }
 
@@ -72,28 +117,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     console.error('Failed to load settings:', err);
   }
 
-  // Save on button click
-  saveBtn.addEventListener('click', async () => {
-    const newSettings = {
-      ...loadedSettings,
-      enableDetailToolbar: enableDetailToolbarInput.checked,
-      enableSearchQuickCopy: enableSearchQuickCopyInput.checked,
-      enableAbstractCleanup: enableAbstractCleanupInput.checked,
-      preferredCitation: preferredCitationInput.value
-    };
-
-    try {
-      await storage.set(newSettings);
-      loadedSettings = newSettings;
-      saveStatus.textContent = '設定を保存しました';
-      saveStatus.classList.add('is-visible');
-      setTimeout(() => {
-        saveStatus.classList.remove('is-visible');
-      }, 2000);
-    } catch (err) {
-      console.error('Failed to save settings:', err);
-      saveStatus.textContent = '保存エラー';
-      saveStatus.classList.add('is-visible');
-    }
-  });
+  // Explicit save on button click
+  if (saveBtn) {
+    saveBtn.addEventListener('click', () => {
+      saveCurrentSettings(true);
+    });
+  }
 });

@@ -69,23 +69,37 @@
   }
 
   async function copyText(text, successMessage = 'クリップボードにコピーしました') {
+    const normalizedText = (text || '').trim().replace(/\r\n/g, '\n');
     try {
+      let copied = false;
       if (navigator.clipboard && navigator.clipboard.writeText) {
-        await navigator.clipboard.writeText(text);
-      } else {
+        try {
+          await navigator.clipboard.writeText(normalizedText);
+          copied = true;
+        } catch (_) {
+          // Fallback to execCommand if navigator.clipboard fails
+        }
+      }
+
+      if (!copied) {
         const textarea = document.createElement('textarea');
-        textarea.value = text;
+        textarea.value = normalizedText;
         textarea.style.position = 'fixed';
         textarea.style.left = '-9999px';
         textarea.style.top = '-9999px';
+        textarea.setAttribute('readonly', '');
         document.body.appendChild(textarea);
         textarea.focus();
         textarea.select();
-        document.execCommand('copy');
+        copied = document.execCommand('copy');
         textarea.remove();
       }
-      showToast(successMessage);
-      return true;
+
+      if (copied) {
+        showToast(successMessage);
+        return true;
+      }
+      throw new Error('Clipboard write operation failed');
     } catch (err) {
       console.error('[CiNii Enhancer] Copy failed:', err);
       showToast('コピーに失敗しました');
@@ -802,13 +816,18 @@
 
     overlay.appendChild(modal);
     document.body.appendChild(overlay);
+    document.body.classList.add('cinii-enh-modal-open');
+
+    const closeBtn = modal.querySelector('.cinii-enh-modal-close');
+    if (closeBtn) closeBtn.focus();
 
     const closeModal = () => {
       overlay.remove();
+      document.body.classList.remove('cinii-enh-modal-open');
       document.removeEventListener('keydown', onKeyDown);
     };
 
-    modal.querySelector('.cinii-enh-modal-close').addEventListener('click', closeModal);
+    if (closeBtn) closeBtn.addEventListener('click', closeModal);
     overlay.addEventListener('click', (e) => {
       if (e.target === overlay) closeModal();
     });
@@ -1041,6 +1060,7 @@
 
     overlay.appendChild(modal);
     document.body.appendChild(overlay);
+    document.body.classList.add('cinii-enh-modal-open');
 
     const formatSelect = modal.querySelector('#setting-preferred-format');
     const labelInput = modal.querySelector('#setting-custom-label');
@@ -1146,10 +1166,14 @@
 
     const closeModal = () => {
       overlay.remove();
+      document.body.classList.remove('cinii-enh-modal-open');
       document.removeEventListener('keydown', onKeyDown);
     };
 
-    modal.querySelector('.cinii-enh-modal-close').addEventListener('click', closeModal);
+    const closeBtn = modal.querySelector('.cinii-enh-modal-close');
+    if (closeBtn) {
+      closeBtn.addEventListener('click', closeModal);
+    }
     overlay.addEventListener('click', (e) => {
       if (e.target === overlay) closeModal();
     });
@@ -1492,7 +1516,14 @@
 
         const checkedBoxes = Array.from(document.querySelectorAll(
           '.listitem input[type="checkbox"]:checked, .search-result-item input[type="checkbox"]:checked, input[name*="art"]:checked, input[name*="id"]:checked, input[name*="item"]:checked, input[name="chk"]:checked, input.checkItem:checked'
-        )).filter((cb) => cb.value && cb.value !== 'all' && cb.value !== 'on');
+        )).filter((cb) => {
+          const val = (cb.value || '').toLowerCase();
+          const name = (cb.name || '').toLowerCase();
+          const id = (cb.id || '').toLowerCase();
+          if (!val || val === 'all' || val === 'on' || val === 'checkall') return false;
+          if (name.includes('all') || id.includes('all') || cb.classList.contains('checkAll')) return false;
+          return true;
+        });
 
         if (checkedBoxes.length === 0) {
           showToast('文献が選択されていません。チェックボックスを選択してください');
@@ -1854,6 +1885,23 @@
   async function init() {
     await loadSettings();
     runEnhancer();
+
+    if (chrome.storage && chrome.storage.onChanged) {
+      chrome.storage.onChanged.addListener((changes, areaName) => {
+        if (areaName === 'sync' || areaName === 'local') {
+          let updated = false;
+          for (const [key, change] of Object.entries(changes)) {
+            if (userSettings[key] !== change.newValue) {
+              userSettings[key] = change.newValue;
+              updated = true;
+            }
+          }
+          if (updated) {
+            updateAllQuickCopyButtons();
+          }
+        }
+      });
+    }
 
     let debounceTimer = null;
     const observer = new MutationObserver((mutations) => {
