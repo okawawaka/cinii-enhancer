@@ -32,7 +32,7 @@ CiNii Research（国立情報学研究所）における引用情報の取得、
 ### 3. カスタム引用テンプレート
 任意のフォーマットを定義できます。設定画面のタブから、文献種別ごとに異なるテンプレートを指定可能です。
 
-- **利用可能な変数**: `{title}`, `{authors}`, `{firstAuthor}`, `{year}`, `{journal}`, `{volume}`, `{issue}`, `{pages}`, `{firstPage}`, `{lastPage}`, `{doi}`, `{url}`, `{publisher}`, `{place}`, `{isbn}`
+- **利用可能な変数**: `{title}`, `{authors}`, `{author}`, `{firstAuthor}`, `{year}`, `{journal}`, `{volume}`, `{issue}`, `{pages}`, `{firstPage}`, `{lastPage}`, `{doi}`, `{url}`, `{publisher}`, `{place}`, `{isbn}`
 - **自動使い分け**: 有効時、文献種別に応じて対応するテンプレート（論文用/図書用/学位論文用）が自動的に適用されます。
 - **リアルタイムプレビュー**: 編集中のテンプレートの出力結果を各文献種別のサンプルデータで確認できます。
 
