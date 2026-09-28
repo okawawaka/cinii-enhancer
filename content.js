@@ -1504,11 +1504,63 @@
     });
   }
 
+  function normalizeCardTypography(item) {
+    if (!item) return;
+
+    // 1. Normalize Title Elements (font-weight: 600, CiNii blue link, remove color/weight overrides)
+    const titleElements = item.querySelectorAll('.item_mainTitle, .articletitle, h2, h3, a[href*="/crid/"]');
+    titleElements.forEach((titleContainer) => {
+      if (titleContainer.style) {
+        titleContainer.style.fontWeight = '';
+        titleContainer.style.color = '';
+      }
+      titleContainer.querySelectorAll('a').forEach((a) => {
+        if (a.style) {
+          a.style.fontWeight = '';
+          a.style.color = '';
+        }
+      });
+      titleContainer.querySelectorAll('b, strong, mark, span, em, font').forEach((tag) => {
+        if (tag.tagName === 'FONT') {
+          tag.removeAttribute('color');
+          tag.removeAttribute('size');
+          tag.removeAttribute('face');
+        }
+        if (tag.style) {
+          tag.style.color = '';
+          tag.style.fontWeight = '';
+          tag.style.backgroundColor = '';
+        }
+      });
+    });
+
+    // 2. Normalize Snippet / Description Elements (normal weight, unified text color)
+    const snippetElements = item.querySelectorAll('.item_description, .description, .item_abstract, .snippet, dd, p');
+    snippetElements.forEach((el) => {
+      if (el.closest('.cinii-enh-title-actions') || el.closest('.cinii-enh-modal')) return;
+      if (el.style) {
+        el.style.fontWeight = '';
+        el.style.color = '';
+      }
+      el.querySelectorAll('b, strong, mark, span, font').forEach((tag) => {
+        if (tag.tagName === 'FONT') {
+          tag.removeAttribute('color');
+        }
+        if (tag.style) {
+          tag.style.color = '';
+          tag.style.fontWeight = '';
+          tag.style.backgroundColor = '';
+        }
+      });
+    });
+  }
+
   function enhanceSearchResults() {
     const resultItems = document.querySelectorAll('.listitem, .search-result-item, [class*="listitem"], .result-item, #searchResult li, .searchResultItem');
     if (resultItems.length === 0) return;
 
     resultItems.forEach((item) => {
+      normalizeCardTypography(item);
       const isCardEnhanced = item.classList.contains('cinii-enh-card-enhanced');
       if (!isCardEnhanced) {
         item.classList.add('cinii-enh-card-enhanced');

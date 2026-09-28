@@ -947,32 +947,166 @@ body.cinii-enh-modal-open {
 }
 
 /* ------------------------------------------------------------------------------
- * 9. Search Results Font-Weight Normalization
+ * 9. Search Results Typography & Color Normalization
+ * 検索結果一覧における文字色・太字の一貫性を全カードで均一に統一
  * ------------------------------------------------------------------------------ */
-/* タイトルの太さをすべての論文で均一に統一 */
+
+/* 検索結果カード全般のベースカラー統一 */
+.cinii-enh-card-enhanced,
+.listitem,
+.search-result-item,
+[class*="listitem"],
+.result-item,
+#searchResult li,
+.searchResultItem,
+.item_box {
+  color: var(--cinii-text-main) !important;
+}
+
+/* 1. タイトルリンクの文字色とフォントウェイトを全論文で均一に統一 (600 / CiNii Blue) */
+.cinii-enh-card-enhanced .item_mainTitle a,
+.cinii-enh-card-enhanced .articletitle a,
+.cinii-enh-card-enhanced h2 a,
+.cinii-enh-card-enhanced h3 a,
+.cinii-enh-card-enhanced a[href*="/crid/"],
 .listitem .item_mainTitle a,
-.search-result-item .item_mainTitle a,
+.listitem .articletitle a,
 .listitem h2 a,
 .listitem h3 a,
+.search-result-item .item_mainTitle a,
+.search-result-item .articletitle a,
 .search-result-item h2 a,
 .search-result-item h3 a,
+[class*="listitem"] .item_mainTitle a,
+[class*="listitem"] .articletitle a,
 [class*="listitem"] h2 a,
 [class*="listitem"] h3 a,
-[class*="listitem"] .item_mainTitle a {
+.result-item h2 a,
+.result-item h3 a,
+.result-item .item_mainTitle a,
+#searchResult li h2 a,
+#searchResult li h3 a,
+#searchResult li .item_mainTitle a,
+.searchResultItem h2 a,
+.searchResultItem h3 a,
+.searchResultItem .item_mainTitle a {
   font-weight: 600 !important;
+  color: var(--cinii-blue) !important;
+  text-decoration: none !important;
 }
 
-/* タイトル内部のタグによる太さの不揃いを解消 */
+/* タイトルリンクのホバー状態 */
+.cinii-enh-card-enhanced .item_mainTitle a:hover,
+.cinii-enh-card-enhanced .articletitle a:hover,
+.cinii-enh-card-enhanced h2 a:hover,
+.cinii-enh-card-enhanced h3 a:hover,
+.cinii-enh-card-enhanced a[href*="/crid/"]:hover,
+.listitem .item_mainTitle a:hover,
+.search-result-item .item_mainTitle a:hover,
+[class*="listitem"] .item_mainTitle a:hover,
+.result-item .item_mainTitle a:hover,
+#searchResult li .item_mainTitle a:hover {
+  color: var(--cinii-blue-hover) !important;
+  text-decoration: underline !important;
+}
+
+/* 訪問済みリンク (:visited) による色ムラを防止してCiNiiブルーに統一 */
+.cinii-enh-card-enhanced .item_mainTitle a:visited,
+.cinii-enh-card-enhanced .articletitle a:visited,
+.cinii-enh-card-enhanced h2 a:visited,
+.cinii-enh-card-enhanced h3 a:visited,
+.cinii-enh-card-enhanced a[href*="/crid/"]:visited,
+.listitem .item_mainTitle a:visited,
+.search-result-item .item_mainTitle a:visited,
+[class*="listitem"] .item_mainTitle a:visited,
+.result-item .item_mainTitle a:visited,
+#searchResult li .item_mainTitle a:visited {
+  color: var(--cinii-blue) !important;
+}
+
+/* タイトル内部のタグ（b, strong, mark, span, em等）による太さ・文字色の不揃いを解消 */
+.cinii-enh-card-enhanced .item_mainTitle a b,
+.cinii-enh-card-enhanced .item_mainTitle a strong,
+.cinii-enh-card-enhanced .item_mainTitle a mark,
+.cinii-enh-card-enhanced .item_mainTitle a span,
+.cinii-enh-card-enhanced .item_mainTitle a em,
+.cinii-enh-card-enhanced h2 a b,
+.cinii-enh-card-enhanced h2 a strong,
+.cinii-enh-card-enhanced h2 a mark,
+.cinii-enh-card-enhanced h2 a span,
+.cinii-enh-card-enhanced h3 a b,
+.cinii-enh-card-enhanced h3 a strong,
+.cinii-enh-card-enhanced h3 a mark,
+.cinii-enh-card-enhanced h3 a span,
 .listitem .item_mainTitle a b,
 .listitem .item_mainTitle a strong,
+.listitem .item_mainTitle a mark,
+.listitem .item_mainTitle a span,
 .search-result-item .item_mainTitle a b,
 .search-result-item .item_mainTitle a strong,
+.search-result-item .item_mainTitle a mark,
+.search-result-item .item_mainTitle a span,
 [class*="listitem"] .item_mainTitle a b,
-[class*="listitem"] .item_mainTitle a strong {
+[class*="listitem"] .item_mainTitle a strong,
+[class*="listitem"] .item_mainTitle a mark,
+[class*="listitem"] .item_mainTitle a span,
+.result-item .item_mainTitle a b,
+.result-item .item_mainTitle a strong,
+#searchResult li .item_mainTitle a b,
+#searchResult li .item_mainTitle a strong {
   font-weight: inherit !important;
+  color: inherit !important;
+  background-color: transparent !important;
 }
 
-/* スニペット・説明文内の太字を通常ウェイトに統一 */
+/* 2. 著者・出版情報（メタデータ行）の文字色・太さを統一 */
+.cinii-enh-card-enhanced .authorslist,
+.cinii-enh-card-enhanced .author-name,
+.cinii-enh-card-enhanced .item_creator,
+.cinii-enh-card-enhanced .item-creator,
+.cinii-enh-card-enhanced .journal,
+.cinii-enh-card-enhanced .item_journal,
+.cinii-enh-card-enhanced .publisher,
+.cinii-enh-card-enhanced .publication_place,
+.cinii-enh-card-enhanced .source,
+.cinii-enh-card-enhanced .year,
+.listitem .authorslist,
+.listitem .journal,
+.listitem .publisher,
+[class*="listitem"] .authorslist,
+[class*="listitem"] .journal,
+[class*="listitem"] .publisher,
+.result-item .authorslist,
+.result-item .publisher,
+#searchResult li .authorslist,
+#searchResult li .publisher {
+  font-weight: normal !important;
+  color: var(--cinii-text-muted) !important;
+}
+
+.cinii-enh-card-enhanced .authorslist a,
+.cinii-enh-card-enhanced .author-name a,
+.listitem .authorslist a {
+  font-weight: normal !important;
+  color: var(--cinii-blue) !important;
+}
+
+/* 3. 抜粋・抄録・スニペット・説明文の文字色・太さを全カードで均一に統一 */
+.cinii-enh-card-enhanced .item_description,
+.cinii-enh-card-enhanced .description,
+.cinii-enh-card-enhanced .item_abstract,
+.cinii-enh-card-enhanced .item-abstract,
+.cinii-enh-card-enhanced .snippet,
+.cinii-enh-card-enhanced .search-result-snippet,
+.cinii-enh-card-enhanced .search_snippet,
+.cinii-enh-card-enhanced .item_summary,
+.cinii-enh-card-enhanced .summary,
+.cinii-enh-card-enhanced .item_note,
+.cinii-enh-card-enhanced .note,
+.cinii-enh-card-enhanced .item_body,
+.cinii-enh-card-enhanced .lead,
+.cinii-enh-card-enhanced dd,
+.cinii-enh-card-enhanced p,
 .listitem .item_description,
 .listitem .description,
 .listitem .item_abstract,
@@ -980,13 +1114,47 @@ body.cinii-enh-modal-open {
 .search-result-item .item_description,
 .search-result-item .description,
 .search-result-item .snippet,
+[class*="listitem"] .item_description,
+[class*="listitem"] .description,
+[class*="listitem"] .snippet,
 [class*="listitem"] dd,
-[class*="listitem"] .item_description b,
-[class*="listitem"] .item_description strong,
-[class*="listitem"] .snippet b,
-[class*="listitem"] .snippet strong,
+[class*="listitem"] p,
+.result-item .description,
+.result-item .snippet,
+#searchResult li dd,
+#searchResult li p {
+  font-weight: normal !important;
+  color: var(--cinii-text-main) !important;
+}
+
+/* スニペット・説明文内部の強調タグ（b, strong, mark, span等）のスタイル統一 */
+.cinii-enh-card-enhanced .item_description b,
+.cinii-enh-card-enhanced .item_description strong,
+.cinii-enh-card-enhanced .item_description mark,
+.cinii-enh-card-enhanced .item_description span,
+.cinii-enh-card-enhanced .description b,
+.cinii-enh-card-enhanced .description strong,
+.cinii-enh-card-enhanced .description mark,
+.cinii-enh-card-enhanced .snippet b,
+.cinii-enh-card-enhanced .snippet strong,
+.cinii-enh-card-enhanced .snippet mark,
+.cinii-enh-card-enhanced .snippet span,
+.cinii-enh-card-enhanced dd b,
+.cinii-enh-card-enhanced dd strong,
+.cinii-enh-card-enhanced dd mark,
+.cinii-enh-card-enhanced dd span,
+.cinii-enh-card-enhanced p b,
+.cinii-enh-card-enhanced p strong,
+.cinii-enh-card-enhanced p mark,
+.cinii-enh-card-enhanced p span,
+.listitem .item_description b,
+.listitem .item_description strong,
+.listitem .snippet b,
+.listitem .snippet strong,
 [class*="listitem"] dd b,
 [class*="listitem"] dd strong {
-  font-weight: normal;
+  font-weight: normal !important;
+  color: inherit !important;
+  background-color: transparent !important;
 }
 
