@@ -1810,12 +1810,12 @@
 
     text = text
       .replace(/<\/?(?:jats:italic|italic)[^>]*>/gi, (m) => m.startsWith('</') ? '</i>' : '<i>')
-      .replace(/<\/?(?:jats:bold|bold)[^>]*>/gi, (m) => m.startsWith('</') ? '</b>' : '<b>')
+      .replace(/<\/?(?:jats:bold|bold|b|strong)[^>]*>/gi, '')
       .replace(/<\/?(?:jats:sup|sup)[^>]*>/gi, (m) => m.startsWith('</') ? '</sup>' : '<sup>')
       .replace(/<\/?(?:jats:sub|sub)[^>]*>/gi, (m) => m.startsWith('</') ? '</sub>' : '<sub>')
       .replace(/<\/?(?:jats:underline|underline)[^>]*>/gi, (m) => m.startsWith('</') ? '</u>' : '<u>')
-      .replace(/<jats:title[^>]*>/gi, '<strong>')
-      .replace(/<\/jats:title>/gi, '</strong>: ')
+      .replace(/<jats:title[^>]*>/gi, '')
+      .replace(/<\/jats:title>/gi, ': ')
       .replace(/<\/?(?:jats:p|p)[^>]*>/gi, ' ')
       .replace(/<\/?(?:jats:[a-zA-Z0-9_-]+|[a-zA-Z0-9_-]+:[a-zA-Z0-9_-]+)[^>]*>/gi, '')
       .replace(/<\/?(?:sec|section|article|div|header|footer|font)[^>]*>/gi, ' ')
@@ -1825,7 +1825,7 @@
     const root = parsedDoc.body.firstElementChild;
     if (!root) return text;
 
-    const allowed = new Set(['B', 'STRONG', 'I', 'EM', 'SUB', 'SUP', 'U', 'MARK', 'SPAN', 'BR']);
+    const allowed = new Set(['I', 'EM', 'SUB', 'SUP', 'U', 'MARK', 'SPAN', 'BR']);
     const remove = new Set(['SCRIPT', 'STYLE', 'IFRAME', 'OBJECT', 'EMBED']);
 
     Array.from(root.childNodes).forEach((n) => sanitizeNodeTree(n, allowed, remove, true));

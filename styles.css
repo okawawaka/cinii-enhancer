@@ -945,3 +945,48 @@ body.cinii-enh-modal-open {
   width: 15px;
   height: 15px;
 }
+
+/* ------------------------------------------------------------------------------
+ * 9. Search Results Font-Weight Normalization
+ * ------------------------------------------------------------------------------ */
+/* タイトルの太さをすべての論文で均一に統一 */
+.listitem .item_mainTitle a,
+.search-result-item .item_mainTitle a,
+.listitem h2 a,
+.listitem h3 a,
+.search-result-item h2 a,
+.search-result-item h3 a,
+[class*="listitem"] h2 a,
+[class*="listitem"] h3 a,
+[class*="listitem"] .item_mainTitle a {
+  font-weight: 600 !important;
+}
+
+/* タイトル内部のタグによる太さの不揃いを解消 */
+.listitem .item_mainTitle a b,
+.listitem .item_mainTitle a strong,
+.search-result-item .item_mainTitle a b,
+.search-result-item .item_mainTitle a strong,
+[class*="listitem"] .item_mainTitle a b,
+[class*="listitem"] .item_mainTitle a strong {
+  font-weight: inherit !important;
+}
+
+/* スニペット・説明文内の太字を通常ウェイトに統一 */
+.listitem .item_description,
+.listitem .description,
+.listitem .item_abstract,
+.listitem .snippet,
+.search-result-item .item_description,
+.search-result-item .description,
+.search-result-item .snippet,
+[class*="listitem"] dd,
+[class*="listitem"] .item_description b,
+[class*="listitem"] .item_description strong,
+[class*="listitem"] .snippet b,
+[class*="listitem"] .snippet strong,
+[class*="listitem"] dd b,
+[class*="listitem"] dd strong {
+  font-weight: normal;
+}
+
