@@ -29,7 +29,7 @@
 
       /* Typography */
       --font-sans: -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Yu Gothic", "Noto Sans JP", sans-serif;
-      --font-mono: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, Courier, monospace;
+      --font-mono: ui-monospace, "JetBrains Mono", "SF Mono", "SFMono-Regular", Menlo, Consolas, "Liberation Mono", monospace;
 
       /* Grid & Geometry */
       --container-max: 1140px;
@@ -420,6 +420,7 @@
       color: var(--c-navy);
     }
 
+    /* mockup-toggle-btn */
     .mockup-toggle-btn {
       font-size: 0.625rem;
       font-weight: 600;
@@ -429,31 +430,34 @@
       padding: 2px 6px;
       border-radius: var(--radius-sm);
       cursor: pointer;
+      transition: color 0.15s ease, background-color 0.15s ease;
     }
 
-    .mockup-abstract-text {
-      font-size: 0.75rem;
-      color: var(--c-text-muted);
-      line-height: 1.6;
+    .mockup-toggle-btn:hover {
+      background-color: var(--c-bg-surface-alt);
+      color: var(--c-navy);
     }
 
+    /* mockup-tabs-bar and mockup-tab */
     .mockup-tabs-bar {
       display: flex;
-      gap: 4px;
-      border-bottom: 1px solid var(--c-border);
-      margin-bottom: 10px;
+      gap: 0;
+      align-items: stretch;
+      flex: 1;
     }
 
     .mockup-tab {
       padding: 4px 10px;
       font-size: 0.6875rem;
       font-weight: 600;
+      letter-spacing: 0.04em;
       color: var(--c-text-subtle);
       background: none;
       border: none;
       border-bottom: 2px solid transparent;
       cursor: pointer;
       font-family: var(--font-mono);
+      transition: color 0.15s ease;
     }
 
     .mockup-tab.active {
@@ -471,6 +475,113 @@
       white-space: pre-wrap;
       word-break: break-all;
       min-height: 60px;
+      letter-spacing: 0.02em;
+    }
+
+    /* Abstract toggle — enhanced raw state */
+    .mockup-abstract-text.is-raw {
+      font-family: var(--font-mono);
+      font-size: 0.625rem;
+      color: var(--c-text-subtle);
+      background-color: #f1f5f9;
+      border-radius: 1px;
+      padding: 4px 6px;
+      letter-spacing: 0.01em;
+      line-height: 1.7;
+    }
+
+    .mockup-abstract-text {
+      font-size: 0.75rem;
+      color: var(--c-text-muted);
+      line-height: 1.6;
+      transition: color 0.2s ease, font-family 0.15s ease, background-color 0.2s ease;
+    }
+
+    /* Abstract bar status indicator */
+    .mockup-tag-clean {
+      font-family: var(--font-mono);
+      font-size: 0.625rem;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--c-navy);
+    }
+
+    .mockup-tag-clean.is-raw-label {
+      color: var(--c-text-subtle);
+    }
+
+    /* Citation code block header row (tabs + copy btn) */
+    .mockup-code-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--c-border);
+      margin-bottom: 0;
+      background-color: var(--c-bg-surface);
+      border: 1px solid var(--c-border);
+      border-bottom: none;
+    }
+
+    .mockup-copy-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      padding: 3px 8px;
+      font-family: var(--font-mono);
+      font-size: 0.5625rem;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      color: var(--c-text-subtle);
+      background: none;
+      border: none;
+      border-left: 1px solid var(--c-border);
+      cursor: pointer;
+      transition: color 0.15s ease, background-color 0.15s ease;
+      height: 100%;
+      align-self: stretch;
+    }
+
+    .mockup-copy-btn:hover {
+      color: var(--c-navy);
+      background-color: var(--c-navy-subtle);
+    }
+
+    .mockup-copy-btn.is-copied {
+      color: var(--c-green);
+    }
+
+    .mockup-copy-btn svg {
+      width: 10px;
+      height: 10px;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    /* --------------------------------------------------------------------------
+     * Note / Aside annotation (Feature cards 04/05)
+     * -------------------------------------------------------------------------- */
+    .note {
+      font-size: 0.75rem;
+      color: var(--c-text-subtle);
+      line-height: 1.55;
+      margin-top: 12px;
+      padding-top: 10px;
+      border-top: 1px solid var(--c-border);
+      font-style: normal;
+    }
+
+    /* Feature card: push tags to bottom */
+    .feature-tag-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      padding-top: 14px;
+      border-top: 1px solid var(--c-border);
+      margin-top: auto;
     }
 
     /* --------------------------------------------------------------------------
@@ -582,6 +693,8 @@
       font-family: var(--font-mono);
       font-size: 0.8125rem;
       font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
       color: var(--c-navy);
       margin-bottom: 20px;
       border-bottom: 1px solid var(--c-border);
@@ -600,17 +713,9 @@
       font-size: 0.875rem;
       color: var(--c-text-muted);
       line-height: 1.65;
-      margin-bottom: 20px;
-      flex: 1;
     }
 
-    .feature-tag-list {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 6px;
-      padding-top: 14px;
-      border-top: 1px solid var(--c-border);
-    }
+    /* feature-tag-list defined above with margin-top: auto */
 
     .feature-tag {
       font-family: var(--font-mono);
@@ -900,19 +1005,24 @@
                 
                 <div class="mockup-abstract-box">
                   <div class="mockup-abstract-bar">
-                    <span class="mockup-tag-clean">HTMLタグ整形済み</span>
-                    <button type="button" class="mockup-toggle-btn" id="demoToggleTag">原文を表示</button>
+                    <span class="mockup-tag-clean" id="demoAbstractLabel">CLEANED</span>
+                    <button type="button" class="mockup-toggle-btn" id="demoToggleTag">RAW を表示</button>
                   </div>
                   <div class="mockup-abstract-text" id="demoAbstractText">
                     母音フォルマント軌跡（F1・F2）の遷移区間を動的パラメータとして抽出し、音響的特徴量の弁別精度を検証した。
                   </div>
                 </div>
 
-                <div class="mockup-tabs-bar">
-                  <button type="button" class="mockup-tab active" data-fmt="bibtex">BibTeX</button>
-                  <button type="button" class="mockup-tab" data-fmt="sist02">SIST02</button>
-                  <button type="button" class="mockup-tab" data-fmt="apa">APA 7th</button>
-                  <button type="button" class="mockup-tab" data-fmt="custom">カスタム</button>
+                <div class="mockup-code-header">
+                  <div class="mockup-tabs-bar">
+                    <button type="button" class="mockup-tab active" data-fmt="bibtex">BibTeX</button>
+                    <button type="button" class="mockup-tab" data-fmt="sist02">SIST02</button>
+                    <button type="button" class="mockup-tab" data-fmt="apa">APA 7th</button>
+                  </div>
+                  <button type="button" class="mockup-copy-btn" id="demoInlineCopy" aria-label="コピー">
+                    <svg viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                    <span id="demoInlineCopyLabel">COPY</span>
+                  </button>
                 </div>
                 <div class="mockup-preview-code" id="demoCodePreview">@article{jouhou2026,
   author = {情報 太郎 and 音声 花子},
@@ -1031,8 +1141,9 @@
             <div class="feature-number">04 / ITEM TYPE ADAPTATION</div>
             <h3 class="feature-card-title">文献種別の自動判別</h3>
             <p class="feature-card-desc">
-              図書（単行本）、学位論文（博士論文）、雑誌論文の構造差を自動検知。図書では出版地や出版社名、学位論文では授与大学名を出力し、BibTeXも @book / @phdthesis へ適切に分岐します。<br><span style="font-size: 0.85em; opacity: 0.85;">※ 図書の {place}（出版地）補完機能は一部の主要出版社のみの限定対応となっており、未対応の出版社も多く存在します。</span>
+              図書（単行本）、学位論文（博士論文）、雑誌論文の構造差を自動検知。図書では出版地や出版社名、学位論文では授与大学名を出力し、BibTeXも @book / @phdthesis へ適切に分岐します。
             </p>
+            <aside class="note">※ 図書の {place}（出版地）補完機能は一部の主要出版社のみの限定対応となっており、未対応の出版社も多く存在します。</aside>
             <div class="feature-tag-list">
               <span class="feature-tag">図書対応</span>
               <span class="feature-tag">学位論文対応</span>
@@ -1045,8 +1156,9 @@
             <div class="feature-number">05 / CUSTOM TEMPLATES</div>
             <h3 class="feature-card-title">自由なカスタム構文</h3>
             <p class="feature-card-desc">
-              所属学会や執筆規程に合わせた独自フォーマットを定義可能。{title}, {author}, {authors}, {journal}, {year}, {doi}, {url}, {publisher}, {place} などの変数を自由に組み合わせ、リアルタイムプレビューで確認できます。<br><span style="font-size: 0.85em; opacity: 0.85;">※ {place} 変数の自動補完は一部の主要出版社のみ対応しています。</span>
+              所属学会や執筆規程に合わせた独自フォーマットを定義可能。{title}, {author}, {authors}, {journal}, {year}, {doi}, {url}, {publisher}, {place} などの変数を自由に組み合わせ、リアルタイムプレビューで確認できます。
             </p>
+            <aside class="note">※ {place} 変数の自動補完は一部の主要出版社のみ対応しています。</aside>
             <div class="feature-tag-list">
               <span class="feature-tag">変数置換</span>
               <span class="feature-tag">種別別テンプレート</span>
@@ -1171,33 +1283,30 @@
     (() => {
       'use strict';
 
-      // Demo Citation Data
+      // Demo Citation Data (仕様書指定の表示例)
       const DEMO_CITATIONS = {
-        bibtex: `@article{jouhou2026,
-  author = {情報 太郎 and 音声 花子},
-  title = {音響音声学におけるフォルマント軌跡の数理モデル},
-  journal = {音響学会誌},
-  year = {2026}
-}`,
-        sist02: `情報 太郎, 音声 花子. 音響音声学におけるフォルマント軌跡の数理モデル. 音響学会誌. 2026, 82(4), pp. 210-218.`,
-        apa: `Jouhou, T., & Onsei, H. (2026). Mathematical models of formant trajectories in acoustic phonetics. Journal of the Acoustical Society, 82(4), 210-218.`,
-        custom: `情報 太郎・音声 花子 (2026)「音響音声学におけるフォルマント軌跡の数理モデル」『音響学会誌』82(4), pp.210-218.`
+        bibtex: `@article{jouhou2026,\n  author = {情報 太郎 and 音声 花子},\n  title = {音響音声学におけるフォルマント軌跡の数理モデル},\n  journal = {音響学会誌},\n  year = {2026}\n}`,
+        sist02: `情報 太郎, 音声 花子. 音響音声学におけるフォルマント軌跡の数理モデル. 音響学会誌. 2026.`,
+        apa: `情報 太郎, & 音声 花子. (2026). 音響音声学におけるフォルマント軌跡の数理モデル. 音響学会誌.`
       };
 
-      const codeEl = document.getElementById('demoCodePreview');
-      const tabs = document.querySelectorAll('.mockup-tab');
-      const quickBtn = document.getElementById('demoQuickCopy');
-      const btnLabel = document.getElementById('demoBtnLabel');
+      const codeEl       = document.getElementById('demoCodePreview');
+      const tabs         = document.querySelectorAll('.mockup-tab');
+      const quickBtn     = document.getElementById('demoQuickCopy');
+      const btnLabel     = document.getElementById('demoBtnLabel');
       const toggleTagBtn = document.getElementById('demoToggleTag');
       const abstractText = document.getElementById('demoAbstractText');
+      const abstractLabel = document.getElementById('demoAbstractLabel');
+      const inlineCopyBtn = document.getElementById('demoInlineCopy');
+      const inlineCopyLabel = document.getElementById('demoInlineCopyLabel');
 
       let currentFormat = 'bibtex';
       let isTagClean = true;
 
-      const RAW_ABSTRACT = `&lt;jats:p&gt;母音フォルマント軌跡（&lt;jats:italic&gt;F&lt;/jats:italic&gt;&lt;jats:sub&gt;1&lt;/jats:sub&gt;・&lt;jats:italic&gt;F&lt;/jats:italic&gt;&lt;jats:sub&gt;2&lt;/jats:sub&gt;）の遷移区間を動的パラメータとして抽出し、音響的特徴量の弁別精度を検証した。&lt;/jats:p&gt;`;
+      const RAW_ABSTRACT = `<jats:p>母音フォルマント軌跡（<jats:italic>F</jats:italic><jats:sub>1</jats:sub>・<jats:italic>F</jats:italic><jats:sub>2</jats:sub>）の遷移区間を動的パラメータとして抽出し、音響的特徴量の弁別精度を検証した。</jats:p>`;
       const CLEAN_ABSTRACT = `母音フォルマント軌跡（F1・F2）の遷移区間を動的パラメータとして抽出し、音響的特徴量の弁別精度を検証した。`;
 
-      // Tab switching
+      // ── Tab switching (citation format) ──────────────────────────────────
       tabs.forEach((tab) => {
         tab.addEventListener('click', () => {
           tabs.forEach((t) => t.classList.remove('active'));
@@ -1205,50 +1314,76 @@
 
           const fmt = tab.getAttribute('data-fmt');
           currentFormat = fmt;
-          if (DEMO_CITATIONS[fmt]) {
+          if (DEMO_CITATIONS[fmt] !== undefined) {
             codeEl.textContent = DEMO_CITATIONS[fmt];
           }
 
           const labelMap = {
             bibtex: 'BibTeX コピー',
             sist02: 'SIST02 コピー',
-            apa: 'APA コピー',
-            custom: 'カスタム コピー'
+            apa:    'APA コピー'
           };
-          btnLabel.textContent = labelMap[fmt] || '引用コピー';
+          if (btnLabel) btnLabel.textContent = labelMap[fmt] || '引用コピー';
+          // Reset inline copy label on tab change
+          if (inlineCopyLabel) inlineCopyLabel.textContent = 'COPY';
+          if (inlineCopyBtn) inlineCopyBtn.classList.remove('is-copied');
         });
       });
 
-      // Quick Copy simulation
-      quickBtn.addEventListener('click', async () => {
+      // ── Helper: clipboard copy with feedback ─────────────────────────────
+      async function copyWithFeedback(btn, labelEl, originalLabel, successLabel) {
         const textToCopy = DEMO_CITATIONS[currentFormat] || '';
         try {
           if (navigator.clipboard && navigator.clipboard.writeText) {
             await navigator.clipboard.writeText(textToCopy);
           }
         } catch (_) {}
-
-        const originalText = btnLabel.textContent;
-        quickBtn.classList.add('is-copied');
-        btnLabel.textContent = 'コピー完了';
-
+        btn.classList.add('is-copied');
+        if (labelEl) labelEl.textContent = successLabel;
         setTimeout(() => {
-          quickBtn.classList.remove('is-copied');
-          btnLabel.textContent = originalText;
+          btn.classList.remove('is-copied');
+          if (labelEl) labelEl.textContent = originalLabel;
         }, 1500);
-      });
+      }
 
-      // Toggle raw HTML tag demo
-      toggleTagBtn.addEventListener('click', () => {
-        isTagClean = !isTagClean;
-        if (isTagClean) {
-          abstractText.textContent = CLEAN_ABSTRACT;
-          toggleTagBtn.textContent = '原文を表示';
-        } else {
-          abstractText.textContent = RAW_ABSTRACT;
-          toggleTagBtn.textContent = '整形表示に戻す';
-        }
-      });
+      // ── Quick Copy (title row button) ─────────────────────────────────────
+      if (quickBtn) {
+        quickBtn.addEventListener('click', () => {
+          const originalText = btnLabel ? btnLabel.textContent : 'BibTeX コピー';
+          copyWithFeedback(quickBtn, btnLabel, originalText, 'コピー完了');
+        });
+      }
+
+      // ── Inline Copy (code block corner button) ────────────────────────────
+      if (inlineCopyBtn) {
+        inlineCopyBtn.addEventListener('click', () => {
+          copyWithFeedback(inlineCopyBtn, inlineCopyLabel, 'COPY', 'DONE');
+        });
+      }
+
+      // ── Toggle Raw / Cleaned abstract ─────────────────────────────────────
+      if (toggleTagBtn && abstractText) {
+        toggleTagBtn.addEventListener('click', () => {
+          isTagClean = !isTagClean;
+          if (isTagClean) {
+            abstractText.textContent = CLEAN_ABSTRACT;
+            abstractText.classList.remove('is-raw');
+            if (abstractLabel) {
+              abstractLabel.textContent = 'CLEANED';
+              abstractLabel.classList.remove('is-raw-label');
+            }
+            toggleTagBtn.textContent = 'RAW を表示';
+          } else {
+            abstractText.textContent = RAW_ABSTRACT;
+            abstractText.classList.add('is-raw');
+            if (abstractLabel) {
+              abstractLabel.textContent = 'RAW / JATS';
+              abstractLabel.classList.add('is-raw-label');
+            }
+            toggleTagBtn.textContent = '整形表示に戻す';
+          }
+        });
+      }
     })();
   </script>
 </body>
