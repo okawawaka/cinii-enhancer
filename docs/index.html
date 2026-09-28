@@ -478,6 +478,14 @@
       letter-spacing: 0.02em;
     }
 
+    /* Abstract bar base state */
+    .mockup-abstract-text {
+      font-size: 0.75rem;
+      color: var(--c-text-muted);
+      line-height: 1.6;
+      transition: color 0.2s ease, background-color 0.2s ease, padding 0.15s ease;
+    }
+
     /* Abstract toggle — enhanced raw state */
     .mockup-abstract-text.is-raw {
       font-family: var(--font-mono);
@@ -488,13 +496,6 @@
       padding: 4px 6px;
       letter-spacing: 0.01em;
       line-height: 1.7;
-    }
-
-    .mockup-abstract-text {
-      font-size: 0.75rem;
-      color: var(--c-text-muted);
-      line-height: 1.6;
-      transition: color 0.2s ease, font-family 0.15s ease, background-color 0.2s ease;
     }
 
     /* Abstract bar status indicator */
@@ -516,8 +517,6 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      border-bottom: 1px solid var(--c-border);
-      margin-bottom: 0;
       background-color: var(--c-bg-surface);
       border: 1px solid var(--c-border);
       border-bottom: none;
@@ -572,6 +571,7 @@
       padding-top: 10px;
       border-top: 1px solid var(--c-border);
       font-style: normal;
+      flex-shrink: 0;
     }
 
     /* Feature card: push tags to bottom */
@@ -713,6 +713,7 @@
       font-size: 0.875rem;
       color: var(--c-text-muted);
       line-height: 1.65;
+      flex: 1;
     }
 
     /* feature-tag-list defined above with margin-top: auto */
