@@ -1009,9 +1009,8 @@
                     <span class="mockup-tag-clean" id="demoAbstractLabel">CLEANED</span>
                     <button type="button" class="mockup-toggle-btn" id="demoToggleTag">RAW を表示</button>
                   </div>
-                  <div class="mockup-abstract-text" id="demoAbstractText">
-                    母音フォルマント軌跡（F1・F2）の遷移区間を動的パラメータとして抽出し、音響的特徴量の弁別精度を検証した。
-                  </div>
+                  <div class="mockup-abstract-text" id="demoAbstractText">母音フォルマント軌跡（<em>F</em><sub>1</sub>・<em>F</em><sub>2</sub>）の遷移区間を動的パラメータとして抽出し、音響的特徴量の弁別精度を検証した。</div>
+
                 </div>
 
                 <div class="mockup-code-header">
@@ -1304,8 +1303,11 @@
       let currentFormat = 'bibtex';
       let isTagClean = true;
 
-      const RAW_ABSTRACT = `<jats:p>母音フォルマント軌跡（<jats:italic>F</jats:italic><jats:sub>1</jats:sub>・<jats:italic>F</jats:italic><jats:sub>2</jats:sub>）の遷移区間を動的パラメータとして抽出し、音響的特徴量の弁別精度を検証した。</jats:p>`;
-      const CLEAN_ABSTRACT = `母音フォルマント軌跡（F1・F2）の遷移区間を動的パラメータとして抽出し、音響的特徴量の弁別精度を検証した。`;
+      // RAW: エスケープ済みJATSタグ文字列（生タグが見えるコード風表示）
+      const RAW_ABSTRACT = `&lt;jats:p&gt;母音フォルマント軌跡（&lt;jats:italic&gt;F&lt;/jats:italic&gt;&lt;jats:sub&gt;1&lt;/jats:sub&gt;・&lt;jats:italic&gt;F&lt;/jats:italic&gt;&lt;jats:sub&gt;2&lt;/jats:sub&gt;）の遷移区間を動的パラメータとして抽出し、音響的特徴量の弁別精度を検証した。&lt;/jats:p&gt;`;
+      // CLEAN: タグをパースしてイタリック・添字として整形済みのHTML
+      const CLEAN_ABSTRACT = `母音フォルマント軌跡（<em>F</em><sub>1</sub>・<em>F</em><sub>2</sub>）の遷移区間を動的パラメータとして抽出し、音響的特徴量の弁別精度を検証した。`;
+
 
       // ── Tab switching (citation format) ──────────────────────────────────
       tabs.forEach((tab) => {
@@ -1367,7 +1369,8 @@
         toggleTagBtn.addEventListener('click', () => {
           isTagClean = !isTagClean;
           if (isTagClean) {
-            abstractText.textContent = CLEAN_ABSTRACT;
+            // Cleaned: em/sub タグをレンダリング
+            abstractText.innerHTML = CLEAN_ABSTRACT;
             abstractText.classList.remove('is-raw');
             if (abstractLabel) {
               abstractLabel.textContent = 'CLEANED';
@@ -1375,7 +1378,8 @@
             }
             toggleTagBtn.textContent = 'RAW を表示';
           } else {
-            abstractText.textContent = RAW_ABSTRACT;
+            // Raw: エスケープ済みJATSタグを文字として表示
+            abstractText.innerHTML = RAW_ABSTRACT;
             abstractText.classList.add('is-raw');
             if (abstractLabel) {
               abstractLabel.textContent = 'RAW / JATS';
