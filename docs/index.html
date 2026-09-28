@@ -1,0 +1,1263 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CiNii QuickCite & Formatter - CiNii Research専用 引用コピー＆書式整形 拡張機能</title>
+  <meta name="description" content="日本の学術論文データベース「CiNii Research」の文献調査を加速するChromium拡張機能。SIST02・BibTeX・APA・カスタム形式のワンクリック引用コピーと、抄録HTMLタグの自動整形を提供。完全ローカル処理。">
+  <link rel="canonical" href="https://okawawaka.github.io/cinii-enhancer/">
+  
+  <style>
+    /* --------------------------------------------------------------------------
+     * 1. Design System & CSS Variables (Swiss Style & CiNii Academic Palette)
+     * -------------------------------------------------------------------------- */
+    :root {
+      /* Palette */
+      --c-navy: #004080;
+      --c-navy-dark: #002855;
+      --c-navy-subtle: #edf4fb;
+      --c-text-main: #1a202c;
+      --c-text-muted: #4a5568;
+      --c-text-subtle: #718096;
+      --c-bg-page: #ffffff;
+      --c-bg-surface: #f8fafc;
+      --c-bg-surface-alt: #edf2f7;
+      --c-border: #e2e8f0;
+      --c-border-strong: #cbd5e1;
+      --c-green: #2e7d32;
+      --c-green-bg: #e8f5e9;
+
+      /* Typography */
+      --font-sans: -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Yu Gothic", "Noto Sans JP", sans-serif;
+      --font-mono: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, Courier, monospace;
+
+      /* Grid & Geometry */
+      --container-max: 1140px;
+      --grid-gap: 24px;
+      --radius-sm: 2px;
+      --radius-none: 0px;
+    }
+
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html {
+      font-size: 16px;
+      scroll-behavior: smooth;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    body {
+      font-family: var(--font-sans);
+      color: var(--c-text-main);
+      background-color: var(--c-bg-page);
+      line-height: 1.65;
+      letter-spacing: -0.01em;
+      border-top: 3px solid var(--c-navy);
+    }
+
+    /* --------------------------------------------------------------------------
+     * 2. Typography & Layout Utilities
+     * -------------------------------------------------------------------------- */
+    .container {
+      width: 100%;
+      max-width: var(--container-max);
+      margin-left: auto;
+      margin-right: auto;
+      padding-left: 24px;
+      padding-right: 24px;
+    }
+
+    .grid-12 {
+      display: grid;
+      grid-template-columns: repeat(12, 1fr);
+      gap: var(--grid-gap);
+    }
+
+    .section {
+      padding-top: 80px;
+      padding-bottom: 80px;
+      border-bottom: 1px solid var(--c-border);
+    }
+
+    .section-eyebrow {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--c-navy);
+      margin-bottom: 12px;
+      display: inline-block;
+    }
+
+    .section-title {
+      font-size: 1.875rem;
+      font-weight: 700;
+      line-height: 1.25;
+      letter-spacing: -0.03em;
+      color: var(--c-text-main);
+      margin-bottom: 16px;
+    }
+
+    .section-desc {
+      font-size: 1rem;
+      color: var(--c-text-muted);
+      line-height: 1.7;
+    }
+
+    /* --------------------------------------------------------------------------
+     * 3. Header & Navigation
+     * -------------------------------------------------------------------------- */
+    .site-header {
+      border-bottom: 1px solid var(--c-border);
+      background-color: var(--c-bg-page);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .header-inner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 64px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: baseline;
+      gap: 8px;
+      text-decoration: none;
+      color: var(--c-text-main);
+    }
+
+    .brand-title {
+      font-size: 1.05rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+
+    .brand-sub {
+      font-size: 0.75rem;
+      font-family: var(--font-mono);
+      color: var(--c-text-subtle);
+    }
+
+    .nav-list {
+      display: flex;
+      align-items: center;
+      gap: 28px;
+      list-style: none;
+    }
+
+    .nav-link {
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--c-text-muted);
+      text-decoration: none;
+      transition: color 0.15s ease;
+    }
+
+    .nav-link:hover {
+      color: var(--c-navy);
+    }
+
+    .nav-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      font-size: 0.8125rem;
+      font-weight: 600;
+      color: var(--c-navy);
+      background-color: #ffffff;
+      border: 1px solid var(--c-border-strong);
+      border-radius: var(--radius-sm);
+      text-decoration: none;
+      transition: all 0.15s ease;
+    }
+
+    .nav-btn:hover {
+      background-color: var(--c-navy-subtle);
+      border-color: var(--c-navy);
+    }
+
+    /* --------------------------------------------------------------------------
+     * 4. Hero Section
+     * -------------------------------------------------------------------------- */
+    .hero {
+      padding-top: 72px;
+      padding-bottom: 72px;
+      background-color: #ffffff;
+      border-bottom: 1px solid var(--c-border);
+    }
+
+    .hero-content {
+      grid-column: span 6;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: var(--c-navy);
+      background-color: var(--c-navy-subtle);
+      border: 1px solid rgba(0, 64, 128, 0.2);
+      padding: 3px 8px;
+      margin-bottom: 20px;
+      width: fit-content;
+      border-radius: var(--radius-sm);
+    }
+
+    .hero-title {
+      font-size: 2.625rem;
+      font-weight: 800;
+      line-height: 1.18;
+      letter-spacing: -0.04em;
+      color: var(--c-text-main);
+      margin-bottom: 20px;
+    }
+
+    .hero-lead {
+      font-size: 1.0625rem;
+      color: var(--c-text-muted);
+      line-height: 1.7;
+      margin-bottom: 32px;
+    }
+
+    .hero-actions {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 28px;
+    }
+
+    .btn-primary {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background-color: var(--c-navy);
+      color: #ffffff;
+      font-size: 0.9375rem;
+      font-weight: 600;
+      padding: 12px 22px;
+      border-radius: var(--radius-sm);
+      text-decoration: none;
+      border: 1px solid var(--c-navy);
+      transition: background-color 0.15s ease, border-color 0.15s ease;
+    }
+
+    .btn-primary:hover {
+      background-color: var(--c-navy-dark);
+      border-color: var(--c-navy-dark);
+    }
+
+    .btn-secondary {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background-color: #ffffff;
+      color: var(--c-text-main);
+      font-size: 0.9375rem;
+      font-weight: 600;
+      padding: 12px 20px;
+      border-radius: var(--radius-sm);
+      text-decoration: none;
+      border: 1px solid var(--c-border-strong);
+      transition: all 0.15s ease;
+    }
+
+    .btn-secondary:hover {
+      background-color: var(--c-bg-surface);
+      border-color: var(--c-text-muted);
+    }
+
+    .hero-meta {
+      font-size: 0.75rem;
+      color: var(--c-text-subtle);
+      font-family: var(--font-mono);
+    }
+
+    /* Hero Visual: Interactive Mockup */
+    .hero-visual {
+      grid-column: span 6;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    .mockup-frame {
+      border: 1px solid var(--c-border-strong);
+      border-radius: var(--radius-sm);
+      background-color: #ffffff;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+      overflow: hidden;
+    }
+
+    .mockup-browser-bar {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background-color: var(--c-bg-surface-alt);
+      border-bottom: 1px solid var(--c-border);
+      padding: 8px 14px;
+    }
+
+    .browser-dots {
+      display: flex;
+      gap: 5px;
+    }
+
+    .browser-dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background-color: #cbd5e1;
+    }
+
+    .browser-address {
+      flex: 1;
+      background-color: #ffffff;
+      border: 1px solid var(--c-border);
+      border-radius: var(--radius-sm);
+      padding: 2px 10px;
+      font-family: var(--font-mono);
+      font-size: 0.6875rem;
+      color: var(--c-text-muted);
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+    }
+
+    .mockup-body {
+      padding: 20px;
+    }
+
+    .mockup-paper-card {
+      border: 1px solid var(--c-border);
+      background-color: #ffffff;
+      padding: 16px;
+    }
+
+    .mockup-title-row {
+      display: flex;
+      align-items: baseline;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    .mockup-paper-title {
+      font-size: 0.9375rem;
+      font-weight: 700;
+      color: var(--c-navy);
+      line-height: 1.4;
+    }
+
+    .mockup-action-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 2px 6px;
+      font-size: 0.6875rem;
+      font-weight: 600;
+      color: var(--c-navy);
+      background-color: #ffffff;
+      border: 1px solid var(--c-border-strong);
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      user-select: none;
+      transition: all 0.15s ease;
+    }
+
+    .mockup-action-tag:hover {
+      background-color: var(--c-navy-subtle);
+      border-color: var(--c-navy);
+    }
+
+    .mockup-action-tag.is-copied {
+      background-color: var(--c-green-bg);
+      border-color: var(--c-green);
+      color: var(--c-green);
+    }
+
+    .mockup-authors {
+      font-size: 0.75rem;
+      color: var(--c-text-subtle);
+      margin-bottom: 12px;
+    }
+
+    .mockup-abstract-box {
+      background-color: var(--c-bg-surface);
+      border: 1px solid var(--c-border);
+      padding: 12px;
+      margin-bottom: 14px;
+    }
+
+    .mockup-abstract-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+      padding-bottom: 6px;
+      border-bottom: 1px solid var(--c-border);
+    }
+
+    .mockup-tag-clean {
+      font-family: var(--font-mono);
+      font-size: 0.625rem;
+      font-weight: 600;
+      color: var(--c-navy);
+    }
+
+    .mockup-toggle-btn {
+      font-size: 0.625rem;
+      font-weight: 600;
+      color: var(--c-text-muted);
+      background: none;
+      border: 1px solid var(--c-border);
+      padding: 2px 6px;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+    }
+
+    .mockup-abstract-text {
+      font-size: 0.75rem;
+      color: var(--c-text-muted);
+      line-height: 1.6;
+    }
+
+    .mockup-tabs-bar {
+      display: flex;
+      gap: 4px;
+      border-bottom: 1px solid var(--c-border);
+      margin-bottom: 10px;
+    }
+
+    .mockup-tab {
+      padding: 4px 10px;
+      font-size: 0.6875rem;
+      font-weight: 600;
+      color: var(--c-text-subtle);
+      background: none;
+      border: none;
+      border-bottom: 2px solid transparent;
+      cursor: pointer;
+      font-family: var(--font-mono);
+    }
+
+    .mockup-tab.active {
+      color: var(--c-navy);
+      border-bottom-color: var(--c-navy);
+    }
+
+    .mockup-preview-code {
+      background-color: var(--c-bg-surface-alt);
+      border: 1px solid var(--c-border);
+      padding: 10px;
+      font-family: var(--font-mono);
+      font-size: 0.6875rem;
+      color: var(--c-text-main);
+      white-space: pre-wrap;
+      word-break: break-all;
+      min-height: 60px;
+    }
+
+    /* --------------------------------------------------------------------------
+     * 5. Problem & Solution Section
+     * -------------------------------------------------------------------------- */
+    .comparison-grid {
+      grid-column: span 12;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 32px;
+      margin-top: 48px;
+    }
+
+    .comparison-card {
+      border: 1px solid var(--c-border);
+      border-radius: var(--radius-sm);
+      padding: 32px;
+      background-color: #ffffff;
+    }
+
+    .comparison-card.is-problem {
+      border-left: 4px solid #94a3b8;
+    }
+
+    .comparison-card.is-solution {
+      border-left: 4px solid var(--c-navy);
+      background-color: var(--c-bg-surface);
+    }
+
+    .comparison-tag {
+      font-family: var(--font-mono);
+      font-size: 0.6875rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 16px;
+      display: inline-block;
+    }
+
+    .comparison-card.is-problem .comparison-tag {
+      color: #64748b;
+    }
+
+    .comparison-card.is-solution .comparison-tag {
+      color: var(--c-navy);
+    }
+
+    .comparison-title {
+      font-size: 1.25rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      margin-bottom: 16px;
+      line-height: 1.35;
+    }
+
+    .comparison-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .comparison-item {
+      font-size: 0.875rem;
+      line-height: 1.6;
+      color: var(--c-text-muted);
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+    }
+
+    .comparison-item-bullet {
+      font-family: var(--font-mono);
+      font-weight: 700;
+      font-size: 0.75rem;
+      margin-top: 2px;
+      flex-shrink: 0;
+    }
+
+    .comparison-card.is-problem .comparison-item-bullet {
+      color: #94a3b8;
+    }
+
+    .comparison-card.is-solution .comparison-item-bullet {
+      color: var(--c-navy);
+    }
+
+    /* --------------------------------------------------------------------------
+     * 6. Features Section
+     * -------------------------------------------------------------------------- */
+    .features-grid {
+      grid-column: span 12;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 24px;
+      margin-top: 48px;
+    }
+
+    .feature-card {
+      border: 1px solid var(--c-border);
+      border-radius: var(--radius-sm);
+      padding: 32px 28px;
+      background-color: #ffffff;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .feature-number {
+      font-family: var(--font-mono);
+      font-size: 0.8125rem;
+      font-weight: 700;
+      color: var(--c-navy);
+      margin-bottom: 20px;
+      border-bottom: 1px solid var(--c-border);
+      padding-bottom: 8px;
+    }
+
+    .feature-card-title {
+      font-size: 1.125rem;
+      font-weight: 700;
+      margin-bottom: 12px;
+      line-height: 1.35;
+      letter-spacing: -0.02em;
+    }
+
+    .feature-card-desc {
+      font-size: 0.875rem;
+      color: var(--c-text-muted);
+      line-height: 1.65;
+      margin-bottom: 20px;
+      flex: 1;
+    }
+
+    .feature-tag-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      padding-top: 14px;
+      border-top: 1px solid var(--c-border);
+    }
+
+    .feature-tag {
+      font-family: var(--font-mono);
+      font-size: 0.6875rem;
+      color: var(--c-text-subtle);
+      background-color: var(--c-bg-surface);
+      border: 1px solid var(--c-border);
+      padding: 2px 6px;
+      border-radius: var(--radius-sm);
+    }
+
+    /* --------------------------------------------------------------------------
+     * 7. How It Works Section
+     * -------------------------------------------------------------------------- */
+    .steps-grid {
+      grid-column: span 12;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 24px;
+      margin-top: 48px;
+    }
+
+    .step-card {
+      border: 1px solid var(--c-border);
+      border-radius: var(--radius-sm);
+      padding: 32px;
+      background-color: var(--c-bg-surface);
+    }
+
+    .step-indicator {
+      font-family: var(--font-mono);
+      font-size: 1.5rem;
+      font-weight: 800;
+      color: var(--c-navy);
+      line-height: 1;
+      margin-bottom: 16px;
+    }
+
+    .step-title {
+      font-size: 1.0625rem;
+      font-weight: 700;
+      margin-bottom: 10px;
+      letter-spacing: -0.01em;
+    }
+
+    .step-desc {
+      font-size: 0.875rem;
+      color: var(--c-text-muted);
+      line-height: 1.65;
+    }
+
+    /* --------------------------------------------------------------------------
+     * 8. CTA Banner
+     * -------------------------------------------------------------------------- */
+    .cta-banner {
+      background-color: var(--c-navy);
+      color: #ffffff;
+      padding: 64px 0;
+      border-bottom: 1px solid var(--c-navy-dark);
+    }
+
+    .cta-inner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 32px;
+    }
+
+    .cta-heading {
+      font-size: 1.75rem;
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      line-height: 1.25;
+      margin-bottom: 8px;
+    }
+
+    .cta-text {
+      font-size: 0.9375rem;
+      color: #cbd5e1;
+    }
+
+    .cta-actions {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      flex-shrink: 0;
+    }
+
+    .btn-white {
+      background-color: #ffffff;
+      color: var(--c-navy);
+      font-size: 0.9375rem;
+      font-weight: 700;
+      padding: 12px 22px;
+      border-radius: var(--radius-sm);
+      text-decoration: none;
+      border: 1px solid #ffffff;
+      transition: background-color 0.15s ease;
+    }
+
+    .btn-white:hover {
+      background-color: #f1f5f9;
+    }
+
+    /* --------------------------------------------------------------------------
+     * 9. Footer
+     * -------------------------------------------------------------------------- */
+    .site-footer {
+      background-color: var(--c-bg-surface-alt);
+      padding: 56px 0 40px 0;
+      font-size: 0.8125rem;
+      color: var(--c-text-subtle);
+    }
+
+    .footer-top {
+      display: grid;
+      grid-template-columns: 2fr 1fr 1fr;
+      gap: 32px;
+      padding-bottom: 40px;
+      border-bottom: 1px solid var(--c-border);
+      margin-bottom: 32px;
+    }
+
+    .footer-col-title {
+      font-family: var(--font-mono);
+      font-size: 0.6875rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--c-text-main);
+      margin-bottom: 14px;
+    }
+
+    .footer-disclaimer {
+      line-height: 1.65;
+      color: var(--c-text-muted);
+    }
+
+    .footer-links {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .footer-link {
+      color: var(--c-text-muted);
+      text-decoration: none;
+      transition: color 0.15s ease;
+    }
+
+    .footer-link:hover {
+      color: var(--c-navy);
+    }
+
+    .footer-bottom {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+    }
+
+    /* Minimal Line Icons */
+    .icon {
+      width: 15px;
+      height: 15px;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      vertical-align: -2px;
+      display: inline-block;
+    }
+
+    /* --------------------------------------------------------------------------
+     * 10. Responsive Breakpoints
+     * -------------------------------------------------------------------------- */
+    @media (max-width: 900px) {
+      .hero-content {
+        grid-column: span 12;
+        margin-bottom: 40px;
+      }
+      .hero-visual {
+        grid-column: span 12;
+      }
+      .comparison-grid {
+        grid-template-columns: 1fr;
+      }
+      .features-grid {
+        grid-template-columns: 1fr;
+      }
+      .steps-grid {
+        grid-template-columns: 1fr;
+      }
+      .cta-inner {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      .footer-top {
+        grid-template-columns: 1fr;
+      }
+      .hero-title {
+        font-size: 2.125rem;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- =========================================================================
+   * 1. Header / Navigation
+   * ========================================================================= -->
+  <header class="site-header">
+    <div class="container header-inner">
+      <a href="#" class="brand">
+        <span class="brand-title">CiNii QuickCite & Formatter</span>
+        <span class="brand-sub">v1.0.0</span>
+      </a>
+      <nav>
+        <ul class="nav-list">
+          <li><a href="#problem-solution" class="nav-link">課題と解決</a></li>
+          <li><a href="#features" class="nav-link">主要機能</a></li>
+          <li><a href="#usage" class="nav-link">使い方</a></li>
+          <li>
+            <a href="https://github.com/okawawaka/cinii-enhancer" target="_blank" rel="noopener noreferrer" class="nav-btn">
+              <svg class="icon" viewBox="0 0 24 24"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/></svg>
+              GitHub
+            </a>
+          </li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <!-- =========================================================================
+     * 2. Hero Section
+     * ========================================================================= -->
+    <section class="hero">
+      <div class="container grid-12">
+        <div class="hero-content">
+          <div class="hero-badge">
+            <span>CHROMIUM EXTENSION / MANIFEST V3</span>
+          </div>
+          <h1 class="hero-title">
+            CiNiiでの文献調査を、<br>もっと明快に、正確に。
+          </h1>
+          <p class="hero-lead">
+            日本の学術データベース「CiNii Research」に、SIST02・BibTeX・APA等の即時引用コピー機能と、抄録HTMLタグの自動整形機能を追加するブラウザ拡張機能です。
+          </p>
+          <div class="hero-actions">
+            <a href="https://github.com/okawawaka/cinii-enhancer" class="btn-primary" target="_blank" rel="noopener noreferrer">
+              <svg class="icon" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              拡張機能を導入（無料）
+            </a>
+            <a href="#features" class="btn-secondary">機能詳細を見る</a>
+          </div>
+          <div class="hero-meta">
+            <span>Google Chrome / Microsoft Edge / Brave 対応 (完全ローカル処理)</span>
+          </div>
+        </div>
+
+        <!-- Interactive Swiss UI Mockup -->
+        <div class="hero-visual">
+          <div class="mockup-frame">
+            <div class="mockup-browser-bar">
+              <div class="browser-dots">
+                <div class="browser-dot"></div>
+                <div class="browser-dot"></div>
+                <div class="browser-dot"></div>
+              </div>
+              <div class="browser-address">https://cir.nii.ac.jp/crid/1390000000000000000</div>
+            </div>
+            <div class="mockup-body">
+              <div class="mockup-paper-card">
+                <div class="mockup-title-row">
+                  <span class="mockup-paper-title">音響音声学におけるフォルマント軌跡の数理モデル</span>
+                  <button type="button" class="mockup-action-tag" id="demoQuickCopy">
+                    <svg class="icon" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                    <span id="demoBtnLabel">BibTeX コピー</span>
+                  </button>
+                  <span class="mockup-action-tag" id="demoCiteModalBtn">引用</span>
+                </div>
+                <div class="mockup-authors">情報 太郎, 音声 花子 (2026) 『音響学会誌』</div>
+                
+                <div class="mockup-abstract-box">
+                  <div class="mockup-abstract-bar">
+                    <span class="mockup-tag-clean">HTMLタグ整形済み</span>
+                    <button type="button" class="mockup-toggle-btn" id="demoToggleTag">原文を表示</button>
+                  </div>
+                  <div class="mockup-abstract-text" id="demoAbstractText">
+                    母音フォルマント軌跡（F1・F2）の遷移区間を動的パラメータとして抽出し、音響的特徴量の弁別精度を検証した。
+                  </div>
+                </div>
+
+                <div class="mockup-tabs-bar">
+                  <button type="button" class="mockup-tab active" data-fmt="bibtex">BibTeX</button>
+                  <button type="button" class="mockup-tab" data-fmt="sist02">SIST02</button>
+                  <button type="button" class="mockup-tab" data-fmt="apa">APA 7th</button>
+                  <button type="button" class="mockup-tab" data-fmt="custom">カスタム</button>
+                </div>
+                <div class="mockup-preview-code" id="demoCodePreview">@article{jouhou2026,
+  author = {情報 太郎 and 音声 花子},
+  title = {音響音声学におけるフォルマント軌跡の数理モデル},
+  journal = {音響学会誌},
+  year = {2026}
+}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- =========================================================================
+     * 3. Problem & Solution Section
+     * ========================================================================= -->
+    <section class="section" id="problem-solution">
+      <div class="container">
+        <span class="section-eyebrow">Problem & Solution</span>
+        <h2 class="section-title">学術文献調査における2つの無駄を削減</h2>
+        <p class="section-desc">CiNii Researchの日常的な利用で発生する、書式整形の手間と表示の乱れを解消します。</p>
+
+        <div class="comparison-grid">
+          <!-- Problem Card -->
+          <div class="comparison-card is-problem">
+            <span class="comparison-tag">これまでの課題</span>
+            <h3 class="comparison-title">手動での書誌整形と、判読困難なタグ表示</h3>
+            <ul class="comparison-list">
+              <li class="comparison-item">
+                <span class="comparison-item-bullet">-</span>
+                <span>引用文献リストを作成する際、タイトル、著者名、巻号、ページ番号を手作業で整形・並び替える必要があった。</span>
+              </li>
+              <li class="comparison-item">
+                <span class="comparison-item-bullet">-</span>
+                <span>論文抄録（アブストラクト）の中に &lt;jats:p&gt; や &lt;jats:italic&gt; 等の生タグが漏れ出し、文章として読みにくかった。</span>
+              </li>
+              <li class="comparison-item">
+                <span class="comparison-item-bullet">-</span>
+                <span>単行本や学位論文を引用する際、雑誌論文用の形式が誤って適用され、出版社や学位授与大学の修正が必要だった。</span>
+              </li>
+            </ul>
+          </div>
+
+          <!-- Solution Card -->
+          <div class="comparison-card is-solution">
+            <span class="comparison-tag">本ツールの解決策</span>
+            <h3 class="comparison-title">ワンクリック引用コピーと、完全自動のテキスト整形</h3>
+            <ul class="comparison-list">
+              <li class="comparison-item">
+                <span class="comparison-item-bullet">+</span>
+                <span>タイトル横のボタンから、BibTeX・SIST02・APA・カスタム形式をクリップボードへ直接取得可能。</span>
+              </li>
+              <li class="comparison-item">
+                <span class="comparison-item-bullet">+</span>
+                <span>XML/HTMLタグを自動パースし、段落・斜体・添字として整形表示。原文表示への切り替えも可能。</span>
+              </li>
+              <li class="comparison-item">
+                <span class="comparison-item-bullet">+</span>
+                <span>論文・図書・学位論文を自動判別し、文献種別に応じた適切な引用フォーマットを自動生成。</span>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- =========================================================================
+     * 4. Features Section
+     * ========================================================================= -->
+    <section class="section" id="features">
+      <div class="container">
+        <span class="section-eyebrow">Core Features</span>
+        <h2 class="section-title">研究・執筆活動に最適化された機能設計</h2>
+        <p class="section-desc">CiNiiの公式UIに溶け込む、端正で信頼性の高いツールセットです。</p>
+
+        <div class="features-grid">
+          <!-- Feature 1 -->
+          <div class="feature-card">
+            <div class="feature-number">01 / CITATION EXPORT</div>
+            <h3 class="feature-card-title">ワンクリック引用コピー</h3>
+            <p class="feature-card-desc">
+              検索一覧および論文詳細画面のタイトル横にアクションボタンを配置。設定した優先フォーマットを1クリックでコピーできます。ダイアログから全形式の一括確認も可能です。
+            </p>
+            <div class="feature-tag-list">
+              <span class="feature-tag">SIST02</span>
+              <span class="feature-tag">BibTeX</span>
+              <span class="feature-tag">APA 7th</span>
+              <span class="feature-tag">RIS</span>
+              <span class="feature-tag">MLA</span>
+            </div>
+          </div>
+
+          <!-- Feature 2 -->
+          <div class="feature-card">
+            <div class="feature-number">02 / TEXT CLEANER</div>
+            <h3 class="feature-card-title">クリーンテキスト整形</h3>
+            <p class="feature-card-desc">
+              J-STAGEや機関リポジトリ由来の文献で発生する、エスケープされたJATS XMLタグやHTML実体参照（&amp;lt;p&amp;gt;等）を自動サニタイズ。自然な段落と斜体で整形表示します。
+            </p>
+            <div class="feature-tag-list">
+              <span class="feature-tag">DOMParser</span>
+              <span class="feature-tag">JATS XML対応</span>
+              <span class="feature-tag">原文切り替え</span>
+            </div>
+          </div>
+
+          <!-- Feature 3 -->
+          <div class="feature-card">
+            <div class="feature-number">03 / BULK EXPORT</div>
+            <h3 class="feature-card-title">検索結果の一括コピー</h3>
+            <p class="feature-card-desc">
+              検索画面の標準書き出しバー（TSV / BibTeX / RIS等）の隣にコピーボタンを追加。新規ウィンドウを開くことなく、選択した複数文献の書誌データを直接クリップボードへ格納します。
+            </p>
+            <div class="feature-tag-list">
+              <span class="feature-tag">一括TSV</span>
+              <span class="feature-tag">一括BibTeX</span>
+              <span class="feature-tag">バックグラウンド取得</span>
+            </div>
+          </div>
+
+          <!-- Feature 4 -->
+          <div class="feature-card">
+            <div class="feature-number">04 / ITEM TYPE ADAPTATION</div>
+            <h3 class="feature-card-title">文献種別の自動判別</h3>
+            <p class="feature-card-desc">
+              図書（単行本）、学位論文（博士論文）、雑誌論文の構造差を自動検知。図書では出版社名、学位論文では授与大学名を出力し、BibTeXも @book / @phdthesis へ適切に分岐します。
+            </p>
+            <div class="feature-tag-list">
+              <span class="feature-tag">図書対応</span>
+              <span class="feature-tag">学位論文対応</span>
+              <span class="feature-tag">BibTeX種別自動化</span>
+            </div>
+          </div>
+
+          <!-- Feature 5 -->
+          <div class="feature-card">
+            <div class="feature-number">05 / CUSTOM TEMPLATES</div>
+            <h3 class="feature-card-title">自由なカスタム構文</h3>
+            <p class="feature-card-desc">
+              所属学会や執筆規程に合わせた独自フォーマットを定義可能。{title}, {authors}, {journal}, {year}, {doi}, {url} などの変数を自由に組み合わせ、リアルタイムプレビューで確認できます。
+            </p>
+            <div class="feature-tag-list">
+              <span class="feature-tag">変数置換</span>
+              <span class="feature-tag">種別別テンプレート</span>
+              <span class="feature-tag">ライブプレビュー</span>
+            </div>
+          </div>
+
+          <!-- Feature 6 -->
+          <div class="feature-card">
+            <div class="feature-number">06 / PRIVACY & SECURITY</div>
+            <h3 class="feature-card-title">完全ローカル・通信不要</h3>
+            <p class="feature-card-desc">
+              外部サーバーへの通信は一切行いません。権限は設定保存（storage）とクリップボード書き込み（clipboardWrite）のみに最小化。機密性の高い研究環境でも安心して利用できます。
+            </p>
+            <div class="feature-tag-list">
+              <span class="feature-tag">外部通信ゼロ</span>
+              <span class="feature-tag">最小権限</span>
+              <span class="feature-tag">Manifest V3</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- =========================================================================
+     * 5. How It Works / Usage Section
+     * ========================================================================= -->
+    <section class="section" id="usage">
+      <div class="container">
+        <span class="section-eyebrow">How It Works</span>
+        <h2 class="section-title">わずか3ステップで導入完了</h2>
+        <p class="section-desc">余計な初期設定や外部アカウントの作成は不要です。</p>
+
+        <div class="steps-grid">
+          <div class="step-card">
+            <div class="step-indicator">01</div>
+            <h3 class="step-title">拡張機能をブラウザに追加</h3>
+            <p class="step-desc">
+              GitHubから本拡張機能をダウンロードし、Chromium系ブラウザ（Chrome, Edge, Brave等）の拡張機能管理画面から読み込みます。
+            </p>
+          </div>
+
+          <div class="step-card">
+            <div class="step-indicator">02</div>
+            <h3 class="step-title">CiNii Researchにアクセス</h3>
+            <p class="step-desc">
+              通常通り CiNii Research（cir.nii.ac.jp）を開くだけで、タイトル横に引用ボタンと設定ボタンが自動配置されます。
+            </p>
+          </div>
+
+          <div class="step-card">
+            <div class="step-indicator">03</div>
+            <h3 class="step-title">ワンクリックで引用を取得</h3>
+            <p class="step-desc">
+              文献のタイトル横にあるコピーボタンを押すだけで、整形済みの引用テキストが即座にクリップボードへコピーされます。
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- =========================================================================
+     * 6. CTA Banner
+     * ========================================================================= -->
+    <section class="cta-banner">
+      <div class="container cta-inner">
+        <div>
+          <h2 class="cta-heading">学術文献の調査・引用作業を今すぐ効率化</h2>
+          <p class="cta-text">オープンソース（MITライセンス）としてGitHub上で公開中。</p>
+        </div>
+        <div class="cta-actions">
+          <a href="https://github.com/okawawaka/cinii-enhancer" class="btn-white" target="_blank" rel="noopener noreferrer">
+            <svg class="icon" viewBox="0 0 24 24"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/></svg>
+            GitHub リポジトリ
+          </a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- =========================================================================
+   * 7. Footer
+   * ========================================================================= -->
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-top">
+        <div>
+          <div class="footer-col-title">免責事項 (Disclaimer)</div>
+          <p class="footer-disclaimer">
+            本拡張機能は個人によって開発されたオープンソースの非公式サードパーティツールです。大学共同利用機関法人情報・システム研究機構 国立情報学研究所（NII）および CiNii Research の公式製品ではありません。
+          </p>
+        </div>
+        <div>
+          <div class="footer-col-title">リソース</div>
+          <ul class="footer-links">
+            <li><a href="https://github.com/okawawaka/cinii-enhancer" class="footer-link" target="_blank" rel="noopener noreferrer">ソースコード (GitHub)</a></li>
+            <li><a href="https://github.com/okawawaka/cinii-enhancer/blob/main/README.md" class="footer-link" target="_blank" rel="noopener noreferrer">ドキュメント</a></li>
+            <li><a href="https://github.com/okawawaka/cinii-enhancer/issues" class="footer-link" target="_blank" rel="noopener noreferrer">不具合報告・要望</a></li>
+          </ul>
+        </div>
+        <div>
+          <div class="footer-col-title">仕様・ライセンス</div>
+          <ul class="footer-links">
+            <li><span>Manifest V3 準拠</span></li>
+            <li><span>MIT License (c) 2026</span></li>
+            <li><span>Version 1.0.0</span></li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="footer-bottom">
+        <div>&copy; 2026 okawawaka / CiNii QuickCite & Formatter</div>
+        <div>Designed with International Typographic Style</div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- =========================================================================
+   * 8. Client-side Interactive Script (Hero Demo)
+   * ========================================================================= -->
+  <script>
+    (() => {
+      'use strict';
+
+      // Demo Citation Data
+      const DEMO_CITATIONS = {
+        bibtex: `@article{jouhou2026,
+  author = {情報 太郎 and 音声 花子},
+  title = {音響音声学におけるフォルマント軌跡の数理モデル},
+  journal = {音響学会誌},
+  year = {2026}
+}`,
+        sist02: `情報 太郎, 音声 花子. 音響音声学におけるフォルマント軌跡の数理モデル. 音響学会誌. 2026, 82(4), pp. 210-218.`,
+        apa: `Jouhou, T., & Onsei, H. (2026). Mathematical models of formant trajectories in acoustic phonetics. Journal of the Acoustical Society, 82(4), 210-218.`,
+        custom: `情報 太郎・音声 花子 (2026)「音響音声学におけるフォルマント軌跡の数理モデル」『音響学会誌』82(4), pp.210-218.`
+      };
+
+      const codeEl = document.getElementById('demoCodePreview');
+      const tabs = document.querySelectorAll('.mockup-tab');
+      const quickBtn = document.getElementById('demoQuickCopy');
+      const btnLabel = document.getElementById('demoBtnLabel');
+      const toggleTagBtn = document.getElementById('demoToggleTag');
+      const abstractText = document.getElementById('demoAbstractText');
+
+      let currentFormat = 'bibtex';
+      let isTagClean = true;
+
+      const RAW_ABSTRACT = `&lt;jats:p&gt;母音フォルマント軌跡（&lt;jats:italic&gt;F&lt;/jats:italic&gt;&lt;jats:sub&gt;1&lt;/jats:sub&gt;・&lt;jats:italic&gt;F&lt;/jats:italic&gt;&lt;jats:sub&gt;2&lt;/jats:sub&gt;）の遷移区間を動的パラメータとして抽出し、音響的特徴量の弁別精度を検証した。&lt;/jats:p&gt;`;
+      const CLEAN_ABSTRACT = `母音フォルマント軌跡（F1・F2）の遷移区間を動的パラメータとして抽出し、音響的特徴量の弁別精度を検証した。`;
+
+      // Tab switching
+      tabs.forEach((tab) => {
+        tab.addEventListener('click', () => {
+          tabs.forEach((t) => t.classList.remove('active'));
+          tab.classList.add('active');
+
+          const fmt = tab.getAttribute('data-fmt');
+          currentFormat = fmt;
+          if (DEMO_CITATIONS[fmt]) {
+            codeEl.textContent = DEMO_CITATIONS[fmt];
+          }
+
+          const labelMap = {
+            bibtex: 'BibTeX コピー',
+            sist02: 'SIST02 コピー',
+            apa: 'APA コピー',
+            custom: 'カスタム コピー'
+          };
+          btnLabel.textContent = labelMap[fmt] || '引用コピー';
+        });
+      });
+
+      // Quick Copy simulation
+      quickBtn.addEventListener('click', async () => {
+        const textToCopy = DEMO_CITATIONS[currentFormat] || '';
+        try {
+          if (navigator.clipboard && navigator.clipboard.writeText) {
+            await navigator.clipboard.writeText(textToCopy);
+          }
+        } catch (_) {}
+
+        const originalText = btnLabel.textContent;
+        quickBtn.classList.add('is-copied');
+        btnLabel.textContent = 'コピー完了';
+
+        setTimeout(() => {
+          quickBtn.classList.remove('is-copied');
+          btnLabel.textContent = originalText;
+        }, 1500);
+      });
+
+      // Toggle raw HTML tag demo
+      toggleTagBtn.addEventListener('click', () => {
+        isTagClean = !isTagClean;
+        if (isTagClean) {
+          abstractText.textContent = CLEAN_ABSTRACT;
+          toggleTagBtn.textContent = '原文を表示';
+        } else {
+          abstractText.textContent = RAW_ABSTRACT;
+          toggleTagBtn.textContent = '整形表示に戻す';
+        }
+      });
+    })();
+  </script>
+</body>
+</html>
