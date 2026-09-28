@@ -168,13 +168,61 @@
     'ナカニシヤ出版': '京都',
     '思文閣出版': '京都',
     '臨川書店': '京都',
+    '世界思想社': '京都',
+    '人文書院': '京都',
+    '法律文化社': '京都',
+    '松籟社': '京都',
+    '京都大学': '京都',
     '名古屋大学出版会': '名古屋',
+    '名古屋大学': '名古屋',
     '大阪大学出版会': '大阪',
+    '大阪大学': '大阪',
     '関西大学出版部': '吹田',
     '北海道大学出版会': '札幌',
+    '北海道大学': '札幌',
     '東北大学出版会': '仙台',
+    '東北大学': '仙台',
     '九州大学出版会': '福岡',
+    '九州大学': '福岡',
     '広島大学出版会': '東広島',
+    '広島大学': '東広島',
+    // 東京の主要学術出版社
+    '東京大学出版会': '東京',
+    '汲古書院': '東京',
+    '勉誠出版': '東京',
+    '笠間書院': '東京',
+    '吉川弘文館': '東京',
+    '岩波書店': '東京',
+    '有斐閣': '東京',
+    'みすず書房': '東京',
+    '白水社': '東京',
+    '平凡社': '東京',
+    '筑摩書房': '東京',
+    '大修館書店': '東京',
+    '三省堂': '東京',
+    '研究社': '東京',
+    '開拓社': '東京',
+    'ひつじ書房': '東京',
+    'くろしお出版': '東京',
+    'サイエンス社': '東京',
+    '朝倉書店': '東京',
+    'オーム社': '東京',
+    '共立出版': '東京',
+    '裳華房': '東京',
+    '培風館': '東京',
+    '近代科学社': '東京',
+    'コロナ社': '東京',
+    '丸善出版': '東京',
+    '丸善': '東京',
+    '勁草書房': '東京',
+    '創文社': '東京',
+    '新曜社': '東京',
+    '誠信書房': '東京',
+    '金子書房': '東京',
+    '岩崎学術出版社': '東京',
+    '医学書院': '東京',
+    '南江堂': '東京',
+    '南山堂': '東京',
     // 海外主要大学・学術出版社
     'Oxford University Press': 'Oxford',
     'Cambridge University Press': 'Cambridge',
@@ -205,9 +253,9 @@
         return place;
       }
     }
-    // 日本の一般的な商業学術出版社で地方名が明記されていないものは、学術慣例上「東京」が圧倒的多数
+    // 日本の学術・専門出版社で地方名が明記されていないものは、学術慣例上「東京」が圧倒的多数
     if (itemType === 'book') {
-      if (/岩波|有斐閣|丸善|サイエンス社|朝倉|コロナ|オーム|共立|裳華房|培風館|近代科学|技術評論|翔泳|インプレス|勁草|創文|紀伊國屋|日経|光文社|文藝春秋|大修館|三省堂|研究社|開拓社|ひつじ書房|くろしお|明石書店|東京大学|早稲田|慶應|法政|中央公論|平凡社|吉川弘文館|みすず書房|白水社|筑摩書房|小学館|集英社|講談社|新潮社|ダイヤモンド社|東洋経済|PHP|岩崎学術|誠信書房|金子書房|医学書院|南江堂|南山堂|中山書店/.test(pubTrimmed)) {
+      if (/汲古|勉誠|笠間|吉川弘文|岩波|有斐閣|丸善|サイエンス|朝倉|コロナ|オーム|共立|裳華房|培風館|近代科学|技術評論|翔泳|インプレス|勁草|創文|紀伊國屋|日経|光文社|文藝春秋|大修館|三省堂|研究社|開拓社|ひつじ|くろしお|明石書店|東京大学|早稲田|慶應|法政|中央公論|平凡社|みすず|白水社|筑摩|小学館|集英社|講談社|新潮社|ダイヤモンド|東洋経済|PHP|岩崎学術|誠信|金子書房|医学書院|南江堂|南山堂|中山書店|新曜社|青土社|国書刊行会|雄山閣|東京書籍|明治書院/.test(pubTrimmed)) {
         return '東京';
       }
     }
@@ -242,6 +290,151 @@
     }
 
     return { place, publisher, year };
+  }
+
+  function parseJsonLdData(ld, meta) {
+    if (!ld || typeof ld !== 'object') return;
+
+    const checkNode = (node) => {
+      if (!node || typeof node !== 'object') return;
+
+      // 1. Item Type Classification
+      const type = String(node['@type'] || '');
+      const resourceType = String(node.resourceType || '');
+      if (
+        type.toLowerCase() === 'book' ||
+        type.toLowerCase() === 'bookseries' ||
+        resourceType.includes('図書') ||
+        resourceType.toLowerCase().includes('book')
+      ) {
+        meta.itemType = 'book';
+      } else if (
+        type.toLowerCase().includes('dissertation') ||
+        type.toLowerCase().includes('thesis') ||
+        resourceType.includes('学位論文') ||
+        resourceType.toLowerCase().includes('dissertation')
+      ) {
+        meta.itemType = 'dissertation';
+      } else if (
+        type.toLowerCase().includes('article') ||
+        resourceType.includes('論文')
+      ) {
+        if (meta.itemType !== 'book' && meta.itemType !== 'dissertation') {
+          meta.itemType = 'article';
+        }
+      }
+
+      // 2. Title
+      if (!meta.title) {
+        if (typeof node.name === 'string') meta.title = node.name.trim();
+        else if (typeof node['dc:title'] === 'string') meta.title = node['dc:title'].trim();
+        else if (Array.isArray(node['dc:title'])) {
+          const jaTitle = node['dc:title'].find((t) => t && (t['@language'] === 'ja' || !t['@language'])) || node['dc:title'][0];
+          if (jaTitle) meta.title = String(jaTitle['@value'] || jaTitle).trim();
+        }
+      }
+
+      // 3. Authors / Creator
+      if (!meta.authors || meta.authors.length === 0) {
+        meta.authors = meta.authors || [];
+        const creators = Array.isArray(node.creator) ? node.creator : (node.creator ? [node.creator] : []);
+        creators.forEach((c) => {
+          if (typeof c === 'string') {
+            const trimmed = c.trim();
+            if (trimmed && !meta.authors.includes(trimmed)) meta.authors.push(trimmed);
+          } else if (c && c['foaf:name']) {
+            const names = Array.isArray(c['foaf:name']) ? c['foaf:name'] : [c['foaf:name']];
+            names.forEach((fn) => {
+              const val = String(typeof fn === 'string' ? fn : (fn['@value'] || '')).trim();
+              if (val && !meta.authors.includes(val)) meta.authors.push(val);
+            });
+          }
+        });
+        if (meta.authors.length === 0 && node.author) {
+          const list = Array.isArray(node.author) ? node.author : [node.author];
+          list.forEach((a) => {
+            const name = String(typeof a === 'string' ? a : (a.name || '')).trim();
+            if (name && !meta.authors.includes(name)) meta.authors.push(name);
+          });
+        }
+      }
+
+      // 4. Publisher & Publication Place (dcterms:publisher / publisher / dc:publisher)
+      const pubList = node['dcterms:publisher'] || node.publisher || node['dc:publisher'];
+      if (pubList) {
+        const arr = Array.isArray(pubList) ? pubList : [pubList];
+        arr.forEach((p) => {
+          if (typeof p === 'string') {
+            const parsed = parsePublicationInfo(p);
+            if (!meta.publicationPlace && parsed.place) meta.publicationPlace = parsed.place;
+            if (!meta.publisher && parsed.publisher) meta.publisher = parsed.publisher;
+            if (!meta.year && parsed.year) meta.year = parsed.year;
+          } else if (p && typeof p === 'object') {
+            if (!meta.publicationPlace && (p.publicationPlace || p['cinii:publicationPlace'] || p['prism:publicationPlace'])) {
+              meta.publicationPlace = String(p.publicationPlace || p['cinii:publicationPlace'] || p['prism:publicationPlace']).trim();
+            }
+            if (!meta.publisher && (p['dc:publisher'] || p.name || p.publisher || p['rdfs:label'])) {
+              const pubName = String(p['dc:publisher'] || p.name || p.publisher || p['rdfs:label']).trim();
+              const parsed = parsePublicationInfo(pubName);
+              if (!meta.publicationPlace && parsed.place) meta.publicationPlace = parsed.place;
+              if (parsed.publisher) meta.publisher = parsed.publisher;
+              else meta.publisher = pubName;
+              if (!meta.year && parsed.year) meta.year = parsed.year;
+            }
+            if (!meta.year && (p['prism:publicationDate'] || p.publicationDate || p['dc:date'])) {
+              const m = String(p['prism:publicationDate'] || p.publicationDate || p['dc:date']).match(/\b(19\d\d|20\d\d)\b/);
+              if (m) meta.year = m[1];
+            }
+          }
+        });
+      }
+
+      // Fallback direct publicationPlace / publisher / year on root node
+      if (!meta.publicationPlace && (node.publicationPlace || node['cinii:publicationPlace'] || node['prism:publicationPlace'])) {
+        meta.publicationPlace = String(node.publicationPlace || node['cinii:publicationPlace'] || node['prism:publicationPlace']).trim();
+      }
+      if (!meta.publisher && typeof node.publisher === 'string') {
+        const parsed = parsePublicationInfo(node.publisher);
+        if (!meta.publicationPlace && parsed.place) meta.publicationPlace = parsed.place;
+        if (parsed.publisher) meta.publisher = parsed.publisher;
+        if (!meta.year && parsed.year) meta.year = parsed.year;
+      }
+      if (!meta.year && (node['dc:date'] || node.datePublished || node['prism:publicationDate'])) {
+        const d = node['dc:date'] || node.datePublished || node['prism:publicationDate'];
+        const m = String(d).match(/\b(19\d\d|20\d\d)\b/);
+        if (m) meta.year = m[1];
+      }
+
+      // 5. Journal, Volume, Issue, Pages, DOI, ISBN
+      if (!meta.journal && (node['prism:publicationName'] || node.publicationName)) {
+        meta.journal = String(node['prism:publicationName'] || node.publicationName).trim();
+      }
+      if (!meta.volume && (node['prism:volume'] || node.volumeNumber)) {
+        meta.volume = String(node['prism:volume'] || node.volumeNumber).trim();
+      }
+      if (!meta.issue && (node['prism:number'] || node.issueNumber)) {
+        meta.issue = String(node['prism:number'] || node.issueNumber).trim();
+      }
+      if (!meta.firstPage && (node['prism:startingPage'] || node.pageStart)) {
+        meta.firstPage = String(node['prism:startingPage'] || node.pageStart).trim();
+      }
+      if (!meta.lastPage && (node['prism:endingPage'] || node.pageEnd)) {
+        meta.lastPage = String(node['prism:endingPage'] || node.pageEnd).trim();
+      }
+      if (!meta.doi && (node['prism:doi'] || node.doi)) {
+        meta.doi = String(node['prism:doi'] || node.doi).trim();
+      }
+      if (!meta.isbn && (node['prism:isbn'] || node.isbn)) {
+        meta.isbn = String(node['prism:isbn'] || node.isbn).trim();
+        meta.itemType = 'book';
+      }
+    };
+
+    if (Array.isArray(ld['@graph'])) {
+      ld['@graph'].forEach(checkNode);
+    } else {
+      checkNode(ld);
+    }
   }
 
   // ==============================================================================
@@ -289,7 +482,10 @@
       else if (name === 'citation_publisher') meta.publisher = content;
       else if (name === 'citation_publication_place' || name === 'citation_address') meta.publicationPlace = content;
       else if (name === 'citation_issn') meta.issn = content;
-      else if (name === 'citation_isbn') meta.isbn = content;
+      else if (name === 'citation_isbn') {
+        meta.isbn = content;
+        meta.itemType = 'book';
+      }
     });
 
     // 2. OpenGraph Fallback
@@ -304,35 +500,7 @@
       if (jsonLdEl) {
         const ld = JSON.parse(jsonLdEl.textContent);
         if (ld) {
-          const checkNode = (node) => {
-            if (!node || typeof node !== 'object') return;
-            if (!meta.title && node.name) meta.title = node.name;
-            if (meta.authors.length === 0 && node.author) {
-              const list = Array.isArray(node.author) ? node.author : [node.author];
-              list.forEach((a) => {
-                const name = typeof a === 'string' ? a : (a.name || '');
-                if (name && !meta.authors.includes(name)) meta.authors.push(name);
-              });
-            }
-            if (!meta.year && (node.datePublished || node['prism:publicationDate'])) {
-              const d = node.datePublished || node['prism:publicationDate'];
-              const m = String(d).match(/\b(19\d\d|20\d\d)\b/);
-              if (m) meta.year = m[1];
-            }
-            if (!meta.publicationPlace && (node.publicationPlace || node['cinii:publicationPlace'] || node['prism:publicationPlace'])) {
-              meta.publicationPlace = String(node.publicationPlace || node['cinii:publicationPlace'] || node['prism:publicationPlace']).trim();
-            }
-            if (!meta.publisher && (node.publisher || node['dc:publisher'] || node['dcterms:publisher'])) {
-              const pub = node.publisher || node['dc:publisher'] || node['dcterms:publisher'];
-              meta.publisher = typeof pub === 'string' ? pub : (pub.name || '');
-            }
-          };
-
-          if (Array.isArray(ld['@graph'])) {
-            ld['@graph'].forEach(checkNode);
-          } else {
-            checkNode(ld);
-          }
+          parseJsonLdData(ld, meta);
         }
       }
     } catch (_) {}
@@ -367,18 +535,22 @@
     }
 
     // 5. Item Type Classification
-    if (
+    const isBookDom =
       currentUrl.includes('/books/') ||
-      meta.isbn ||
-      document.querySelector('.book_class, dl.book_class, [class*="book_class"], .classIcon-book') ||
-      document.querySelector('meta[name="citation_isbn"]')
-    ) {
-      meta.itemType = 'book';
-    } else if (
+      Boolean(meta.isbn) ||
+      Boolean(document.querySelector('.book_class, dl.book_class, [class*="book_class"], .classIcon-book, img[src*="classIcon-book"], [alt*="図書"]')) ||
+      Boolean(document.querySelector('meta[name="citation_isbn"]')) ||
+      Boolean(document.querySelector('.cinii-enh-resource-type, .item-type, .resource-type, .badge, .tag')?.textContent.includes('図書'));
+
+    const isDissertationDom =
       currentUrl.includes('/dissertations/') ||
-      document.querySelector('.paper-dissertation_class, dl.paper-dissertation_class, .classIcon-dissertation') ||
-      document.querySelector('meta[name="citation_dissertation_institution"]')
-    ) {
+      Boolean(document.querySelector('.paper-dissertation_class, dl.paper-dissertation_class, [class*="dissertation"], .classIcon-dissertation, img[src*="classIcon-dissertation"], [alt*="学位論文"]')) ||
+      Boolean(document.querySelector('meta[name="citation_dissertation_institution"]')) ||
+      Boolean(document.querySelector('.cinii-enh-resource-type, .item-type, .resource-type, .badge, .tag')?.textContent.includes('学位論文'));
+
+    if (meta.itemType === 'book' || (isBookDom && meta.itemType !== 'dissertation')) {
+      meta.itemType = 'book';
+    } else if (meta.itemType === 'dissertation' || isDissertationDom) {
       meta.itemType = 'dissertation';
     } else {
       meta.itemType = 'article';
@@ -392,9 +564,13 @@
       const val = dd.textContent.trim();
       if (!val) return;
 
-      if (/出版地|発行地|刊行地/.test(label)) {
+      if (/ISBN/i.test(label)) {
+        if (!meta.isbn) meta.isbn = val;
+        meta.itemType = 'book';
+      } else if (/出版地|発行地|刊行地/.test(label)) {
         if (!meta.publicationPlace) meta.publicationPlace = val.replace(/[\[\]]/g, '').trim();
       } else if (/出版事項|発行事項|出版・頒布事項/.test(label)) {
+        if (meta.itemType !== 'dissertation') meta.itemType = 'book';
         const parsed = parsePublicationInfo(val);
         if (!meta.publicationPlace && parsed.place) meta.publicationPlace = parsed.place;
         if (!meta.publisher && parsed.publisher) meta.publisher = parsed.publisher;
@@ -596,19 +772,27 @@
     if (doiMatch) doi = doiMatch[0];
 
     let itemType = 'article';
-    if (
-      item.querySelector('.book_class, dl.book_class') ||
+    const isBookSignal =
+      Boolean(item.querySelector('.book_class, dl.book_class, [class*="book_class"], .classIcon-book, img[src*="classIcon-book"], [alt*="図書"]')) ||
       item.classList.contains('book_class') ||
       itemHtml.includes('classIcon-book.svg') ||
-      href.includes('/books/')
-    ) {
-      itemType = 'book';
-    } else if (
-      item.querySelector('.paper-dissertation_class, dl.paper-dissertation_class') ||
+      itemHtml.includes('icon_book') ||
+      itemHtml.includes('tagIcon-book.svg') ||
+      href.includes('/books/') ||
+      /\b図書\b|\[図書\]|（図書）|図書\(book\)/i.test(textContent) ||
+      /ISBN[\s:：]*978|978-4-/i.test(textContent) ||
+      Boolean(item.querySelector('dt, th')?.textContent.includes('ISBN'));
+
+    const isDissertationSignal =
+      Boolean(item.querySelector('.paper-dissertation_class, dl.paper-dissertation_class, [class*="dissertation"], .classIcon-dissertation, img[src*="classIcon-dissertation"], [alt*="学位論文"]')) ||
       item.classList.contains('paper-dissertation_class') ||
       itemHtml.includes('classIcon-dissertation.svg') ||
-      href.includes('/dissertations/')
-    ) {
+      href.includes('/dissertations/') ||
+      /\b学位論文\b|\[学位論文\]|（学位論文）/i.test(textContent);
+
+    if (isBookSignal && !isDissertationSignal) {
+      itemType = 'book';
+    } else if (isDissertationSignal) {
       itemType = 'dissertation';
     }
 
@@ -638,9 +822,12 @@
         if (!dd) return;
         const val = dd.textContent.trim();
         if (!val) return;
-        if (/出版地|発行地|刊行地/.test(label) && !publicationPlace) {
+        if (/ISBN/i.test(label)) {
+          if (itemType !== 'dissertation') itemType = 'book';
+        } else if (/出版地|発行地|刊行地/.test(label) && !publicationPlace) {
           publicationPlace = val.replace(/[\[\]]/g, '').trim();
         } else if (/出版事項|発行事項|出版・頒布事項/.test(label)) {
+          if (itemType !== 'dissertation') itemType = 'book';
           const parsed = parsePublicationInfo(val);
           if (!publicationPlace && parsed.place) publicationPlace = parsed.place;
           if (!publisher && parsed.publisher) publisher = parsed.publisher;
@@ -1660,6 +1847,30 @@
 
     actionsWrapper.appendChild(citeBtn);
     titleEl.appendChild(actionsWrapper);
+
+    // 3. Async background completion via official JSON-LD (.json) endpoint on CiNii CRID pages
+    if (meta.url && meta.url.includes('/crid/')) {
+      const jsonUrl = meta.url + '.json';
+      fetch(jsonUrl)
+        .then((res) => {
+          if (res.ok) return res.json();
+          throw new Error('HTTP ' + res.status);
+        })
+        .then((data) => {
+          parseJsonLdData(data, meta);
+          if (meta.publisher) {
+            const parsed = parsePublicationInfo(meta.publisher);
+            if (!meta.publicationPlace && parsed.place) meta.publicationPlace = parsed.place;
+            if (parsed.publisher) meta.publisher = parsed.publisher;
+          }
+          if (!meta.publicationPlace && meta.publisher) {
+            meta.publicationPlace = inferPublicationPlace(meta.publisher, meta.itemType);
+          }
+        })
+        .catch(() => {
+          // Fallback silently if offline or JSON endpoint unavailable
+        });
+    }
   }
 
   function enhanceExportSection() {
