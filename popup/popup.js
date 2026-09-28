@@ -10,7 +10,11 @@ const DEFAULT_SETTINGS = {
   enableAbstractCleanup: true,
   preferredCitation: 'bibtex',
   customTemplate: '{authors} ({year})「{title}」『{journal}』{volume}({issue}), pp.{pages}. {url}',
-  customTemplateLabel: 'カスタム'
+  customTemplateArticle: '{authors} ({year})「{title}」『{journal}』{volume}({issue}), pp.{pages}. {url}',
+  customTemplateBook: '{authors} ({year})『{title}』{publisher}. {url}',
+  customTemplateDissertation: '{authors} ({year})『{title}』博士論文, {publisher}. {url}',
+  customTemplateLabel: 'カスタム',
+  enableItemTypeTemplate: true
 };
 
 document.addEventListener('DOMContentLoaded', async () => {

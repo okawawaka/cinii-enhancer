@@ -671,16 +671,19 @@ a.cinii-enh-btn-pdf span {
 .cinii-enh-header-settings-li {
   display: inline-flex;
   align-items: center;
+  height: 48px; /* CiNii ヘッダーの基準高さに合致 */
   list-style: none;
   vertical-align: middle;
+  padding: 0 4px;
+  margin: 0;
 }
 
 .cinii-enh-header-settings-btn {
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  padding: 4px 10px;
-  margin: 0 4px;
+  padding: 5px 11px;
+  margin: 9px 4px; /* 上下に適切な余白を確保しヘッダー中央に整列 */
   font-family: var(--cinii-font);
   font-size: 12px;
   font-weight: 500;
@@ -707,6 +710,14 @@ a.cinii-enh-btn-pdf span {
   height: 14px;
   vertical-align: -2px;
   stroke: currentColor;
+}
+
+/* ヘッダーの別コンテナに配置された場合の上下マージン保証 */
+.navbar-topcontent .cinii-enh-header-settings-btn,
+.headermenu .cinii-enh-header-settings-btn,
+header .cinii-enh-header-settings-btn {
+  margin-top: 10px;
+  margin-bottom: 10px;
 }
 
 /* ------------------------------------------------------------------------------
@@ -813,6 +824,52 @@ a.cinii-enh-btn-pdf span {
 .cinii-enh-form-textarea:focus {
   outline: none;
   border-color: var(--cinii-blue);
+}
+
+/* Item Type Switcher Tabs (論文 / 図書 / 学位論文) */
+.cinii-enh-template-tabs {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  border-bottom: 2px solid var(--cinii-border-medium);
+  margin-top: 4px;
+  margin-bottom: 8px;
+}
+
+.cinii-enh-template-tab-btn {
+  padding: 6px 12px;
+  font-family: var(--cinii-font);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--cinii-text-muted);
+  background-color: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  user-select: none;
+}
+
+.cinii-enh-template-tab-btn:hover {
+  color: var(--cinii-blue);
+  background-color: var(--cinii-blue-subtle);
+}
+
+.cinii-enh-template-tab-btn.is-active {
+  color: var(--cinii-blue);
+  border-bottom-color: var(--cinii-blue);
+  background-color: #ffffff;
+}
+
+.cinii-enh-template-pane {
+  display: none;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.cinii-enh-template-pane.is-active {
+  display: flex;
 }
 
 /* Variable Insertion Chips */

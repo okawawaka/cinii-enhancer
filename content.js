@@ -20,7 +20,11 @@
     enableAbstractCleanup: true,
     preferredCitation: 'bibtex',
     customTemplate: '{authors} ({year})「{title}」『{journal}』{volume}({issue}), pp.{pages}. {url}',
-    customTemplateLabel: 'カスタム'
+    customTemplateArticle: '{authors} ({year})「{title}」『{journal}』{volume}({issue}), pp.{pages}. {url}',
+    customTemplateBook: '{authors} ({year})『{title}』{publisher}. {url}',
+    customTemplateDissertation: '{authors} ({year})『{title}』博士論文, {publisher}. {url}',
+    customTemplateLabel: 'カスタム',
+    enableItemTypeTemplate: true
   };
 
   // SVGs (Strictly NO EMOJIS, scholarly vector icons)
@@ -291,12 +295,33 @@
       }
     }
 
-    // Look for direct full-text link in CiNii DOM
-    if (!meta.pdfUrl) {
-      const direct = detectFullTextInElement(document);
-      if (direct && direct.url) {
-        meta.pdfUrl = direct.url;
-        meta.fullTextLabel = direct.label;
+    // 5. Determine precise itemType (book, dissertation, or article)
+    const currentUrl = window.location.href;
+    if (
+      currentUrl.includes('/books/') ||
+      meta.isbn ||
+      document.querySelector('.book_class, dl.book_class, [class*="book_class"], .classIcon-book') ||
+      document.querySelector('meta[name="citation_isbn"]')
+    ) {
+      meta.itemType = 'book';
+    } else if (
+      currentUrl.includes('/dissertations/') ||
+      document.querySelector('.paper-dissertation_class, dl.paper-dissertation_class, .classIcon-dissertation') ||
+      document.querySelector('meta[name="citation_dissertation_institution"]')
+    ) {
+      meta.itemType = 'dissertation';
+    } else {
+      meta.itemType = 'article';
+    }
+
+    // 6. Look for publisher or institution in DOM if empty
+    if (!meta.publisher) {
+      const pubEl = document.querySelector('.item_publisher, .publisher, dd[class*="publisher"], .detail_publisher, .publisher-name');
+      if (pubEl) {
+        meta.publisher = pubEl.textContent.trim();
+      } else if (meta.itemType === 'dissertation') {
+        const instEl = document.querySelector('.institution, [class*="institution"], dd[class*="institution"]');
+        if (instEl) meta.publisher = instEl.textContent.trim();
       }
     }
 
@@ -320,28 +345,62 @@
       .split(/\s+/)[0]
       .toLowerCase();
     const citeKey = `${authorKey}${yearKey}${firstWord ? '_' + firstWord : ''}`;
-
     const authorStr = meta.authors.join(' and ') || 'Unknown';
+
+    let entryType = 'article';
+    if (meta.itemType === 'book') entryType = 'book';
+    else if (meta.itemType === 'dissertation') entryType = 'phdthesis';
 
     const fields = [
       `  title     = {{${meta.title || 'Untitled'}}}`,
       `  author    = {${authorStr}}`
     ];
 
-    if (meta.journal) fields.push(`  journal   = {${meta.journal}}`);
-    if (meta.year) fields.push(`  year      = {${meta.year}}`);
-    if (meta.volume) fields.push(`  volume    = {${meta.volume}}`);
-    if (meta.issue) fields.push(`  number    = {${meta.issue}}`);
-    if (meta.pages) fields.push(`  pages     = {${meta.pages.replace('-', '--')}}`);
-    if (meta.publisher) fields.push(`  publisher = {${meta.publisher}}`);
+    if (entryType === 'book') {
+      if (meta.publisher) fields.push(`  publisher = {${meta.publisher}}`);
+      if (meta.year) fields.push(`  year      = {${meta.year}}`);
+      if (meta.isbn) fields.push(`  isbn      = {${meta.isbn}}`);
+    } else if (entryType === 'phdthesis') {
+      if (meta.publisher) fields.push(`  school    = {${meta.publisher}}`);
+      if (meta.year) fields.push(`  year      = {${meta.year}}`);
+    } else {
+      if (meta.journal) fields.push(`  journal   = {${meta.journal}}`);
+      if (meta.year) fields.push(`  year      = {${meta.year}}`);
+      if (meta.volume) fields.push(`  volume    = {${meta.volume}}`);
+      if (meta.issue) fields.push(`  number    = {${meta.issue}}`);
+      if (meta.pages) fields.push(`  pages     = {${meta.pages.replace('-', '--')}}`);
+      if (meta.publisher) fields.push(`  publisher = {${meta.publisher}}`);
+    }
+
     if (meta.doi) fields.push(`  doi       = {${meta.doi}}`);
     if (meta.url) fields.push(`  url       = {${meta.url}}`);
 
-    return `@${meta.itemType || 'article'}{${citeKey},\n${fields.join(',\n')}\n}`;
+    return `@${entryType}{${citeKey},\n${fields.join(',\n')}\n}`;
   }
 
   function generateSIST02(meta) {
     const authors = meta.authors.join(', ') || '著者不明';
+
+    // 図書（単行本・書籍）
+    if (meta.itemType === 'book') {
+      let res = `${authors}. 『${meta.title}』.`;
+      if (meta.publisher) res += ` ${meta.publisher},`;
+      if (meta.year) res += ` ${meta.year}.`;
+      if (meta.pages) res += ` ${meta.pages}p.`;
+      if (meta.url) res += ` ${meta.url}`;
+      return res.replace(/\s{2,}/g, ' ').trim();
+    }
+
+    // 学位論文
+    if (meta.itemType === 'dissertation') {
+      let res = `${authors}. 『${meta.title}』. 博士論文,`;
+      if (meta.publisher) res += ` ${meta.publisher},`;
+      if (meta.year) res += ` ${meta.year}.`;
+      if (meta.url) res += ` ${meta.url}`;
+      return res.replace(/\s{2,}/g, ' ').trim();
+    }
+
+    // 雑誌・紀要論文
     let res = `${authors}. ${meta.title}.`;
     if (meta.journal) res += ` ${meta.journal}.`;
 
@@ -387,10 +446,28 @@
     }
 
     const yearStr = meta.year ? `(${meta.year})` : '(n.d.)';
-    let res = `${authorStr} ${yearStr}. ${meta.title}.`;
 
+    // 図書: Author. (Year). *Book title*. Publisher. DOI/URL
+    if (meta.itemType === 'book') {
+      let res = `${authorStr} ${yearStr}. *${meta.title}*.`;
+      if (meta.publisher) res += ` ${meta.publisher}.`;
+      if (meta.doi) res += ` https://doi.org/${meta.doi}`;
+      else if (meta.url) res += ` ${meta.url}`;
+      return res.trim();
+    }
+
+    // 学位論文: Author. (Year). *Title* [Doctoral dissertation, Institution]. URL
+    if (meta.itemType === 'dissertation') {
+      const inst = meta.publisher ? `, ${meta.publisher}` : '';
+      let res = `${authorStr} ${yearStr}. *${meta.title}* [Doctoral dissertation${inst}].`;
+      if (meta.url) res += ` ${meta.url}`;
+      return res.trim();
+    }
+
+    // 論文
+    let res = `${authorStr} ${yearStr}. ${meta.title}.`;
     if (meta.journal) {
-      res += ` ${meta.journal}`;
+      res += ` *${meta.journal}*`;
       if (meta.volume) {
         res += `, ${meta.volume}`;
         if (meta.issue) res += `(${meta.issue})`;
@@ -413,6 +490,18 @@
   function generateMarkdown(meta) {
     const authors = meta.authors.join(', ') || '著者不明';
     const year = meta.year ? ` (${meta.year})` : '';
+    const link = meta.url ? `[${meta.title}](${meta.url})` : meta.title;
+
+    if (meta.itemType === 'book') {
+      const pub = meta.publisher ? ` ${meta.publisher}.` : '';
+      return `- ${authors}${year}. 『${link}』.${pub}`;
+    }
+
+    if (meta.itemType === 'dissertation') {
+      const inst = meta.publisher ? `, ${meta.publisher}` : '';
+      return `- ${authors}${year}. 『${link}』(博士論文${inst}).`;
+    }
+
     let details = '';
     if (meta.journal) {
       details += ` *${meta.journal}*`;
@@ -420,12 +509,24 @@
       if (meta.issue) details += ` No.${meta.issue}`;
       if (meta.pages) details += `, pp.${meta.pages}`;
     }
-    const link = meta.url ? `[${meta.title}](${meta.url})` : meta.title;
-    return `${authors}${year}. ${link}.${details}`;
+    return `${authors}${year}. 「${link}」.${details}`;
   }
 
   function generateMLA(meta) {
     const author = meta.authors[0] || 'Unknown';
+
+    if (meta.itemType === 'book') {
+      let res = `${author}. *${meta.title}*.`;
+      if (meta.publisher) res += ` ${meta.publisher},`;
+      if (meta.year) res += ` ${meta.year}.`;
+      return res.trim();
+    }
+
+    if (meta.itemType === 'dissertation') {
+      let res = `${author}. *${meta.title}*. ${meta.year || 'n.d.'}. ${meta.publisher || 'University'}, PhD dissertation.`;
+      return res.trim();
+    }
+
     let res = `${author}. "${meta.title}."`;
     if (meta.journal) res += ` ${meta.journal}`;
     if (meta.volume) res += `, vol. ${meta.volume}`;
@@ -441,6 +542,18 @@
   function generateChicago(meta) {
     const author = meta.authors[0] || 'Unknown';
     const year = meta.year || 'n.d.';
+
+    if (meta.itemType === 'book') {
+      let res = `${author}. ${year}. *${meta.title}*.`;
+      if (meta.publisher) res += ` ${meta.publisher}.`;
+      return res.trim();
+    }
+
+    if (meta.itemType === 'dissertation') {
+      let res = `${author}. ${year}. "${meta.title}." PhD diss., ${meta.publisher || 'University'}.`;
+      return res.trim();
+    }
+
     let res = `${author}. ${year}. "${meta.title}."`;
     if (meta.journal) {
       res += ` ${meta.journal}`;
@@ -455,13 +568,18 @@
   }
 
   function generateRIS(meta) {
+    let ty = 'JOUR';
+    if (meta.itemType === 'book') ty = 'BOOK';
+    else if (meta.itemType === 'dissertation') ty = 'THES';
+
     const lines = [
-      'TY  - JOUR',
+      `TY  - ${ty}`,
       `TI  - ${meta.title || 'Untitled'}`
     ];
     (meta.authors || []).forEach((a) => lines.push(`AU  - ${a}`));
     if (meta.journal) lines.push(`JO  - ${meta.journal}`);
     if (meta.year) lines.push(`PY  - ${meta.year}`);
+    if (meta.publisher) lines.push(`PB  - ${meta.publisher}`);
     if (meta.volume) lines.push(`VL  - ${meta.volume}`);
     if (meta.issue) lines.push(`IS  - ${meta.issue}`);
     if (meta.firstPage) lines.push(`SP  - ${meta.firstPage}`);
@@ -473,11 +591,12 @@
   }
 
   function generateTSV(meta) {
-    const headers = ['タイトル', '著者', '収録刊行物', '巻', '号', 'ページ', '出版年', 'DOI', 'URL'];
+    const headers = ['タイトル', '著者', '種別', '収録刊行物/出版社', '巻', '号', 'ページ', '出版年', 'DOI', 'URL'];
     const row = [
       meta.title || '',
       (meta.authors || []).join('; '),
-      meta.journal || '',
+      meta.itemType || 'article',
+      meta.journal || meta.publisher || '',
       meta.volume || '',
       meta.issue || '',
       meta.pages || '',
@@ -489,7 +608,17 @@
   }
 
   function generateCustomCitation(meta, templateStr) {
-    const tmpl = templateStr || userSettings.customTemplate || '{authors} ({year})「{title}」『{journal}』{volume}({issue}), pp.{pages}. {url}';
+    let tmpl = templateStr;
+    if (!tmpl || userSettings.enableItemTypeTemplate !== false) {
+      if (meta.itemType === 'book') {
+        tmpl = templateStr || userSettings.customTemplateBook || '{authors} ({year})『{title}』{publisher}. {url}';
+      } else if (meta.itemType === 'dissertation') {
+        tmpl = templateStr || userSettings.customTemplateDissertation || '{authors} ({year})『{title}』博士論文, {publisher}. {url}';
+      } else {
+        tmpl = templateStr || userSettings.customTemplateArticle || userSettings.customTemplate || '{authors} ({year})「{title}」『{journal}』{volume}({issue}), pp.{pages}. {url}';
+      }
+    }
+
     const authorsStr = (meta.authors && meta.authors.length > 0) ? meta.authors.join(', ') : '著者不明';
     const firstAuthor = (meta.authors && meta.authors[0]) ? meta.authors[0] : '著者不明';
 
@@ -506,7 +635,8 @@
       '{lastPage}': meta.lastPage || '',
       '{doi}': meta.doi ? `https://doi.org/${meta.doi}` : '',
       '{url}': meta.url || '',
-      '{publisher}': meta.publisher || ''
+      '{publisher}': meta.publisher || '',
+      '{isbn}': meta.isbn || ''
     };
 
     let result = tmpl;
@@ -712,8 +842,8 @@
     const modal = document.createElement('div');
     modal.className = 'cinii-enh-modal cinii-enh-settings-modal';
 
-    // Sample metadata for live preview
-    const sampleMeta = {
+    // Sample metadata for live previews across different item types
+    const sampleMetaArticle = {
       title: 'CiNii Researchにおける文献情報管理と引用機能の高度化',
       authors: ['情報 太郎', '学術 花子'],
       year: '2026',
@@ -724,8 +854,33 @@
       firstPage: '120',
       lastPage: '135',
       doi: '10.1234/example.2026.001',
-      url: 'https://cir.nii.ac.jp/crid/1390000000000000000'
+      url: 'https://cir.nii.ac.jp/crid/1390000000000000000',
+      itemType: 'article'
     };
+
+    const sampleMetaBook = {
+      title: '音響と言語処理の数理的基礎',
+      authors: ['言語 健一', '音響 律子'],
+      year: '2024',
+      publisher: 'サイエンス社',
+      isbn: '978-4-00-000000-0',
+      url: 'https://cir.nii.ac.jp/crid/1130000000000000000',
+      itemType: 'book'
+    };
+
+    const sampleMetaDissertation = {
+      title: '深層学習に基づく音響特徴抽出と音声解析手法の研究',
+      authors: ['研究 幸雄'],
+      year: '2025',
+      publisher: '東京大学',
+      url: 'https://cir.nii.ac.jp/crid/1110000000000000000',
+      itemType: 'dissertation'
+    };
+
+    const tmplArticle = userSettings.customTemplateArticle || userSettings.customTemplate || '{authors} ({year})「{title}」『{journal}』{volume}({issue}), pp.{pages}. {url}';
+    const tmplBook = userSettings.customTemplateBook || '{authors} ({year})『{title}』{publisher}. {url}';
+    const tmplDissertation = userSettings.customTemplateDissertation || '{authors} ({year})『{title}』博士論文, {publisher}. {url}';
+    const enableItemType = userSettings.enableItemTypeTemplate !== false;
 
     modal.innerHTML = `
       <div class="cinii-enh-modal-header">
@@ -742,7 +897,7 @@
             クイックコピー優先フォーマット
           </label>
           <div class="cinii-enh-form-help">
-            タイトル右横のボタン（例:「BibTeX」）をクリックした際に、1クリックで即時コピーされる形式です。
+            タイトル右横のボタンをクリックした際に、1クリックで即時コピーされる形式です。
           </div>
           <select id="setting-preferred-format" class="cinii-enh-form-select">
             <option value="bibtex">BibTeX (LaTeX / Typst)</option>
@@ -756,49 +911,105 @@
           </select>
         </div>
 
-        <!-- 2. Custom Citation Template Editor -->
+        <!-- 2. Custom Citation Template Editor with Item-Type Tabs -->
         <div class="cinii-enh-form-group cinii-enh-custom-template-section">
           <div class="cinii-enh-form-header-row">
-            <label class="cinii-enh-form-label" for="setting-custom-template">
-              カスタム引用テンプレート設定
+            <label class="cinii-enh-form-label">
+              カスタム引用テンプレート設定（種別別）
             </label>
             <div class="cinii-enh-template-label-input-wrap">
               <span class="cinii-enh-sublabel">ボタン表示名:</span>
               <input type="text" id="setting-custom-label" class="cinii-enh-form-input cinii-enh-form-input-sm" value="${escapeHtml(userSettings.customTemplateLabel || 'カスタム')}" placeholder="ボタン名 (例: カスタム)">
             </div>
           </div>
-          <div class="cinii-enh-form-help">
-            波括弧の変数（例: <code>{title}</code>）が文献情報に自動置換されます。
+          
+          <div class="cinii-enh-toggle-row" style="margin-top: 4px; padding: 6px 10px;">
+            <div class="cinii-enh-toggle-info">
+              <span class="cinii-enh-toggle-title" style="font-size: 11.5px;">文献種別ごとに自動でテンプレートを使い分ける</span>
+              <span class="cinii-enh-toggle-desc">有効時、本には図書用、論文には論文用の設定を自動適用します（推奨）。</span>
+            </div>
+            <label class="cinii-enh-toggle-control" for="setting-enable-itemtype-template">
+              <input type="checkbox" id="setting-enable-itemtype-template" ${enableItemType ? 'checked' : ''}>
+              <span class="cinii-enh-toggle-track"></span>
+              <span id="badge-enable-itemtype-template" class="cinii-enh-status-badge ${enableItemType ? 'cinii-enh-badge-on' : 'cinii-enh-badge-off'}">
+                ${enableItemType ? '有効' : '無効'}
+              </span>
+            </label>
           </div>
 
-          <!-- Variable insertion chips -->
-          <div class="cinii-enh-chips-bar">
-            <span class="cinii-enh-chips-title">変数を挿入:</span>
-            <button type="button" class="cinii-enh-chip" data-var="{title}">{title} タイトル</button>
-            <button type="button" class="cinii-enh-chip" data-var="{authors}">{authors} 著者一覧</button>
-            <button type="button" class="cinii-enh-chip" data-var="{firstAuthor}">{firstAuthor} 筆頭著者</button>
-            <button type="button" class="cinii-enh-chip" data-var="{year}">{year} 出版年</button>
-            <button type="button" class="cinii-enh-chip" data-var="{journal}">{journal} 収録誌名</button>
-            <button type="button" class="cinii-enh-chip" data-var="{volume}">{volume} 巻</button>
-            <button type="button" class="cinii-enh-chip" data-var="{issue}">{issue} 号</button>
-            <button type="button" class="cinii-enh-chip" data-var="{pages}">{pages} ページ</button>
-            <button type="button" class="cinii-enh-chip" data-var="{doi}">{doi} DOI</button>
-            <button type="button" class="cinii-enh-chip" data-var="{url}">{url} URL</button>
+          <!-- Item Type Switcher Tabs -->
+          <div class="cinii-enh-template-tabs">
+            <button type="button" class="cinii-enh-template-tab-btn is-active" data-tab="article">論文（雑誌・紀要）</button>
+            <button type="button" class="cinii-enh-template-tab-btn" data-tab="book">図書（単行本・書籍）</button>
+            <button type="button" class="cinii-enh-template-tab-btn" data-tab="dissertation">学位論文</button>
           </div>
 
-          <textarea id="setting-custom-template" class="cinii-enh-form-textarea" rows="3" placeholder="{authors} ({year})「{title}」『{journal}』{volume}({issue}), pp.{pages}. {url}">${escapeHtml(userSettings.customTemplate || '')}</textarea>
-
-          <!-- Presets -->
-          <div class="cinii-enh-presets-row">
-            <span class="cinii-enh-sublabel">プリセット:</span>
-            <button type="button" class="cinii-enh-btn-preset" data-preset="{authors} ({year})「{title}」『{journal}』{volume}({issue}), pp.{pages}. {url}">和文（一般）</button>
-            <button type="button" class="cinii-enh-btn-preset" data-preset="- [{title}]({url}) - {authors} ({year})">Markdownメモ</button>
-            <button type="button" class="cinii-enh-btn-preset" data-preset="{authors}, &quot;{title},&quot; {journal}, vol. {volume}, no. {issue}, pp. {pages}, {year}.">英文論文調</button>
+          <!-- Pane 1: Article -->
+          <div id="pane-article" class="cinii-enh-template-pane is-active">
+            <div class="cinii-enh-chips-bar">
+              <span class="cinii-enh-chips-title">変数を挿入:</span>
+              <button type="button" class="cinii-enh-chip" data-var="{title}">{title} 標題</button>
+              <button type="button" class="cinii-enh-chip" data-var="{authors}">{authors} 著者一覧</button>
+              <button type="button" class="cinii-enh-chip" data-var="{firstAuthor}">{firstAuthor} 筆頭著者</button>
+              <button type="button" class="cinii-enh-chip" data-var="{year}">{year} 出版年</button>
+              <button type="button" class="cinii-enh-chip" data-var="{journal}">{journal} 収録誌名</button>
+              <button type="button" class="cinii-enh-chip" data-var="{volume}">{volume} 巻</button>
+              <button type="button" class="cinii-enh-chip" data-var="{issue}">{issue} 号</button>
+              <button type="button" class="cinii-enh-chip" data-var="{pages}">{pages} ページ</button>
+              <button type="button" class="cinii-enh-chip" data-var="{doi}">{doi} DOI</button>
+              <button type="button" class="cinii-enh-chip" data-var="{url}">{url} URL</button>
+            </div>
+            <textarea id="setting-template-article" class="cinii-enh-form-textarea" rows="3" placeholder="{authors} ({year})「{title}」『{journal}』{volume}({issue}), pp.{pages}. {url}">${escapeHtml(tmplArticle)}</textarea>
+            <div class="cinii-enh-presets-row">
+              <span class="cinii-enh-sublabel">プリセット:</span>
+              <button type="button" class="cinii-enh-btn-preset" data-target="article" data-preset="{authors} ({year})「{title}」『{journal}』{volume}({issue}), pp.{pages}. {url}">和文論文（標準）</button>
+              <button type="button" class="cinii-enh-btn-preset" data-target="article" data-preset="- [{title}]({url}) - {authors} ({year})">Markdownメモ</button>
+              <button type="button" class="cinii-enh-btn-preset" data-target="article" data-preset="{authors} ({year}). {title}. *{journal}*, {volume}({issue}), {pages}. {doi}">英文論文調</button>
+            </div>
           </div>
 
-          <!-- Live Preview -->
+          <!-- Pane 2: Book -->
+          <div id="pane-book" class="cinii-enh-template-pane">
+            <div class="cinii-enh-chips-bar">
+              <span class="cinii-enh-chips-title">変数を挿入:</span>
+              <button type="button" class="cinii-enh-chip" data-var="{title}">{title} 書名</button>
+              <button type="button" class="cinii-enh-chip" data-var="{authors}">{authors} 著者一覧</button>
+              <button type="button" class="cinii-enh-chip" data-var="{firstAuthor}">{firstAuthor} 筆頭著者</button>
+              <button type="button" class="cinii-enh-chip" data-var="{year}">{year} 出版年</button>
+              <button type="button" class="cinii-enh-chip" data-var="{publisher}">{publisher} 出版社</button>
+              <button type="button" class="cinii-enh-chip" data-var="{isbn}">{isbn} ISBN</button>
+              <button type="button" class="cinii-enh-chip" data-var="{url}">{url} URL</button>
+            </div>
+            <textarea id="setting-template-book" class="cinii-enh-form-textarea" rows="3" placeholder="{authors} ({year})『{title}』{publisher}. {url}">${escapeHtml(tmplBook)}</textarea>
+            <div class="cinii-enh-presets-row">
+              <span class="cinii-enh-sublabel">プリセット:</span>
+              <button type="button" class="cinii-enh-btn-preset" data-target="book" data-preset="{authors} ({year})『{title}』{publisher}. {url}">和文書籍（標準）</button>
+              <button type="button" class="cinii-enh-btn-preset" data-target="book" data-preset="- 『[{title}]({url})』{publisher}, {authors} ({year})">Markdown書籍</button>
+              <button type="button" class="cinii-enh-btn-preset" data-target="book" data-preset="{authors} ({year}). *{title}*. {publisher}. {url}">英文書籍調</button>
+            </div>
+          </div>
+
+          <!-- Pane 3: Dissertation -->
+          <div id="pane-dissertation" class="cinii-enh-template-pane">
+            <div class="cinii-enh-chips-bar">
+              <span class="cinii-enh-chips-title">変数を挿入:</span>
+              <button type="button" class="cinii-enh-chip" data-var="{title}">{title} 題目</button>
+              <button type="button" class="cinii-enh-chip" data-var="{authors}">{authors} 著者</button>
+              <button type="button" class="cinii-enh-chip" data-var="{year}">{year} 授与年</button>
+              <button type="button" class="cinii-enh-chip" data-var="{publisher}">{publisher} 授与機関（大学）</button>
+              <button type="button" class="cinii-enh-chip" data-var="{url}">{url} URL</button>
+            </div>
+            <textarea id="setting-template-dissertation" class="cinii-enh-form-textarea" rows="3" placeholder="{authors} ({year})『{title}』博士論文, {publisher}. {url}">${escapeHtml(tmplDissertation)}</textarea>
+            <div class="cinii-enh-presets-row">
+              <span class="cinii-enh-sublabel">プリセット:</span>
+              <button type="button" class="cinii-enh-btn-preset" data-target="dissertation" data-preset="{authors} ({year})『{title}』博士論文, {publisher}. {url}">和文学位論文（標準）</button>
+              <button type="button" class="cinii-enh-btn-preset" data-target="dissertation" data-preset="{authors} ({year}). *{title}* [Doctoral dissertation, {publisher}]. {url}">英文学位論文調</button>
+            </div>
+          </div>
+
+          <!-- Live Preview Box -->
           <div class="cinii-enh-preview-box">
-            <div class="cinii-enh-preview-title">リアルタイムプレビュー:</div>
+            <div class="cinii-enh-preview-title" id="cinii-enh-preview-title">リアルタイムプレビュー（論文）:</div>
             <div id="cinii-enh-template-preview" class="cinii-enh-preview-content"></div>
           </div>
         </div>
@@ -849,19 +1060,67 @@
     document.body.appendChild(overlay);
 
     const formatSelect = modal.querySelector('#setting-preferred-format');
-    const templateTextarea = modal.querySelector('#setting-custom-template');
     const labelInput = modal.querySelector('#setting-custom-label');
+    const enableItemTypeCb = modal.querySelector('#setting-enable-itemtype-template');
+    const badgeItemType = modal.querySelector('#badge-enable-itemtype-template');
     const previewEl = modal.querySelector('#cinii-enh-template-preview');
+    const previewTitleEl = modal.querySelector('#cinii-enh-preview-title');
+
+    const textareaArticle = modal.querySelector('#setting-template-article');
+    const textareaBook = modal.querySelector('#setting-template-book');
+    const textareaDissertation = modal.querySelector('#setting-template-dissertation');
+
+    let currentTab = 'article';
 
     formatSelect.value = userSettings.preferredCitation || 'bibtex';
 
+    const getActiveTextarea = () => {
+      if (currentTab === 'book') return textareaBook;
+      if (currentTab === 'dissertation') return textareaDissertation;
+      return textareaArticle;
+    };
+
     const updatePreview = () => {
-      const tmpl = templateTextarea.value || '';
-      previewEl.textContent = generateCustomCitation(sampleMeta, tmpl);
+      let sample = sampleMetaArticle;
+      let tmpl = textareaArticle.value || '';
+      let typeLabel = '論文';
+
+      if (currentTab === 'book') {
+        sample = sampleMetaBook;
+        tmpl = textareaBook.value || '';
+        typeLabel = '図書（単行本）';
+      } else if (currentTab === 'dissertation') {
+        sample = sampleMetaDissertation;
+        tmpl = textareaDissertation.value || '';
+        typeLabel = '学位論文';
+      }
+
+      previewTitleEl.textContent = `リアルタイムプレビュー（${typeLabel}）:`;
+      previewEl.textContent = generateCustomCitation(sample, tmpl);
     };
     updatePreview();
 
-    templateTextarea.addEventListener('input', updatePreview);
+    // Input listeners for preview
+    textareaArticle.addEventListener('input', updatePreview);
+    textareaBook.addEventListener('input', updatePreview);
+    textareaDissertation.addEventListener('input', updatePreview);
+
+    // Tab switching
+    modal.querySelectorAll('.cinii-enh-template-tab-btn').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const tab = btn.getAttribute('data-tab');
+        currentTab = tab;
+
+        modal.querySelectorAll('.cinii-enh-template-tab-btn').forEach((b) => b.classList.remove('is-active'));
+        btn.classList.add('is-active');
+
+        modal.querySelectorAll('.cinii-enh-template-pane').forEach((p) => p.classList.remove('is-active'));
+        const activePane = modal.querySelector(`#pane-${tab}`);
+        if (activePane) activePane.classList.add('is-active');
+
+        updatePreview();
+      });
+    });
 
     // Toggle badge change listeners
     const setupToggle = (checkboxId, badgeId) => {
@@ -880,17 +1139,19 @@
     };
     setupToggle('setting-enable-quick-copy', 'badge-enable-quick-copy');
     setupToggle('setting-enable-abstract-cleanup', 'badge-enable-abstract-cleanup');
+    setupToggle('setting-enable-itemtype-template', 'badge-enable-itemtype-template');
 
     // Variable insertion chips
     modal.querySelectorAll('.cinii-enh-chip').forEach((btn) => {
       btn.addEventListener('click', () => {
         const v = btn.getAttribute('data-var');
-        const start = templateTextarea.selectionStart;
-        const end = templateTextarea.selectionEnd;
-        const val = templateTextarea.value;
-        templateTextarea.value = val.substring(0, start) + v + val.substring(end);
-        templateTextarea.focus();
-        templateTextarea.selectionStart = templateTextarea.selectionEnd = start + v.length;
+        const targetTa = getActiveTextarea();
+        const start = targetTa.selectionStart;
+        const end = targetTa.selectionEnd;
+        const val = targetTa.value;
+        targetTa.value = val.substring(0, start) + v + val.substring(end);
+        targetTa.focus();
+        targetTa.selectionStart = targetTa.selectionEnd = start + v.length;
         updatePreview();
       });
     });
@@ -898,7 +1159,11 @@
     // Preset buttons
     modal.querySelectorAll('.cinii-enh-btn-preset').forEach((btn) => {
       btn.addEventListener('click', () => {
-        templateTextarea.value = btn.getAttribute('data-preset');
+        const target = btn.getAttribute('data-target');
+        const preset = btn.getAttribute('data-preset');
+        if (target === 'book') textareaBook.value = preset;
+        else if (target === 'dissertation') textareaDissertation.value = preset;
+        else textareaArticle.value = preset;
         updatePreview();
       });
     });
@@ -924,8 +1189,12 @@
     saveBtn.addEventListener('click', () => {
       const newSettings = {
         preferredCitation: formatSelect.value,
-        customTemplate: templateTextarea.value.trim() || '{authors} ({year})「{title}」『{journal}』{volume}({issue}), pp.{pages}. {url}',
+        customTemplate: textareaArticle.value.trim() || tmplArticle,
+        customTemplateArticle: textareaArticle.value.trim() || tmplArticle,
+        customTemplateBook: textareaBook.value.trim() || tmplBook,
+        customTemplateDissertation: textareaDissertation.value.trim() || tmplDissertation,
         customTemplateLabel: labelInput.value.trim() || 'カスタム',
+        enableItemTypeTemplate: enableItemTypeCb.checked,
         enableSearchQuickCopy: modal.querySelector('#setting-enable-quick-copy').checked,
         enableAbstractCleanup: modal.querySelector('#setting-enable-abstract-cleanup').checked,
         unpaywallEmail: userSettings.unpaywallEmail || 'academic-reader@example.com'
@@ -1366,15 +1635,53 @@
     const doiMatch = item.innerHTML.match(/10\.\d{4,9}\/[-._;()/:A-Za-z0-9]+/);
     if (doiMatch) doi = doiMatch[0];
 
+    // Determine itemType for search card
+    let itemType = 'article';
+    const itemHtml = item.innerHTML || '';
+    const href = titleLink.href || '';
+    if (
+      item.querySelector('.book_class, dl.book_class') ||
+      item.classList.contains('book_class') ||
+      itemHtml.includes('classIcon-book.svg') ||
+      href.includes('/books/')
+    ) {
+      itemType = 'book';
+    } else if (
+      item.querySelector('.paper-dissertation_class, dl.paper-dissertation_class') ||
+      item.classList.contains('paper-dissertation_class') ||
+      itemHtml.includes('classIcon-dissertation.svg') ||
+      href.includes('/dissertations/')
+    ) {
+      itemType = 'dissertation';
+    }
+
+    // Extract publisher or journal
+    let publisher = '';
+    let journal = '';
+    const pubEl = item.querySelector('.publisher, [class*="publisher"], dd.publisher');
+    if (pubEl) {
+      publisher = pubEl.textContent.trim();
+    } else {
+      const pubMatch = textContent.match(/[:：]\s*([^\d,，\n]+)[,，]\s*(?:19|20)\d\d/);
+      if (pubMatch) publisher = pubMatch[1].trim();
+    }
+
+    const journalEl = item.querySelector('.journal, [class*="journal"], dd.source, .item_journal');
+    if (journalEl) {
+      journal = journalEl.textContent.trim();
+    }
+
     const cardMeta = {
       title: titleText,
       authors: authors.length > 0 ? authors : ['著作者'],
-      journal: '',
+      journal: journal,
       year: year,
       volume: '',
       issue: '',
       pages: '',
       doi: doi,
+      publisher: publisher,
+      itemType: itemType,
       url: titleLink.href.split('?')[0].split('#')[0]
     };
 
