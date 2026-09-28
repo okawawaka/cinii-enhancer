@@ -268,28 +268,102 @@
     let publisher = str.trim();
     let year = '';
 
-    // 1. Separate place by colon if present (e.g. "東京 : 岩波書店")
-    const parts = publisher.split(/[:：]/);
-    if (parts.length >= 2) {
-      place = parts[0].replace(/[\[\]]/g, '').replace(/[,，]+$/, '').trim();
-      publisher = parts.slice(1).join(':').trim();
+    // 1. Separate place by colon if present (e.g. "東京 : 岩波書店" or "[東京] : 汲古書院 , 1987")
+    const colonIndex = publisher.indexOf(':') !== -1 ? publisher.indexOf(':') : publisher.indexOf('：');
+    if (colonIndex !== -1) {
+      const rawPlace = publisher.substring(0, colonIndex).replace(/[\[\]]/g, '').replace(/[,，]+$/, '').trim();
+      const rawRest = publisher.substring(colonIndex + 1).trim();
+      if (rawPlace && !/^(https?|doi)$/i.test(rawPlace)) {
+        place = rawPlace;
+        publisher = rawRest;
+      }
     }
 
-    // 2. Extract trailing year if present (e.g. "岩波書店 , 2024" or "岩波書店 , 2024.4")
-    const ym = publisher.match(/^(.*?)[,，\s]+(19\d\d|20\d\d)(?:[\.\-\/]\d+)?\s*$/);
+    // 2. Extract trailing year if present (e.g. "岩波書店 , 2024" or "汲古書院 , 1987.9" or "サイエンス社, 2020年")
+    const ym = publisher.match(/^(.*?)[,，\s]+(19\d\d|20\d\d)(?:[\.\-\/]\d+)?\s*(?:年)?\s*$/);
     if (ym) {
       publisher = ym[1].trim();
       year = ym[2];
+    } else {
+      const ym2 = publisher.match(/(19\d\d|20\d\d)\b/);
+      if (ym2 && (publisher.endsWith(ym2[0]) || publisher.endsWith(ym2[0] + '年'))) {
+        year = ym2[1];
+        publisher = publisher.replace(/[,，\s]*(19\d\d|20\d\d)(?:[\.\-\/]\d+)?\s*(?:年)?\s*$/, '').trim();
+      }
     }
 
     // Clean trailing punctuation
-    publisher = publisher.replace(/[,，;；]+$/, '').trim();
+    publisher = publisher.replace(/[,，;；:：]+$/, '').trim();
     place = place.replace(/[\[\]]/g, '').replace(/[:：,，]+$/, '').trim();
     if (/^出版地不明$|^不詳$|^s\.l\.$/i.test(place)) {
       place = '';
     }
 
     return { place, publisher, year };
+  }
+
+  function extractPublicationFromText(textContent) {
+    if (!textContent) return { place: '', publisher: '', year: '' };
+    let place = '';
+    let publisher = '';
+    let year = '';
+
+    // Pattern 1: Explicit "Place : Publisher , Year" pattern
+    // e.g. "東京 : 汲古書院 , 1987" or "京都 : ミネルヴァ書房 , 2020" or "London : Routledge , 2018"
+    const mColon = textContent.match(/(?:^|[\s\n\r（(\[【])([^\d\s:：,，\(\)\[\]]{2,20})\s*[:：]\s*([^\d\n:：,，]+?)[,，\s]+(19\d\d|20\d\d)(?:[\.\-\/]\d+)?/);
+    if (mColon) {
+      place = mColon[1].replace(/[\[\]]/g, '').trim();
+      publisher = mColon[2].trim();
+      year = mColon[3].trim();
+    }
+
+    // Pattern 2: "Publisher , Year" without colon
+    // e.g. "岩波書店 , 2024" or "汲古書院 , 1987.9"
+    if (!publisher) {
+      const mPubYear = textContent.match(/(?:^|[\s\n\r（(\[【])([^\d\s:：,，\(\)\[\]]{2,30}?)[,，\s]+(19\d\d|20\d\d)(?:[\.\-\/]\d+)?\s*(?:年)?/);
+      if (mPubYear) {
+        const candidatePub = mPubYear[1].trim();
+        if (!/^(?:第?[0-9]+[巻号頁]|pp?\.?|vol|no)$/i.test(candidatePub)) {
+          publisher = candidatePub;
+          year = mPubYear[2].trim();
+        }
+      }
+    }
+
+    // Clean place
+    if (place) {
+      place = place.replace(/[\[\]]/g, '').replace(/[:：,，]+$/, '').trim();
+      if (/^出版地不明$|^不詳$|^s\.l\.$/i.test(place)) {
+        place = '';
+      }
+    }
+
+    return { place, publisher, year };
+  }
+
+  function findValueElementForLabel(labelEl) {
+    if (!labelEl) return null;
+    // 1. Next sibling element (dd, td, div, span, p)
+    const next = labelEl.nextElementSibling;
+    if (next && /^(DD|TD|DIV|SPAN|P)$/i.test(next.tagName)) {
+      return next;
+    }
+    // 2. Table row cell
+    const tr = labelEl.closest('tr');
+    if (tr) {
+      const td = tr.querySelector('td');
+      if (td && td !== labelEl) return td;
+    }
+    // 3. Parent container (e.g. div.row, dl, section) sibling or child
+    const parent = labelEl.parentElement;
+    if (parent) {
+      if (labelEl.classList.contains('col') || Array.from(labelEl.classList).some((c) => c.startsWith('col-'))) {
+        if (next) return next;
+      }
+      const valCandidate = parent.querySelector('dd, td, .sectionContent, .value, .item_data_body, p');
+      if (valCandidate && valCandidate !== labelEl) return valCandidate;
+    }
+    return null;
   }
 
   function parseJsonLdData(ld, meta) {
@@ -556,30 +630,46 @@
       meta.itemType = 'article';
     }
 
-    // 6. DOM Table / DL scan for Publication Place, Publisher, and Authors
-    document.querySelectorAll('dl dt, dl th, table th, .item_data_list dt').forEach((th) => {
+    // 6. DOM Table / DL / Section scan for Publication Place, Publisher, and Authors
+    const labelSelectors = [
+      'dl dt',
+      'dl th',
+      'table th',
+      '.item_data_list dt',
+      '.detailSection dt',
+      '.dataSection dt',
+      '.item-details dt',
+      '.listSectionTitle',
+      '.sectionTitle',
+      '[class*="data_label"]',
+      '[class*="item_label"]'
+    ];
+    document.querySelectorAll(labelSelectors.join(', ')).forEach((th) => {
       const label = th.textContent.trim().replace(/\s+/g, '');
-      const dd = th.nextElementSibling || th.closest('tr')?.querySelector('td');
-      if (!dd) return;
-      const val = dd.textContent.trim();
+      const valEl = findValueElementForLabel(th);
+      if (!valEl) return;
+      const val = valEl.textContent.trim();
       if (!val) return;
 
       if (/ISBN/i.test(label)) {
         if (!meta.isbn) meta.isbn = val;
         meta.itemType = 'book';
-      } else if (/出版地|発行地|刊行地/.test(label)) {
+      } else if (/出版地|発行地|刊行地|出版場所/.test(label)) {
         if (!meta.publicationPlace) meta.publicationPlace = val.replace(/[\[\]]/g, '').trim();
-      } else if (/出版事項|発行事項|出版・頒布事項/.test(label)) {
+      } else if (/出版事項|発行事項|出版・頒布事項|出版情報|書誌事項|刊行事項/.test(label)) {
         if (meta.itemType !== 'dissertation') meta.itemType = 'book';
         const parsed = parsePublicationInfo(val);
         if (!meta.publicationPlace && parsed.place) meta.publicationPlace = parsed.place;
         if (!meta.publisher && parsed.publisher) meta.publisher = parsed.publisher;
         if (!meta.year && parsed.year) meta.year = parsed.year;
-      } else if (/^出版[者社]$|^発行[者社]$/.test(label)) {
-        if (!meta.publisher) meta.publisher = val;
-      } else if (/^著者$|^編者$|^著作者$|^作成者$|^著者名$/.test(label)) {
+      } else if (/出版[者社元]|発行[者社元所機関]|発売[者社元]|刊行[者社元]|公開者|製作[者社元]|版元|発行学会|学会名|所属機関/.test(label)) {
+        const parsed = parsePublicationInfo(val);
+        if (!meta.publicationPlace && parsed.place) meta.publicationPlace = parsed.place;
+        if (!meta.publisher) meta.publisher = parsed.publisher || val;
+        if (!meta.year && parsed.year) meta.year = parsed.year;
+      } else if (/^著者$|^編者$|^著作者$|^作成者$|^著者名$|^編著者$/.test(label)) {
         if (meta.authors.length === 0) {
-          const aLinks = dd.querySelectorAll('a');
+          const aLinks = valEl.querySelectorAll('a');
           if (aLinks.length > 0) {
             aLinks.forEach((a) => {
               const t = a.textContent.trim();
@@ -596,21 +686,40 @@
     });
 
     // 7. Publisher / Institution / Publication Place Fallback
-    if (!meta.publisher) {
-      const pubEl = document.querySelector('.item_publisher, .publisher, dd[class*="publisher"], .detail_publisher, .publisher-name');
-      if (pubEl) {
-        meta.publisher = pubEl.textContent.trim();
-      } else if (meta.itemType === 'dissertation') {
-        const instEl = document.querySelector('.institution, [class*="institution"], dd[class*="institution"]');
-        if (instEl) meta.publisher = instEl.textContent.trim();
+    if (!meta.publisher || !meta.publicationPlace) {
+      const pubSelectors = [
+        '.item_publisher',
+        '.publisher',
+        'dd[class*="publisher"]',
+        '.detail_publisher',
+        '.publisher-name',
+        '.item_source',
+        '.detail_source',
+        '[itemprop="publisher"]',
+        '.institution',
+        '[class*="institution"]'
+      ];
+      for (const sel of pubSelectors) {
+        const el = document.querySelector(sel);
+        if (el) {
+          const text = el.textContent.trim();
+          if (text) {
+            const parsed = parsePublicationInfo(text);
+            if (!meta.publicationPlace && parsed.place) meta.publicationPlace = parsed.place;
+            if (!meta.publisher && parsed.publisher) meta.publisher = parsed.publisher;
+            if (!meta.year && parsed.year) meta.year = parsed.year;
+          }
+        }
       }
     }
 
-    if (!meta.publicationPlace) {
-      const placeEl = document.querySelector('.publication_place, .pub_place, .item_pubplace, dd[class*="pubplace"]');
-      if (placeEl) {
-        meta.publicationPlace = placeEl.textContent.trim();
-      }
+    // Step 7.5: Full-page text regex extraction fallback if publisher still missing
+    if (!meta.publisher || !meta.publicationPlace) {
+      const pageText = document.body ? document.body.textContent : '';
+      const fallbackPub = extractPublicationFromText(pageText);
+      if (!meta.publicationPlace && fallbackPub.place) meta.publicationPlace = fallbackPub.place;
+      if (!meta.publisher && fallbackPub.publisher) meta.publisher = fallbackPub.publisher;
+      if (!meta.year && fallbackPub.year) meta.year = fallbackPub.year;
     }
 
     // Separate "Place : Publisher" format if present
@@ -799,54 +908,56 @@
     let publisher = '';
     let publicationPlace = '';
 
-    // Step 1: Explicit place and publisher elements
-    const placeEl = item.querySelector('.publication_place, .pub_place, [class*="pubplace"]');
-    if (placeEl) {
-      publicationPlace = placeEl.textContent.trim();
-    }
-
-    const pubEl = item.querySelector('.publisher, [class*="publisher"], dd.publisher, dd.source, .item_source');
-    if (pubEl) {
-      const pubText = pubEl.textContent.trim();
-      const parsed = parsePublicationInfo(pubText);
-      if (parsed.place && !publicationPlace) publicationPlace = parsed.place;
-      if (parsed.publisher) publisher = parsed.publisher;
-      if (parsed.year && !year) year = parsed.year;
+    // Step 1: Scan search card publication elements
+    const pubElements = item.querySelectorAll(
+      '.publication_place, .pub_place, [class*="pubplace"], .item_publisher, .publisher, [class*="publisher"], .item_source, dd.source, p.source, .source, [class*="source"], .item_subinfo, .subinfo, .item_meta, dd, p'
+    );
+    for (const el of pubElements) {
+      if (el.closest('.cinii-enh-title-actions') || el.querySelector('.item_mainTitle')) continue;
+      const text = el.textContent.trim();
+      if (!text) continue;
+      const parsed = parsePublicationInfo(text);
+      if (!publicationPlace && parsed.place) publicationPlace = parsed.place;
+      if (!publisher && parsed.publisher && !/^(?:詳細|CiNii|KAKEN|本文|Link|DOI|PDF)$/i.test(parsed.publisher)) {
+        publisher = parsed.publisher;
+      }
+      if (!year && parsed.year) year = parsed.year;
+      if (publicationPlace && publisher) break;
     }
 
     // Step 2: Search card definition list scan
     if (!publisher || !publicationPlace) {
-      item.querySelectorAll('dl dt, dl th').forEach((dt) => {
+      item.querySelectorAll('dl dt, dl th, table th, [class*="data_label"]').forEach((dt) => {
         const label = dt.textContent.trim().replace(/\s+/g, '');
-        const dd = dt.nextElementSibling;
-        if (!dd) return;
-        const val = dd.textContent.trim();
+        const valEl = findValueElementForLabel(dt);
+        if (!valEl) return;
+        const val = valEl.textContent.trim();
         if (!val) return;
         if (/ISBN/i.test(label)) {
           if (itemType !== 'dissertation') itemType = 'book';
-        } else if (/出版地|発行地|刊行地/.test(label) && !publicationPlace) {
+        } else if (/出版地|発行地|刊行地|出版場所/.test(label) && !publicationPlace) {
           publicationPlace = val.replace(/[\[\]]/g, '').trim();
-        } else if (/出版事項|発行事項|出版・頒布事項/.test(label)) {
+        } else if (/出版事項|発行事項|出版・頒布事項|出版情報|書誌事項|刊行事項/.test(label)) {
           if (itemType !== 'dissertation') itemType = 'book';
           const parsed = parsePublicationInfo(val);
           if (!publicationPlace && parsed.place) publicationPlace = parsed.place;
           if (!publisher && parsed.publisher) publisher = parsed.publisher;
           if (!year && parsed.year) year = parsed.year;
-        } else if (/^出版[者社]$|^発行[者社]$/.test(label) && !publisher) {
-          publisher = val;
+        } else if (/出版[者社元]|発行[者社元所機関]|発売[者社元]|刊行[者社元]|公開者|製作[者社元]|版元|発行学会|学会名|所属機関/.test(label) && !publisher) {
+          const parsed = parsePublicationInfo(val);
+          if (!publicationPlace && parsed.place) publicationPlace = parsed.place;
+          publisher = parsed.publisher || val;
+          if (!year && parsed.year) year = parsed.year;
         }
       });
     }
 
-    // Step 3: Text content pattern matching
-    if (!publisher) {
-      const m = textContent.match(/[:：]\s*([^\d,，\(\)\n:：]+?)[,，\s]+(?:19|20)\d\d/);
-      if (m) {
-        const parsed = parsePublicationInfo(m[0]);
-        if (parsed.place && !publicationPlace) publicationPlace = parsed.place;
-        if (parsed.publisher) publisher = parsed.publisher;
-        if (parsed.year && !year) year = parsed.year;
-      }
+    // Step 3: Robust text content pattern matching
+    if (!publisher || !publicationPlace) {
+      const parsedFromText = extractPublicationFromText(textContent);
+      if (!publicationPlace && parsedFromText.place) publicationPlace = parsedFromText.place;
+      if (!publisher && parsedFromText.publisher) publisher = parsedFromText.publisher;
+      if (!year && parsedFromText.year) year = parsedFromText.year;
     }
 
     // Step 4: Separate colon format if publisher still contains "Place : Publisher"
@@ -874,6 +985,11 @@
     // Step 5: Infer publication place from known academic publisher if missing
     if (!publicationPlace && publisher) {
       publicationPlace = inferPublicationPlace(publisher, itemType);
+    }
+
+    // If card has publication place or publisher, confirm it is a book unless it is a dissertation
+    if (itemType !== 'dissertation' && (publicationPlace || /汲古|勉誠|笠間|吉川|岩波|有斐閣|丸善|サイエンス|朝倉|コロナ|オーム|共立|裳華房|培風館|近代科学|翔泳|インプレス|勁草|創文|大修館|三省堂|研究社|開拓社|ひつじ|くろしお|平凡社|みすず|白水社|筑摩|大学出版/i.test(publisher))) {
+      itemType = 'book';
     }
 
     let journal = '';
@@ -1143,13 +1259,17 @@
 
   function generateCustomCitation(meta, templateStr) {
     let tmpl = templateStr;
-    if (!tmpl || userSettings.enableItemTypeTemplate !== false) {
-      if (meta.itemType === 'book') {
-        tmpl = templateStr || userSettings.customTemplateBook || '{authors} ({year})『{title}』{place}: {publisher}. {url}';
-      } else if (meta.itemType === 'dissertation') {
-        tmpl = templateStr || userSettings.customTemplateDissertation || '{authors} ({year})『{title}』博士論文, {publisher}. {url}';
+    if (!tmpl) {
+      if (userSettings.enableItemTypeTemplate !== false) {
+        if (meta.itemType === 'book') {
+          tmpl = userSettings.customTemplateBook || '{authors} ({year})『{title}』{place}: {publisher}. {url}';
+        } else if (meta.itemType === 'dissertation') {
+          tmpl = userSettings.customTemplateDissertation || '{authors} ({year})『{title}』博士論文, {publisher}. {url}';
+        } else {
+          tmpl = userSettings.customTemplateArticle || userSettings.customTemplate || '{authors} ({year})「{title}」『{journal}』{volume}({issue}), pp.{pages}. {url}';
+        }
       } else {
-        tmpl = templateStr || userSettings.customTemplateArticle || userSettings.customTemplate || '{authors} ({year})「{title}」『{journal}』{volume}({issue}), pp.{pages}. {url}';
+        tmpl = userSettings.customTemplate || '{authors} ({year})「{title}」『{journal}』{volume}({issue}), pp.{pages}. {url}';
       }
     }
 
@@ -1187,8 +1307,10 @@
       .replace(/『\s*』/g, '')
       .replace(/「\s*」/g, '')
       .replace(/pp\.\s*(?=[,\.\s]|$)/g, '')
-      .replace(/([』）\)\.\s])\s*[:：]\s*/g, '$1 ')
+      .replace(/([』」）\)\.\s])\s*[:：]\s*/g, '$1 ')
       .replace(/^[:：]\s*/g, '')
+      .replace(/[:：]\s*([\.。,，])/g, '$1')
+      .replace(/[:：]\s*$/g, '')
       .replace(/,\s*,/g, ',')
       .replace(/\s{2,}/g, ' ')
       .trim();
