@@ -144,10 +144,17 @@
   }
 
   function isSearchPage() {
+    const p = window.location.pathname;
+    const s = window.location.search;
     return (
-      window.location.pathname.includes('/search') ||
-      window.location.pathname.includes('/all') ||
-      Boolean(document.querySelector('.listitem, .search-result-item, #searchResult'))
+      p.includes('/search') ||
+      p.includes('/all') ||
+      p === '/articles' ||
+      p === '/books' ||
+      p === '/dissertations' ||
+      p === '/projects' ||
+      s.includes('q=') ||
+      Boolean(document.querySelector('.listitem, .search-result-item, #searchResult, #result-list, .resultList, [class*="listitem"]'))
     );
   }
 
@@ -1426,55 +1433,93 @@
   }
 
   function enhanceSearchResults() {
-    const resultItems = document.querySelectorAll('.listitem, .search-result-item');
+    const resultItems = document.querySelectorAll('.listitem, .search-result-item, [class*="listitem"], .result-item, #searchResult li, .searchResultItem');
     if (resultItems.length === 0) return;
 
     resultItems.forEach((item) => {
-      if (item.classList.contains('cinii-enh-card-enhanced')) return;
-      item.classList.add('cinii-enh-card-enhanced');
+      const isCardEnhanced = item.classList.contains('cinii-enh-card-enhanced');
+      if (!isCardEnhanced) {
+        item.classList.add('cinii-enh-card-enhanced');
 
-      const titleLink = item.querySelector('.item_mainTitle a, .articletitle a, h2 a, h3 a, a[href*="/crid/"]');
-      if (!titleLink) return;
+        const titleLink = item.querySelector('.item_mainTitle a, .articletitle a, h2 a, h3 a, a[href*="/crid/"]');
 
-      const cardMeta = extractSearchCardMetadata(item, titleLink);
+        // Insert citation action buttons directly to the right of the title
+        if (titleLink && userSettings.enableSearchQuickCopy && isCiteableItem(item, titleLink)) {
+          const cardMeta = extractSearchCardMetadata(item, titleLink);
+          const titleActions = document.createElement('span');
+          titleActions.className = 'cinii-enh-title-actions';
 
-      // Insert citation action buttons directly to the right of the title
-      if (userSettings.enableSearchQuickCopy && isCiteableItem(item, titleLink)) {
-        const titleActions = document.createElement('span');
-        titleActions.className = 'cinii-enh-title-actions';
+          const quickBtn = createQuickCopyButton(cardMeta, 'cinii-enh-btn-sm');
+          titleActions.appendChild(quickBtn);
 
-        const quickBtn = createQuickCopyButton(cardMeta, 'cinii-enh-btn-sm');
-        titleActions.appendChild(quickBtn);
+          const citeBtn = document.createElement('button');
+          citeBtn.type = 'button';
+          citeBtn.className = 'cinii-enh-btn cinii-enh-btn-sm cinii-enh-btn-cite-title';
+          citeBtn.innerHTML = `${SVGS.QUOTE}<span>引用</span>`;
+          citeBtn.title = '全引用フォーマット一覧を表示';
 
-        const citeBtn = document.createElement('button');
-        citeBtn.type = 'button';
-        citeBtn.className = 'cinii-enh-btn cinii-enh-btn-sm cinii-enh-btn-cite-title';
-        citeBtn.innerHTML = `${SVGS.QUOTE}<span>引用</span>`;
-        citeBtn.title = '全引用フォーマット一覧を表示';
+          citeBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            e.preventDefault();
+            const citations = generateAllCitations(cardMeta);
+            openCitationModal(citations, cardMeta.title);
+          });
 
-        citeBtn.addEventListener('click', (e) => {
-          e.stopPropagation();
-          e.preventDefault();
-          const citations = generateAllCitations(cardMeta);
-          openCitationModal(citations, cardMeta.title);
-        });
+          titleActions.appendChild(citeBtn);
 
-        titleActions.appendChild(citeBtn);
-
-        if (titleLink.parentNode) {
-          titleLink.parentNode.insertBefore(titleActions, titleLink.nextSibling);
+          if (titleLink.parentNode) {
+            titleLink.parentNode.insertBefore(titleActions, titleLink.nextSibling);
+          }
         }
       }
 
-      // Inline snippet cleanup
-      if (userSettings.enableAbstractCleanup && titleLink) {
-        const rawTitle = titleLink.innerHTML || '';
-        if (rawTitle.includes('&lt;') || rawTitle.includes('<jats:') || /<[a-z0-9_-]+:[a-z0-9_-]+/i.test(rawTitle)) {
-          const cleanedTitle = cleanSearchSnippetHtml(rawTitle);
-          if (cleanedTitle && cleanedTitle !== rawTitle) {
-            titleLink.innerHTML = cleanedTitle;
+      // Cleanup HTML/XML tags in search result card (Title, Description, Abstract, Snippets)
+      if (userSettings.enableAbstractCleanup) {
+        // 1. Title elements
+        const titleElements = item.querySelectorAll('.item_mainTitle, .articletitle, h2, h3, a[href*="/crid/"]');
+        titleElements.forEach((el) => {
+          if (el.dataset.ciniiSnippetCleaned === 'true' || el.closest('.cinii-enh-title-actions')) return;
+          const raw = el.innerHTML || '';
+          if (hasRawHtmlOrJatsTags(raw)) {
+            el.dataset.ciniiSnippetCleaned = 'true';
+            const cleaned = cleanSearchSnippetHtml(raw);
+            if (cleaned && cleaned !== raw) {
+              el.innerHTML = cleaned;
+            }
           }
-        }
+        });
+
+        // 2. Snippet, description, abstract, and note elements
+        const snippetSelectors = [
+          '.item_description',
+          '.description',
+          '.item_abstract',
+          '.item-abstract',
+          '.snippet',
+          '.search-result-snippet',
+          '.search_snippet',
+          '.item_summary',
+          '.summary',
+          '.item_note',
+          '.note',
+          'dd',
+          'p',
+          '.item_body',
+          '.lead'
+        ];
+
+        const snippetCandidates = item.querySelectorAll(snippetSelectors.join(', '));
+        snippetCandidates.forEach((el) => {
+          if (el.dataset.ciniiSnippetCleaned === 'true' || el.closest('.cinii-enh-title-actions')) return;
+          const raw = el.innerHTML || '';
+          if (hasRawHtmlOrJatsTags(raw)) {
+            el.dataset.ciniiSnippetCleaned = 'true';
+            const cleaned = cleanSearchSnippetHtml(raw);
+            if (cleaned && cleaned !== raw) {
+              el.innerHTML = cleaned;
+            }
+          }
+        });
       }
     });
   }
@@ -1734,36 +1779,47 @@
     return root.innerHTML.trim();
   }
 
+  function hasRawHtmlOrJatsTags(str) {
+    if (!str) return false;
+    return (
+      str.includes('&lt;') ||
+      str.includes('&amp;lt;') ||
+      str.includes('&#60;') ||
+      str.includes('&#x3c;') ||
+      str.includes('<jats:') ||
+      str.includes('</jats:') ||
+      /<[a-z0-9_-]+:[a-z0-9_-]+/i.test(str) ||
+      /(?:&lt;|&amp;lt;|&#60;|&#x3c;)\s*\/?(?:jats:[a-z0-9_-]+|[a-z0-9_-]+:[a-z0-9_-]+|p|br|b|i|em|strong|sub|sup|u|font|span|div|sec|title)\b/i.test(str) ||
+      /(?:&lt;|&amp;lt;|&#60;|&#x3c;)\s*\/?[a-z][a-z0-9_-]*(?:\s+[^&>]*)?(?:&gt;|&amp;gt;|&#62;|&#x3e;)/i.test(str)
+    );
+  }
+
   function cleanSearchSnippetHtml(raw) {
     if (!raw) return '';
     let text = raw;
 
-    if (text.includes('&lt;') || text.includes('&amp;lt;')) {
-      text = text
-        .replace(/&amp;lt;/gi, '<')
-        .replace(/&amp;gt;/gi, '>')
-        .replace(/&amp;quot;/gi, '"')
-        .replace(/&amp;amp;/gi, '&')
-        .replace(/&lt;/gi, '<')
-        .replace(/&gt;/gi, '>')
-        .replace(/&quot;/gi, '"');
+    // Full multi-stage entity decoding using DOMParser
+    if (text.includes('&lt;') || text.includes('&amp;lt;') || text.includes('&#60;') || text.includes('&#x3c;')) {
+      const doc = new DOMParser().parseFromString(text, 'text/html');
+      text = doc.body.textContent || text;
+      if (text.includes('&lt;') || text.includes('&#60;')) {
+        const doc2 = new DOMParser().parseFromString(text, 'text/html');
+        text = doc2.body.textContent || text;
+      }
     }
 
     text = text
-      .replace(/<\/?jats:italic[^>]*>/gi, (m) => m.startsWith('</') ? '</i>' : '<i>')
-      .replace(/<\/?jats:bold[^>]*>/gi, (m) => m.startsWith('</') ? '</b>' : '<b>')
-      .replace(/<\/?jats:sup[^>]*>/gi, (m) => m.startsWith('</') ? '</sup>' : '<sup>')
-      .replace(/<\/?jats:sub[^>]*>/gi, (m) => m.startsWith('</') ? '</sub>' : '<sub>')
-      .replace(/<\/?jats:underline[^>]*>/gi, (m) => m.startsWith('</') ? '</u>' : '<u>')
+      .replace(/<\/?(?:jats:italic|italic)[^>]*>/gi, (m) => m.startsWith('</') ? '</i>' : '<i>')
+      .replace(/<\/?(?:jats:bold|bold)[^>]*>/gi, (m) => m.startsWith('</') ? '</b>' : '<b>')
+      .replace(/<\/?(?:jats:sup|sup)[^>]*>/gi, (m) => m.startsWith('</') ? '</sup>' : '<sup>')
+      .replace(/<\/?(?:jats:sub|sub)[^>]*>/gi, (m) => m.startsWith('</') ? '</sub>' : '<sub>')
+      .replace(/<\/?(?:jats:underline|underline)[^>]*>/gi, (m) => m.startsWith('</') ? '</u>' : '<u>')
       .replace(/<jats:title[^>]*>/gi, '<strong>')
       .replace(/<\/jats:title>/gi, '</strong>: ')
-      .replace(/<\/?jats:p[^>]*>/gi, ' ')
-      .replace(/<\/?jats:[a-zA-Z0-9_-]+[^>]*>/gi, '')
-      .replace(/<\/?(?:sec|section|article|div|header|footer)[^>]*>/gi, ' ')
-      .replace(/<p[^>]*>/gi, ' ')
-      .replace(/<\/p>/gi, ' ')
-      .replace(/<\/?font[^>]*>/gi, '')
-      .replace(/<\/?(?:script|style|iframe|object)[^>]*>/gi, '');
+      .replace(/<\/?(?:jats:p|p)[^>]*>/gi, ' ')
+      .replace(/<\/?(?:jats:[a-zA-Z0-9_-]+|[a-zA-Z0-9_-]+:[a-zA-Z0-9_-]+)[^>]*>/gi, '')
+      .replace(/<\/?(?:sec|section|article|div|header|footer|font)[^>]*>/gi, ' ')
+      .replace(/<\/?(?:script|style|iframe|object|embed)[^>]*>/gi, '');
 
     const parsedDoc = new DOMParser().parseFromString(`<span>${text}</span>`, 'text/html');
     const root = parsedDoc.body.firstElementChild;
@@ -1917,7 +1973,8 @@
             target.closest('.cinii-enh-btn-export-copy') ||
             target.closest('.cinii-enh-header-settings-btn') ||
             target.closest('.cinii-enh-title-actions') ||
-            target.closest('.cinii-enh-btn-search-export-copy')
+            target.closest('.cinii-enh-btn-search-export-copy') ||
+            target.closest('[data-cinii-snippet-cleaned="true"]')
           )
         );
       });
