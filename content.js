@@ -18,7 +18,7 @@
     preferredCitation: 'bibtex',
     customTemplate: '{authors} ({year})「{title}」『{journal}』{volume}({issue}), pp.{pages}. {url}',
     customTemplateArticle: '{authors} ({year})「{title}」『{journal}』{volume}({issue}), pp.{pages}. {url}',
-    customTemplateBook: '{authors} ({year})『{title}』{publisher}. {url}',
+    customTemplateBook: '{authors} ({year})『{title}』{place}: {publisher}. {url}',
     customTemplateDissertation: '{authors} ({year})『{title}』博士論文, {publisher}. {url}',
     customTemplateLabel: 'カスタム',
     enableItemTypeTemplate: true
@@ -176,6 +176,7 @@
       pages: '',
       doi: '',
       publisher: '',
+      publicationPlace: '',
       issn: '',
       isbn: '',
       itemType: 'article',
@@ -200,6 +201,7 @@
       else if (name === 'citation_lastpage') meta.lastPage = content;
       else if (name === 'citation_doi') meta.doi = content;
       else if (name === 'citation_publisher') meta.publisher = content;
+      else if (name === 'citation_publication_place' || name === 'citation_address') meta.publicationPlace = content;
       else if (name === 'citation_issn') meta.issn = content;
       else if (name === 'citation_isbn') meta.isbn = content;
     });
@@ -279,7 +281,7 @@
       meta.itemType = 'article';
     }
 
-    // 6. Publisher / Institution Fallback
+    // 6. Publisher / Institution / Publication Place Fallback
     if (!meta.publisher) {
       const pubEl = document.querySelector('.item_publisher, .publisher, dd[class*="publisher"], .detail_publisher, .publisher-name');
       if (pubEl) {
@@ -288,6 +290,33 @@
         const instEl = document.querySelector('.institution, [class*="institution"], dd[class*="institution"]');
         if (instEl) meta.publisher = instEl.textContent.trim();
       }
+    }
+
+    if (!meta.publicationPlace) {
+      const placeEl = document.querySelector('.publication_place, .pub_place, .item_pubplace, dd[class*="pubplace"]');
+      if (placeEl) {
+        meta.publicationPlace = placeEl.textContent.trim();
+      }
+    }
+
+    // Separate "Place : Publisher" format if present
+    if (meta.publisher) {
+      const parts = meta.publisher.split(/[:：]/);
+      if (parts.length >= 2) {
+        if (!meta.publicationPlace) {
+          meta.publicationPlace = parts[0].replace(/[,，]+$/, '').trim();
+        }
+        meta.publisher = parts.slice(1).join(':').trim();
+      }
+      const yearTailMatch = meta.publisher.match(/^(.*?)[,，\s]+(19\d\d|20\d\d)\s*$/);
+      if (yearTailMatch) {
+        meta.publisher = yearTailMatch[1].trim();
+        if (!meta.year) meta.year = yearTailMatch[2];
+      }
+    }
+
+    if (meta.publicationPlace) {
+      meta.publicationPlace = meta.publicationPlace.replace(/[:：,，]+$/, '').trim();
     }
 
     return meta;
@@ -377,12 +406,36 @@
     }
 
     let publisher = '';
+    let publicationPlace = '';
     const pubEl = item.querySelector('.publisher, [class*="publisher"], dd.publisher');
     if (pubEl) {
       publisher = pubEl.textContent.trim();
     } else {
       const m = textContent.match(/[:：]\s*([^\d,，\n]+)[,，]\s*(?:19|20)\d\d/);
       if (m) publisher = m[1].trim();
+    }
+
+    const placeEl = item.querySelector('.publication_place, .pub_place, [class*="pubplace"]');
+    if (placeEl) {
+      publicationPlace = placeEl.textContent.trim();
+    }
+
+    if (publisher) {
+      const parts = publisher.split(/[:：]/);
+      if (parts.length >= 2) {
+        if (!publicationPlace) {
+          publicationPlace = parts[0].replace(/[,，]+$/, '').trim();
+        }
+        publisher = parts.slice(1).join(':').trim();
+      }
+      const yearTailMatch = publisher.match(/^(.*?)[,，\s]+(19\d\d|20\d\d)\s*$/);
+      if (yearTailMatch) {
+        publisher = yearTailMatch[1].trim();
+      }
+    }
+
+    if (publicationPlace) {
+      publicationPlace = publicationPlace.replace(/[:：,，]+$/, '').trim();
     }
 
     let journal = '';
@@ -399,6 +452,7 @@
       pages: '',
       doi: doi,
       publisher: publisher,
+      publicationPlace: publicationPlace,
       itemType: itemType,
       url: href.split('?')[0].split('#')[0]
     };
@@ -426,6 +480,7 @@
     ];
 
     if (entryType === 'book') {
+      if (meta.publicationPlace) fields.push(`  address   = {${meta.publicationPlace}}`);
       if (meta.publisher) fields.push(`  publisher = {${meta.publisher}}`);
       if (meta.year) fields.push(`  year      = {${meta.year}}`);
       if (meta.isbn) fields.push(`  isbn      = {${meta.isbn}}`);
@@ -452,7 +507,10 @@
 
     if (meta.itemType === 'book') {
       let res = `${authors}. 『${meta.title}』.`;
-      if (meta.publisher) res += ` ${meta.publisher},`;
+      const pubParts = [];
+      if (meta.publicationPlace) pubParts.push(meta.publicationPlace);
+      if (meta.publisher) pubParts.push(meta.publisher);
+      if (pubParts.length > 0) res += ` ${pubParts.join(', ')},`;
       if (meta.year) res += ` ${meta.year}.`;
       if (meta.pages) res += ` ${meta.pages}p.`;
       if (meta.url) res += ` ${meta.url}`;
@@ -578,7 +636,13 @@
     const year = meta.year || 'n.d.';
     if (meta.itemType === 'book') {
       let res = `${author}. ${year}. *${meta.title}*.`;
-      if (meta.publisher) res += ` ${meta.publisher}.`;
+      if (meta.publicationPlace && meta.publisher) {
+        res += ` ${meta.publicationPlace}: ${meta.publisher}.`;
+      } else if (meta.publisher) {
+        res += ` ${meta.publisher}.`;
+      } else if (meta.publicationPlace) {
+        res += ` ${meta.publicationPlace}.`;
+      }
       return res.trim();
     }
     if (meta.itemType === 'dissertation') {
@@ -609,6 +673,7 @@
     (meta.authors || []).forEach((a) => lines.push(`AU  - ${a}`));
     if (meta.journal) lines.push(`JO  - ${meta.journal}`);
     if (meta.year) lines.push(`PY  - ${meta.year}`);
+    if (meta.publicationPlace) lines.push(`CY  - ${meta.publicationPlace}`);
     if (meta.publisher) lines.push(`PB  - ${meta.publisher}`);
     if (meta.volume) lines.push(`VL  - ${meta.volume}`);
     if (meta.issue) lines.push(`IS  - ${meta.issue}`);
@@ -621,12 +686,13 @@
   }
 
   function generateTSV(meta) {
-    const headers = ['タイトル', '著者', '種別', '収録刊行物/出版社', '巻', '号', 'ページ', '出版年', 'DOI', 'URL'];
+    const headers = ['タイトル', '著者', '種別', '収録刊行物/出版社', '出版地', '巻', '号', 'ページ', '出版年', 'DOI', 'URL'];
     const row = [
       meta.title || '',
       (meta.authors || []).join('; '),
       meta.itemType || 'article',
       meta.journal || meta.publisher || '',
+      meta.publicationPlace || '',
       meta.volume || '',
       meta.issue || '',
       meta.pages || '',
@@ -641,7 +707,7 @@
     let tmpl = templateStr;
     if (!tmpl || userSettings.enableItemTypeTemplate !== false) {
       if (meta.itemType === 'book') {
-        tmpl = templateStr || userSettings.customTemplateBook || '{authors} ({year})『{title}』{publisher}. {url}';
+        tmpl = templateStr || userSettings.customTemplateBook || '{authors} ({year})『{title}』{place}: {publisher}. {url}';
       } else if (meta.itemType === 'dissertation') {
         tmpl = templateStr || userSettings.customTemplateDissertation || '{authors} ({year})『{title}』博士論文, {publisher}. {url}';
       } else {
@@ -666,6 +732,8 @@
       '{doi}': meta.doi ? `https://doi.org/${meta.doi}` : '',
       '{url}': meta.url || '',
       '{publisher}': meta.publisher || '',
+      '{place}': meta.publicationPlace || '',
+      '{publicationPlace}': meta.publicationPlace || '',
       '{isbn}': meta.isbn || ''
     };
 
@@ -680,6 +748,8 @@
       .replace(/『\s*』/g, '')
       .replace(/「\s*」/g, '')
       .replace(/pp\.\s*(?=[,\.\s]|$)/g, '')
+      .replace(/([』）\)\.\s])\s*[:：]\s*/g, '$1 ')
+      .replace(/^[:：]\s*/g, '')
       .replace(/,\s*,/g, ',')
       .replace(/\s{2,}/g, ' ')
       .trim();
@@ -871,6 +941,7 @@
       title: '音響と言語処理の数理的基礎',
       authors: ['言語 健一', '音響 律子'],
       year: '2024',
+      publicationPlace: '東京',
       publisher: 'サイエンス社',
       isbn: '978-4-00-000000-0',
       url: 'https://cir.nii.ac.jp/crid/1130000000000000000',
@@ -887,7 +958,7 @@
     };
 
     const tmplArticle = userSettings.customTemplateArticle || userSettings.customTemplate || '{authors} ({year})「{title}」『{journal}』{volume}({issue}), pp.{pages}. {url}';
-    const tmplBook = userSettings.customTemplateBook || '{authors} ({year})『{title}』{publisher}. {url}';
+    const tmplBook = userSettings.customTemplateBook || '{authors} ({year})『{title}』{place}: {publisher}. {url}';
     const tmplDissertation = userSettings.customTemplateDissertation || '{authors} ({year})『{title}』博士論文, {publisher}. {url}';
     const enableItemType = userSettings.enableItemTypeTemplate !== false;
 
@@ -985,16 +1056,17 @@
               <button type="button" class="cinii-enh-chip" data-var="{authors}">{authors} 著者一覧</button>
               <button type="button" class="cinii-enh-chip" data-var="{firstAuthor}">{firstAuthor} 筆頭著者</button>
               <button type="button" class="cinii-enh-chip" data-var="{year}">{year} 出版年</button>
+              <button type="button" class="cinii-enh-chip" data-var="{place}">{place} 出版地</button>
               <button type="button" class="cinii-enh-chip" data-var="{publisher}">{publisher} 出版社</button>
               <button type="button" class="cinii-enh-chip" data-var="{isbn}">{isbn} ISBN</button>
               <button type="button" class="cinii-enh-chip" data-var="{url}">{url} URL</button>
             </div>
-            <textarea id="setting-template-book" class="cinii-enh-form-textarea" rows="3" placeholder="{authors} ({year})『{title}』{publisher}. {url}">${escapeHtml(tmplBook)}</textarea>
+            <textarea id="setting-template-book" class="cinii-enh-form-textarea" rows="3" placeholder="{authors} ({year})『{title}』{place}: {publisher}. {url}">${escapeHtml(tmplBook)}</textarea>
             <div class="cinii-enh-presets-row">
               <span class="cinii-enh-sublabel">プリセット:</span>
-              <button type="button" class="cinii-enh-btn-preset" data-target="book" data-preset="{authors} ({year})『{title}』{publisher}. {url}">和文書籍（標準）</button>
-              <button type="button" class="cinii-enh-btn-preset" data-target="book" data-preset="- 『[{title}]({url})』{publisher}, {authors} ({year})">Markdown書籍</button>
-              <button type="button" class="cinii-enh-btn-preset" data-target="book" data-preset="{authors} ({year}). *{title}*. {publisher}. {url}">英文書籍調</button>
+              <button type="button" class="cinii-enh-btn-preset" data-target="book" data-preset="{authors} ({year})『{title}』{place}: {publisher}. {url}">和文書籍（標準）</button>
+              <button type="button" class="cinii-enh-btn-preset" data-target="book" data-preset="- 『[{title}]({url})』{place}: {publisher}, {authors} ({year})">Markdown書籍</button>
+              <button type="button" class="cinii-enh-btn-preset" data-target="book" data-preset="{authors} ({year}). *{title}*. {place}: {publisher}. {url}">英文書籍調</button>
             </div>
           </div>
 

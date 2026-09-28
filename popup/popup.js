@@ -9,7 +9,7 @@ const DEFAULT_SETTINGS = {
   preferredCitation: 'bibtex',
   customTemplate: '{authors} ({year})「{title}」『{journal}』{volume}({issue}), pp.{pages}. {url}',
   customTemplateArticle: '{authors} ({year})「{title}」『{journal}』{volume}({issue}), pp.{pages}. {url}',
-  customTemplateBook: '{authors} ({year})『{title}』{publisher}. {url}',
+  customTemplateBook: '{authors} ({year})『{title}』{place}: {publisher}. {url}',
   customTemplateDissertation: '{authors} ({year})『{title}』博士論文, {publisher}. {url}',
   customTemplateLabel: 'カスタム',
   enableItemTypeTemplate: true
