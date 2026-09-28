@@ -24,40 +24,43 @@
 
   <main class="popup-main">
     <section class="settings-group">
-      <h2 class="group-title">オープンアクセス照会設定</h2>
-      <div class="form-item">
-        <label for="unpaywallEmail" class="form-label">Unpaywall 照会用メールアドレス</label>
-        <input type="email" id="unpaywallEmail" class="form-input" placeholder="your-email@example.com">
-        <p class="form-help">DOIからオープンアクセスPDFを自動検出する Unpaywall API の利用規約に基づき照会元として使用されます。</p>
-      </div>
-    </section>
-
-    <section class="settings-group">
-      <h2 class="group-title">表示・機能設定</h2>
+      <h2 class="group-title">機能のオン/オフ</h2>
       
-      <label class="toggle-item">
-        <span class="toggle-label">詳細画面の拡張ツールバーを表示</span>
-        <input type="checkbox" id="enableDetailToolbar">
-        <span class="toggle-slider"></span>
-      </label>
+      <div class="toggle-card">
+        <div class="toggle-card-info">
+          <span class="toggle-card-title">詳細画面の引用ツールバー</span>
+          <span class="toggle-card-desc">論文詳細画面のタイトル横に引用ボタンを配置</span>
+        </div>
+        <label class="toggle-control" for="enableDetailToolbar">
+          <input type="checkbox" id="enableDetailToolbar">
+          <span class="toggle-slider"></span>
+          <span id="badge-detail-toolbar" class="status-badge badge-on">有効</span>
+        </label>
+      </div>
 
-      <label class="toggle-item">
-        <span class="toggle-label">検索結果にPDF直行ボタン・バッジを表示</span>
-        <input type="checkbox" id="enableSearchPdfDirect">
-        <span class="toggle-slider"></span>
-      </label>
+      <div class="toggle-card">
+        <div class="toggle-card-info">
+          <span class="toggle-card-title">検索結果の引用ボタン</span>
+          <span class="toggle-card-desc">検索結果一覧のタイトル横に引用ボタンを配置</span>
+        </div>
+        <label class="toggle-control" for="enableSearchQuickCopy">
+          <input type="checkbox" id="enableSearchQuickCopy">
+          <span class="toggle-slider"></span>
+          <span id="badge-search-copy" class="status-badge badge-on">有効</span>
+        </label>
+      </div>
 
-      <label class="toggle-item">
-        <span class="toggle-label">検索結果にワンクリック引用ボタンを表示</span>
-        <input type="checkbox" id="enableSearchQuickCopy">
-        <span class="toggle-slider"></span>
-      </label>
-
-      <label class="toggle-item">
-        <span class="toggle-label">抄録・検索結果のHTMLタグを自動整形</span>
-        <input type="checkbox" id="enableAbstractCleanup">
-        <span class="toggle-slider"></span>
-      </label>
+      <div class="toggle-card">
+        <div class="toggle-card-info">
+          <span class="toggle-card-title">HTMLタグの自動整形</span>
+          <span class="toggle-card-desc">抄録や抜粋文の不要なタグを除去・段落整形</span>
+        </div>
+        <label class="toggle-control" for="enableAbstractCleanup">
+          <input type="checkbox" id="enableAbstractCleanup">
+          <span class="toggle-slider"></span>
+          <span id="badge-abstract-cleanup" class="status-badge badge-on">有効</span>
+        </label>
+      </div>
     </section>
 
     <section class="settings-group">

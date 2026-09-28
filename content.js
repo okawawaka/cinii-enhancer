@@ -807,23 +807,33 @@
         <div class="cinii-enh-form-group">
           <label class="cinii-enh-form-label">機能のオン/オフ</label>
           <div class="cinii-enh-toggle-list">
-            <label class="cinii-enh-checkbox-item">
-              <input type="checkbox" id="setting-enable-quick-copy" ${userSettings.enableSearchQuickCopy ? 'checked' : ''}>
-              <span>検索結果カードに引用ボタンを表示</span>
-            </label>
-            <label class="cinii-enh-checkbox-item">
-              <input type="checkbox" id="setting-enable-abstract-cleanup" ${userSettings.enableAbstractCleanup ? 'checked' : ''}>
-              <span>抄録・検索結果のHTMLタグを自動整形</span>
-            </label>
+            <div class="cinii-enh-toggle-row">
+              <div class="cinii-enh-toggle-info">
+                <span class="cinii-enh-toggle-title">検索結果カードに引用ボタンを表示</span>
+                <span class="cinii-enh-toggle-desc">検索結果一覧の文献タイトルの右横に「[コピー]」「[引用]」ボタンを配置します。</span>
+              </div>
+              <label class="cinii-enh-toggle-control" for="setting-enable-quick-copy">
+                <input type="checkbox" id="setting-enable-quick-copy" ${userSettings.enableSearchQuickCopy ? 'checked' : ''}>
+                <span class="cinii-enh-toggle-track"></span>
+                <span id="badge-enable-quick-copy" class="cinii-enh-status-badge ${userSettings.enableSearchQuickCopy ? 'cinii-enh-badge-on' : 'cinii-enh-badge-off'}">
+                  ${userSettings.enableSearchQuickCopy ? '有効' : '無効'}
+                </span>
+              </label>
+            </div>
+            <div class="cinii-enh-toggle-row">
+              <div class="cinii-enh-toggle-info">
+                <span class="cinii-enh-toggle-title">抄録・検索結果のHTMLタグを自動整形</span>
+                <span class="cinii-enh-toggle-desc">抄録や抜粋文に含まれる不要なタグを除去・段落整形し、読みやすくします。</span>
+              </div>
+              <label class="cinii-enh-toggle-control" for="setting-enable-abstract-cleanup">
+                <input type="checkbox" id="setting-enable-abstract-cleanup" ${userSettings.enableAbstractCleanup ? 'checked' : ''}>
+                <span class="cinii-enh-toggle-track"></span>
+                <span id="badge-enable-abstract-cleanup" class="cinii-enh-status-badge ${userSettings.enableAbstractCleanup ? 'cinii-enh-badge-on' : 'cinii-enh-badge-off'}">
+                  ${userSettings.enableAbstractCleanup ? '有効' : '無効'}
+                </span>
+              </label>
+            </div>
           </div>
-        </div>
-
-        <!-- 4. Unpaywall Email -->
-        <div class="cinii-enh-form-group">
-          <label class="cinii-enh-form-label" for="setting-unpaywall-email">
-            Unpaywall 照会用メールアドレス
-          </label>
-          <input type="email" id="setting-unpaywall-email" class="cinii-enh-form-input" value="${escapeHtml(userSettings.unpaywallEmail || '')}" placeholder="your-email@example.com">
         </div>
       </div>
 
@@ -852,6 +862,24 @@
     updatePreview();
 
     templateTextarea.addEventListener('input', updatePreview);
+
+    // Toggle badge change listeners
+    const setupToggle = (checkboxId, badgeId) => {
+      const cb = modal.querySelector('#' + checkboxId);
+      const bg = modal.querySelector('#' + badgeId);
+      if (!cb || !bg) return;
+      cb.addEventListener('change', () => {
+        if (cb.checked) {
+          bg.textContent = '有効';
+          bg.className = 'cinii-enh-status-badge cinii-enh-badge-on';
+        } else {
+          bg.textContent = '無効';
+          bg.className = 'cinii-enh-status-badge cinii-enh-badge-off';
+        }
+      });
+    };
+    setupToggle('setting-enable-quick-copy', 'badge-enable-quick-copy');
+    setupToggle('setting-enable-abstract-cleanup', 'badge-enable-abstract-cleanup');
 
     // Variable insertion chips
     modal.querySelectorAll('.cinii-enh-chip').forEach((btn) => {
@@ -900,7 +928,7 @@
         customTemplateLabel: labelInput.value.trim() || 'カスタム',
         enableSearchQuickCopy: modal.querySelector('#setting-enable-quick-copy').checked,
         enableAbstractCleanup: modal.querySelector('#setting-enable-abstract-cleanup').checked,
-        unpaywallEmail: modal.querySelector('#setting-unpaywall-email').value.trim() || 'academic-reader@example.com'
+        unpaywallEmail: userSettings.unpaywallEmail || 'academic-reader@example.com'
       };
 
       userSettings = { ...userSettings, ...newSettings };
@@ -926,11 +954,8 @@
   function injectHeaderSettingsButton() {
     if (document.getElementById('cinii-enh-header-settings-btn')) return;
 
-    // Search for header navigation container
-    const headerNav =
-      document.querySelector('.header .nav, .header ul, .header-nav, #header ul, .navbar-nav, .user-menu, .globalNav, header .container, #header, .header, header');
-
-    if (!headerNav) return;
+    // Search for header utility list (e.g. English switcher area in CiNii)
+    const utilityList = document.querySelector('.navbar-nav.menu-utility-list, .menu-utility-list');
 
     const btn = document.createElement('button');
     btn.type = 'button';
@@ -945,13 +970,27 @@
       openSettingsModal();
     });
 
-    if (headerNav.tagName === 'UL') {
+    if (utilityList) {
       const li = document.createElement('li');
       li.className = 'cinii-enh-header-settings-li';
       li.appendChild(btn);
-      headerNav.appendChild(li);
-    } else {
-      headerNav.appendChild(btn);
+      utilityList.appendChild(li);
+      return;
+    }
+
+    // Fallback: general header navigation or header container
+    const fallbackContainer =
+      document.querySelector('.navbar-topcontent, .headermenu, .navbar-header, #header ul, .navbar-nav, header');
+
+    if (fallbackContainer) {
+      if (fallbackContainer.tagName === 'UL') {
+        const li = document.createElement('li');
+        li.className = 'cinii-enh-header-settings-li';
+        li.appendChild(btn);
+        fallbackContainer.appendChild(li);
+      } else {
+        fallbackContainer.appendChild(btn);
+      }
     }
   }
 

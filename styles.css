@@ -672,38 +672,41 @@ a.cinii-enh-btn-pdf span {
   display: inline-flex;
   align-items: center;
   list-style: none;
+  vertical-align: middle;
 }
 
 .cinii-enh-header-settings-btn {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  padding: 3px 8px;
+  gap: 5px;
+  padding: 4px 10px;
+  margin: 0 4px;
   font-family: var(--cinii-font);
   font-size: 12px;
   font-weight: 500;
-  line-height: 1.3;
-  color: #ffffff !important;
-  background-color: rgba(255, 255, 255, 0.12);
-  border: 1px solid rgba(255, 255, 255, 0.3);
+  line-height: 1.4;
+  color: #444444 !important;
+  background-color: #ffffff;
+  border: 1px solid #cccccc;
   border-radius: var(--cinii-radius-sm);
   cursor: pointer;
-  transition: background-color 0.15s ease, border-color 0.15s ease;
+  transition: all 0.15s ease;
   user-select: none;
   white-space: nowrap;
   vertical-align: middle;
 }
 
 .cinii-enh-header-settings-btn:hover {
-  background-color: rgba(255, 255, 255, 0.24);
-  border-color: rgba(255, 255, 255, 0.6);
-  color: #ffffff !important;
+  background-color: #f0f5fc;
+  border-color: var(--cinii-blue);
+  color: var(--cinii-blue) !important;
 }
 
 .cinii-enh-header-settings-btn .cinii-enh-icon {
-  width: 13px;
-  height: 13px;
+  width: 14px;
+  height: 14px;
   vertical-align: -2px;
+  stroke: currentColor;
 }
 
 /* ------------------------------------------------------------------------------
@@ -898,26 +901,108 @@ a.cinii-enh-btn-pdf span {
   word-break: break-all;
 }
 
-/* Checkbox toggle list */
+/* Feature Toggle List with Clear ON/OFF Status */
 .cinii-enh-toggle-list {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 10px;
 }
 
-.cinii-enh-checkbox-item {
+.cinii-enh-toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background-color: var(--cinii-bg-neutral);
+  border: 1px solid var(--cinii-border-light);
+  border-radius: var(--cinii-radius-sm);
+  gap: 16px;
+}
+
+.cinii-enh-toggle-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.cinii-enh-toggle-title {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--cinii-text-heading);
+}
+
+.cinii-enh-toggle-desc {
+  font-size: 11px;
+  color: var(--cinii-text-muted);
+  line-height: 1.35;
+}
+
+.cinii-enh-toggle-control {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  font-size: 12px;
-  color: var(--cinii-text-main);
+  flex-shrink: 0;
   cursor: pointer;
   user-select: none;
 }
 
-.cinii-enh-checkbox-item input[type="checkbox"] {
+.cinii-enh-toggle-control input[type="checkbox"] {
+  display: none;
+}
+
+.cinii-enh-toggle-track {
+  position: relative;
+  width: 38px;
+  height: 20px;
+  background-color: #d1d5db;
+  border-radius: 10px;
+  transition: background-color 0.15s ease;
   cursor: pointer;
-  accent-color: var(--cinii-blue);
+}
+
+.cinii-enh-toggle-track::after {
+  content: "";
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 16px;
+  height: 16px;
+  background-color: #ffffff;
+  border-radius: 50%;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+  transition: transform 0.15s ease;
+}
+
+.cinii-enh-toggle-control input:checked + .cinii-enh-toggle-track {
+  background-color: var(--cinii-blue);
+}
+
+.cinii-enh-toggle-control input:checked + .cinii-enh-toggle-track::after {
+  transform: translateX(18px);
+}
+
+.cinii-enh-status-badge {
+  display: inline-block;
+  min-width: 38px;
+  padding: 2px 6px;
+  font-size: 11px;
+  font-weight: 700;
+  text-align: center;
+  border-radius: var(--cinii-radius-sm);
+  transition: all 0.15s ease;
+  user-select: none;
+}
+
+.cinii-enh-badge-on {
+  background-color: var(--cinii-blue);
+  color: #ffffff;
+  border: 1px solid var(--cinii-blue);
+}
+
+.cinii-enh-badge-off {
+  background-color: #f3f4f6;
+  color: #6b7280;
+  border: 1px solid #d1d5db;
 }
 
 /* Modal Footer */

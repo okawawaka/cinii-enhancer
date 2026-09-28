@@ -16,26 +16,56 @@ const DEFAULT_SETTINGS = {
 document.addEventListener('DOMContentLoaded', async () => {
   const storage = chrome.storage.sync || chrome.storage.local;
 
-  const emailInput = document.getElementById('unpaywallEmail');
   const enableDetailToolbarInput = document.getElementById('enableDetailToolbar');
-  const enableSearchPdfDirectInput = document.getElementById('enableSearchPdfDirect');
   const enableSearchQuickCopyInput = document.getElementById('enableSearchQuickCopy');
   const enableAbstractCleanupInput = document.getElementById('enableAbstractCleanup');
   const preferredCitationInput = document.getElementById('preferredCitation');
   const saveBtn = document.getElementById('saveBtn');
   const saveStatus = document.getElementById('saveStatus');
 
+  const badgeDetailToolbar = document.getElementById('badge-detail-toolbar');
+  const badgeSearchCopy = document.getElementById('badge-search-copy');
+  const badgeAbstractCleanup = document.getElementById('badge-abstract-cleanup');
+
+  const updateBadge = (checkbox, badge) => {
+    if (!checkbox || !badge) return;
+    if (checkbox.checked) {
+      badge.textContent = '有効';
+      badge.className = 'status-badge badge-on';
+    } else {
+      badge.textContent = '無効';
+      badge.className = 'status-badge badge-off';
+    }
+  };
+
+  // Wire badge update events
+  if (enableDetailToolbarInput && badgeDetailToolbar) {
+    enableDetailToolbarInput.addEventListener('change', () => updateBadge(enableDetailToolbarInput, badgeDetailToolbar));
+  }
+  if (enableSearchQuickCopyInput && badgeSearchCopy) {
+    enableSearchQuickCopyInput.addEventListener('change', () => updateBadge(enableSearchQuickCopyInput, badgeSearchCopy));
+  }
+  if (enableAbstractCleanupInput && badgeAbstractCleanup) {
+    enableAbstractCleanupInput.addEventListener('change', () => updateBadge(enableAbstractCleanupInput, badgeAbstractCleanup));
+  }
+
   // Load current settings
+  let loadedSettings = { ...DEFAULT_SETTINGS };
   try {
     const current = await storage.get(DEFAULT_SETTINGS);
-    emailInput.value = current.unpaywallEmail || '';
-    enableDetailToolbarInput.checked = Boolean(current.enableDetailToolbar);
-    enableSearchPdfDirectInput.checked = Boolean(current.enableSearchPdfDirect);
-    enableSearchQuickCopyInput.checked = Boolean(current.enableSearchQuickCopy);
-    enableAbstractCleanupInput.checked = Boolean(current.enableAbstractCleanup);
-    if (current.preferredCitation) {
-      preferredCitationInput.value = current.preferredCitation;
+    loadedSettings = { ...DEFAULT_SETTINGS, ...current };
+
+    enableDetailToolbarInput.checked = Boolean(loadedSettings.enableDetailToolbar);
+    enableSearchQuickCopyInput.checked = Boolean(loadedSettings.enableSearchQuickCopy);
+    enableAbstractCleanupInput.checked = Boolean(loadedSettings.enableAbstractCleanup);
+
+    if (loadedSettings.preferredCitation) {
+      preferredCitationInput.value = loadedSettings.preferredCitation;
     }
+
+    updateBadge(enableDetailToolbarInput, badgeDetailToolbar);
+    updateBadge(enableSearchQuickCopyInput, badgeSearchCopy);
+    updateBadge(enableAbstractCleanupInput, badgeAbstractCleanup);
   } catch (err) {
     console.error('Failed to load settings:', err);
   }
@@ -43,9 +73,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Save on button click
   saveBtn.addEventListener('click', async () => {
     const newSettings = {
-      unpaywallEmail: emailInput.value.trim() || DEFAULT_SETTINGS.unpaywallEmail,
+      ...loadedSettings,
       enableDetailToolbar: enableDetailToolbarInput.checked,
-      enableSearchPdfDirect: enableSearchPdfDirectInput.checked,
       enableSearchQuickCopy: enableSearchQuickCopyInput.checked,
       enableAbstractCleanup: enableAbstractCleanupInput.checked,
       preferredCitation: preferredCitationInput.value
@@ -53,6 +82,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     try {
       await storage.set(newSettings);
+      loadedSettings = newSettings;
       saveStatus.textContent = '設定を保存しました';
       saveStatus.classList.add('is-visible');
       setTimeout(() => {
