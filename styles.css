@@ -190,6 +190,11 @@
   color: var(--cinii-green-dark) !important;
 }
 
+.cinii-enh-btn-search-export-copy {
+  margin-left: 6px;
+  vertical-align: middle;
+}
+
 /* ------------------------------------------------------------------------------
  * 3. Title Actions Container (Detail & Search Cards)
  * ------------------------------------------------------------------------------ */

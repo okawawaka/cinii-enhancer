@@ -1455,6 +1455,184 @@
     });
   }
 
+  function enhanceSearchExportSection() {
+    // 1. Dropdown form pattern (select + execute button)
+    const selects = document.querySelectorAll('select');
+    selects.forEach((sel) => {
+      if (sel.dataset.ciniiEnhExportEnhanced === 'true') return;
+
+      const optionsText = Array.from(sel.options).map((o) => (o.textContent || '').trim()).join(' ');
+      const isExportSelect =
+        sel.name === 'fileType' ||
+        sel.id === 'fileType' ||
+        /新しい(?:ウィンドウ|ウインドウ)で開く|操作を選択する|TSVで表示|BibTeXで表示|RISで表示|書き出し|出力/i.test(optionsText);
+
+      if (!isExportSelect) return;
+      sel.dataset.ciniiEnhExportEnhanced = 'true';
+
+      const form = sel.form || sel.closest('form');
+      let execBtn = null;
+
+      const siblingBtn = sel.parentElement?.querySelector('button, input[type="submit"], input[type="button"], a.btn, .btn');
+      if (siblingBtn && siblingBtn !== sel) {
+        execBtn = siblingBtn;
+      } else if (form) {
+        execBtn = form.querySelector('button[type="submit"], input[type="submit"], button.btn, button:not(.cinii-enh-btn)');
+      }
+
+      const copyBtn = document.createElement('button');
+      copyBtn.type = 'button';
+      copyBtn.className = 'cinii-enh-btn cinii-enh-btn-export-copy cinii-enh-btn-search-export-copy';
+      copyBtn.title = '選択した文献のデータを直接クリップボードにコピー';
+      copyBtn.innerHTML = `${SVGS.COPY}<span>コピー</span>`;
+
+      copyBtn.addEventListener('click', async (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+
+        const checkedBoxes = Array.from(document.querySelectorAll(
+          '.listitem input[type="checkbox"]:checked, .search-result-item input[type="checkbox"]:checked, input[name*="art"]:checked, input[name*="id"]:checked, input[name*="item"]:checked, input[name="chk"]:checked, input.checkItem:checked'
+        )).filter((cb) => cb.value && cb.value !== 'all' && cb.value !== 'on');
+
+        if (checkedBoxes.length === 0) {
+          showToast('文献が選択されていません。チェックボックスを選択してください');
+          return;
+        }
+
+        const selectedOption = sel.options[sel.selectedIndex];
+        const optText = (selectedOption ? selectedOption.textContent : '').trim();
+        let optValue = (selectedOption ? selectedOption.value : '').toLowerCase();
+
+        if (/操作を選択|新しい(?:ウィンドウ|ウインドウ)で開く|^$/i.test(optText) || !optValue) {
+          const bibOpt = Array.from(sel.options).find((o) => /bibtex/i.test(o.textContent) || /bibtex/i.test(o.value));
+          const tsvOpt = Array.from(sel.options).find((o) => /tsv/i.test(o.textContent) || /tsv/i.test(o.value));
+          const targetOpt = (userSettings.preferredCitation === 'tsv' ? tsvOpt : bibOpt) || bibOpt || tsvOpt || sel.options[1];
+          if (targetOpt) {
+            sel.value = targetOpt.value;
+            optValue = targetOpt.value.toLowerCase();
+          } else {
+            showToast('書き出し形式（BibTeXやTSVなど）を選択してください');
+            return;
+          }
+        }
+
+        const originalHtml = copyBtn.innerHTML;
+        copyBtn.disabled = true;
+
+        try {
+          let copied = false;
+          let exportFormatName = optText.replace(/で表示|に書き出し|で出力/g, '').trim() || '引用';
+
+          // Background fetch using CiNii export form endpoint
+          if (form && form.action) {
+            const formData = new FormData(form);
+            if (sel.name) formData.set(sel.name, sel.value);
+
+            const method = (form.method || 'POST').toUpperCase();
+            let fetchUrl = form.action;
+            let fetchOptions = {
+              method: method,
+              credentials: 'include'
+            };
+
+            if (method === 'GET') {
+              const urlObj = new URL(fetchUrl, window.location.origin);
+              for (const [key, val] of formData.entries()) {
+                urlObj.searchParams.append(key, val);
+              }
+              fetchUrl = urlObj.toString();
+            } else {
+              fetchOptions.body = formData;
+            }
+
+            const res = await fetch(fetchUrl, fetchOptions);
+            if (res.ok) {
+              const textData = await res.text();
+              if (textData && textData.trim() && !textData.includes('<!DOCTYPE html>') && !textData.includes('<html')) {
+                await copyText(textData, `${checkedBoxes.length}件の引用をコピーしました（${exportFormatName}）`);
+                copied = true;
+              }
+            }
+          }
+
+          // Fallback: extract metadata from checked items directly
+          if (!copied) {
+            const selectedItems = checkedBoxes.map((cb) => cb.closest('.listitem, .search-result-item')).filter(Boolean);
+            const metas = selectedItems.map((item) => {
+              const link = item.querySelector('.item_mainTitle a, .articletitle a, h2 a, h3 a, a[href*="/crid/"]');
+              return link ? extractSearchCardMetadata(item, link) : null;
+            }).filter(Boolean);
+
+            if (metas.length > 0) {
+              let bulkData = '';
+              const lowerFmt = optText.toLowerCase() + ' ' + optValue;
+
+              if (lowerFmt.includes('bibtex')) {
+                bulkData = metas.map((m) => generateBibTeX(m)).join('\n\n');
+                exportFormatName = 'BibTeX';
+              } else if (lowerFmt.includes('tsv')) {
+                const headers = ['タイトル', '著者', '収録刊行物', '巻', '号', 'ページ', '出版年', '出版社', 'DOI', 'URL'];
+                const rows = metas.map((m) => [
+                  m.title,
+                  m.authors.join('; '),
+                  m.journal,
+                  m.volume,
+                  m.issue,
+                  m.pages,
+                  m.year,
+                  m.publisher,
+                  m.doi,
+                  m.url
+                ].map((f) => `"${String(f || '').replace(/"/g, '""')}"`).join('\t'));
+                bulkData = headers.join('\t') + '\n' + rows.join('\n');
+                exportFormatName = 'TSV';
+              } else if (lowerFmt.includes('ris') || lowerFmt.includes('endnote') || lowerFmt.includes('refworks')) {
+                bulkData = metas.map((m) => generateRIS(m)).join('\n\n');
+                exportFormatName = 'RIS';
+              } else {
+                bulkData = metas.map((m) => generateSIST02(m)).join('\n');
+                exportFormatName = '引用';
+              }
+
+              if (bulkData) {
+                await copyText(bulkData, `${metas.length}件の引用をコピーしました（${exportFormatName}）`);
+                copied = true;
+              }
+            }
+          }
+
+          if (copied) {
+            copyBtn.classList.add('is-copied');
+            copyBtn.innerHTML = `${SVGS.CHECK}<span>完了</span>`;
+            setTimeout(() => {
+              copyBtn.classList.remove('is-copied');
+              copyBtn.innerHTML = originalHtml;
+              copyBtn.disabled = false;
+            }, 1600);
+          } else {
+            copyBtn.innerHTML = originalHtml;
+            copyBtn.disabled = false;
+          }
+        } catch (err) {
+          console.error('[CiNii Enhancer] Bulk export copy failed:', err);
+          copyBtn.innerHTML = originalHtml;
+          copyBtn.disabled = false;
+          showToast('コピーに失敗しました');
+        }
+      });
+
+      const anchorEl = execBtn || sel;
+      if (anchorEl.nextSibling) {
+        anchorEl.parentNode.insertBefore(copyBtn, anchorEl.nextSibling);
+      } else {
+        anchorEl.parentNode.appendChild(copyBtn);
+      }
+    });
+
+    // 2. Individual link pattern (if direct export links exist on search results)
+    enhanceExportSection();
+  }
+
   // ==============================================================================
   // 7. HTML Tag Sanitization & Abstract Enhancement
   // ==============================================================================
@@ -1669,6 +1847,7 @@
 
     if (isSearchPage()) {
       enhanceSearchResults();
+      enhanceSearchExportSection();
     }
   }
 
@@ -1689,7 +1868,8 @@
             target.closest('.cinii-enh-detail-title-actions') ||
             target.closest('.cinii-enh-btn-export-copy') ||
             target.closest('.cinii-enh-header-settings-btn') ||
-            target.closest('.cinii-enh-title-actions')
+            target.closest('.cinii-enh-title-actions') ||
+            target.closest('.cinii-enh-btn-search-export-copy')
           )
         );
       });
