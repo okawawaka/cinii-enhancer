@@ -1694,6 +1694,9 @@
               <button type="button" class="cinii-enh-btn-preset" data-target="book" data-preset="- 『[{title}]({url})』{place}: {publisher}, {authors} ({year})">Markdown書籍</button>
               <button type="button" class="cinii-enh-btn-preset" data-target="book" data-preset="{authors} ({year}). *{title}*. {place}: {publisher}. {url}">英文書籍調</button>
             </div>
+            <div class="cinii-enh-field-note" style="margin-top: 6px; font-size: 11px; color: var(--cinii-enh-text-muted, #64748b); line-height: 1.45;">
+              ※ {place}（出版地）補完機能は一部の主要出版社のみの対応となっており、対応できていない出版社も多く存在します。未対応の出版社では空欄となりますので、必要に応じて手動での補正やテンプレートをご調整ください。
+            </div>
           </div>
 
           <!-- Pane 3: Dissertation -->
