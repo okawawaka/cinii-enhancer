@@ -963,7 +963,26 @@ body.cinii-enh-modal-open {
   color: var(--cinii-text-main) !important;
 }
 
-/* 1. タイトルリンクの文字色とフォントウェイトを全論文で均一に統一 (600 / CiNii Blue) */
+/* 1. タイトル（コンテナおよびリンク）の文字色・太さ・サイズを全論文で均一に統一 (600 / CiNii Blue) */
+.cinii-enh-card-enhanced .item_mainTitle,
+.cinii-enh-card-enhanced .articletitle,
+.cinii-enh-card-enhanced h2.item_mainTitle,
+.cinii-enh-card-enhanced h3.item_mainTitle,
+.listitem .item_mainTitle,
+.listitem .articletitle,
+.search-result-item .item_mainTitle,
+.search-result-item .articletitle,
+[class*="listitem"] .item_mainTitle,
+[class*="listitem"] .articletitle,
+.result-item .item_mainTitle,
+#searchResult li .item_mainTitle,
+.searchResultItem .item_mainTitle {
+  font-size: 1.15rem !important;
+  font-weight: 600 !important;
+  line-height: 1.45 !important;
+  color: var(--cinii-blue) !important;
+}
+
 .cinii-enh-card-enhanced .item_mainTitle a,
 .cinii-enh-card-enhanced .articletitle a,
 .cinii-enh-card-enhanced h2 a,
@@ -990,6 +1009,7 @@ body.cinii-enh-modal-open {
 .searchResultItem h2 a,
 .searchResultItem h3 a,
 .searchResultItem .item_mainTitle a {
+  font-size: inherit !important;
   font-weight: 600 !important;
   color: var(--cinii-blue) !important;
   text-decoration: none !important;
@@ -1105,8 +1125,8 @@ body.cinii-enh-modal-open {
 .cinii-enh-card-enhanced .note,
 .cinii-enh-card-enhanced .item_body,
 .cinii-enh-card-enhanced .lead,
-.cinii-enh-card-enhanced dd,
-.cinii-enh-card-enhanced p,
+.cinii-enh-card-enhanced dd:not(.item_mainTitle):not(.articletitle):not([class*="title"]),
+.cinii-enh-card-enhanced p:not(.item_mainTitle):not(.articletitle):not([class*="title"]),
 .listitem .item_description,
 .listitem .description,
 .listitem .item_abstract,
@@ -1117,12 +1137,12 @@ body.cinii-enh-modal-open {
 [class*="listitem"] .item_description,
 [class*="listitem"] .description,
 [class*="listitem"] .snippet,
-[class*="listitem"] dd,
-[class*="listitem"] p,
+[class*="listitem"] dd:not(.item_mainTitle):not(.articletitle):not([class*="title"]),
+[class*="listitem"] p:not(.item_mainTitle):not(.articletitle):not([class*="title"]),
 .result-item .description,
 .result-item .snippet,
-#searchResult li dd,
-#searchResult li p {
+#searchResult li dd:not(.item_mainTitle):not(.articletitle):not([class*="title"]),
+#searchResult li p:not(.item_mainTitle):not(.articletitle):not([class*="title"]) {
   font-weight: normal !important;
   color: var(--cinii-text-main) !important;
 }

@@ -797,7 +797,8 @@
       meta.publicationPlace = inferPublicationPlace(meta.publisher, meta.itemType);
     }
 
-    // Sanitize all extracted authors: remove semicolons, newlines, tabs, and excess whitespace
+    // Sanitize title and all extracted authors
+    if (meta.title) meta.title = stripXmlTags(meta.title);
     meta.authors = (meta.authors || []).map((a) => a.replace(/[;；]/g, '').replace(/[\r\n\t]+/g, ' ').replace(/\s+/g, ' ').trim()).filter(Boolean);
 
     return meta;
@@ -851,7 +852,7 @@
   }
 
   function extractSearchCardMetadata(item, titleLink) {
-    const titleText = titleLink.textContent.trim().replace(/\s+/g, ' ');
+    const titleText = stripXmlTags(titleLink.textContent || '').trim().replace(/\s+/g, ' ');
     const textContent = item.textContent || '';
     const itemHtml = item.innerHTML || '';
     const href = titleLink.href || '';
@@ -2018,6 +2019,18 @@
     const titleEl = findDetailTitleElement(meta.title);
     if (!titleEl) return;
 
+    // Clean XML/HTML tags in detail page title if present, preserving heading typography
+    if (userSettings.enableAbstractCleanup && titleEl && titleEl.dataset.ciniiTitleCleaned !== 'true') {
+      const rawTitle = titleEl.innerHTML || '';
+      if (hasRawHtmlOrJatsTags(rawTitle)) {
+        titleEl.dataset.ciniiTitleCleaned = 'true';
+        const cleanedTitle = cleanTitleHtml(rawTitle);
+        if (cleanedTitle && cleanedTitle !== rawTitle) {
+          titleEl.innerHTML = cleanedTitle;
+        }
+      }
+    }
+
     const actionsWrapper = document.createElement('span');
     actionsWrapper.id = 'cinii-enh-detail-title-actions';
     actionsWrapper.className = 'cinii-enh-detail-title-actions';
@@ -2194,7 +2207,14 @@
     // 2. Normalize Snippet / Description Elements (normal weight, unified text color)
     const snippetElements = item.querySelectorAll('.item_description, .description, .item_abstract, .snippet, dd, p');
     snippetElements.forEach((el) => {
-      if (el.closest('.cinii-enh-title-actions') || el.closest('.cinii-enh-modal')) return;
+      if (
+        el.closest('.cinii-enh-title-actions') ||
+        el.closest('.cinii-enh-modal') ||
+        el.closest('.item_mainTitle, .articletitle, h1, h2, h3') ||
+        el.classList.contains('item_mainTitle') ||
+        el.classList.contains('articletitle') ||
+        el.querySelector('.item_mainTitle, a[href*="/crid/"]')
+      ) return;
       if (el.style) {
         el.style.fontWeight = '';
         el.style.color = '';
@@ -2256,21 +2276,35 @@
 
       // Cleanup HTML/XML tags in search result card (Title, Description, Abstract, Snippets)
       if (userSettings.enableAbstractCleanup) {
-        // 1. Title elements
-        const titleElements = item.querySelectorAll('.item_mainTitle, .articletitle, h2, h3, a[href*="/crid/"]');
-        titleElements.forEach((el) => {
-          if (el.dataset.ciniiSnippetCleaned === 'true' || el.closest('.cinii-enh-title-actions')) return;
-          const raw = el.innerHTML || '';
-          if (hasRawHtmlOrJatsTags(raw)) {
-            el.dataset.ciniiSnippetCleaned = 'true';
-            const cleaned = cleanSearchSnippetHtml(raw);
-            if (cleaned && cleaned !== raw) {
-              el.innerHTML = cleaned;
+        // 1. Title elements: Clean inner HTML of the title link to preserve anchor link and heading styling
+        const titleLink = item.querySelector('.item_mainTitle a, .articletitle a, h2 a, h3 a, a[href*="/crid/"]');
+        if (titleLink) {
+          if (titleLink.dataset.ciniiTitleCleaned !== 'true') {
+            const raw = titleLink.innerHTML || '';
+            if (hasRawHtmlOrJatsTags(raw)) {
+              titleLink.dataset.ciniiTitleCleaned = 'true';
+              const cleaned = cleanTitleHtml(raw);
+              if (cleaned && cleaned !== raw) {
+                titleLink.innerHTML = cleaned;
+              }
             }
           }
-        });
+        } else {
+          // If no inner anchor exists, clean the title container itself without stripping heading hierarchy
+          const titleContainer = item.querySelector('.item_mainTitle, .articletitle, h2, h3');
+          if (titleContainer && titleContainer.dataset.ciniiTitleCleaned !== 'true' && !titleContainer.closest('.cinii-enh-title-actions')) {
+            const raw = titleContainer.innerHTML || '';
+            if (hasRawHtmlOrJatsTags(raw)) {
+              titleContainer.dataset.ciniiTitleCleaned = 'true';
+              const cleaned = cleanTitleHtml(raw);
+              if (cleaned && cleaned !== raw) {
+                titleContainer.innerHTML = cleaned;
+              }
+            }
+          }
+        }
 
-        // 2. Snippet, description, abstract, and note elements
+        // 2. Snippet, description, abstract, and note elements (Strictly excluding title containers)
         const snippetSelectors = [
           '.item_description',
           '.description',
@@ -2283,15 +2317,20 @@
           '.summary',
           '.item_note',
           '.note',
-          'dd',
-          'p',
           '.item_body',
           '.lead'
         ];
 
         const snippetCandidates = item.querySelectorAll(snippetSelectors.join(', '));
         snippetCandidates.forEach((el) => {
-          if (el.dataset.ciniiSnippetCleaned === 'true' || el.closest('.cinii-enh-title-actions')) return;
+          if (
+            el.dataset.ciniiSnippetCleaned === 'true' ||
+            el.closest('.cinii-enh-title-actions') ||
+            el.closest('.item_mainTitle, .articletitle, h1, h2, h3') ||
+            el.classList.contains('item_mainTitle') ||
+            el.classList.contains('articletitle') ||
+            el.querySelector('.item_mainTitle, a[href*="/crid/"]')
+          ) return;
           const raw = el.innerHTML || '';
           if (hasRawHtmlOrJatsTags(raw)) {
             el.dataset.ciniiSnippetCleaned = 'true';
@@ -2524,6 +2563,57 @@
         node.remove();
       }
     }
+  }
+
+  function stripXmlTags(str) {
+    if (!str) return '';
+    let t = str;
+    if (t.includes('&lt;') || t.includes('&amp;lt;') || t.includes('&#60;') || t.includes('&#x3c;')) {
+      if (typeof DOMParser !== 'undefined') {
+        const doc = new DOMParser().parseFromString(t, 'text/html');
+        t = doc.body.textContent || t;
+      } else {
+        t = t.replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&');
+      }
+    }
+    return t.replace(/<[^>]+>/g, '').replace(/[\r\n\t]+/g, ' ').replace(/\s{2,}/g, ' ').trim();
+  }
+
+  function cleanTitleHtml(raw) {
+    if (!raw) return '';
+    let text = raw;
+
+    // Multi-stage entity decoding using DOMParser if escaped
+    if (text.includes('&lt;') || text.includes('&amp;lt;') || text.includes('&#60;') || text.includes('&#x3c;')) {
+      const doc = new DOMParser().parseFromString(text, 'text/html');
+      text = doc.body.textContent || text;
+      if (text.includes('&lt;') || text.includes('&#60;')) {
+        const doc2 = new DOMParser().parseFromString(text, 'text/html');
+        text = doc2.body.textContent || text;
+      }
+    }
+
+    text = text
+      .replace(/<\/?(?:jats:italic|italic)[^>]*>/gi, (m) => m.startsWith('</') ? '</i>' : '<i>')
+      .replace(/<\/?(?:jats:bold|bold)[^>]*>/gi, (m) => m.startsWith('</') ? '</b>' : '<b>')
+      .replace(/<\/?(?:jats:sup|sup)[^>]*>/gi, (m) => m.startsWith('</') ? '</sup>' : '<sup>')
+      .replace(/<\/?(?:jats:sub|sub)[^>]*>/gi, (m) => m.startsWith('</') ? '</sub>' : '<sub>')
+      .replace(/<\/?(?:jats:underline|underline)[^>]*>/gi, (m) => m.startsWith('</') ? '</u>' : '<u>')
+      .replace(/<\/?jats:title[^>]*>/gi, '')
+      .replace(/<\/?(?:jats:p|p|sec|section|article|div|header|footer)[^>]*>/gi, ' ')
+      .replace(/<\/?(?:jats:[a-zA-Z0-9_-]+|[a-zA-Z0-9_-]+:[a-zA-Z0-9_-]+)[^>]*>/gi, '')
+      .replace(/<\/?(?:script|style|iframe|object|embed)[^>]*>/gi, '');
+
+    const parsedDoc = new DOMParser().parseFromString(`<span>${text}</span>`, 'text/html');
+    const root = parsedDoc.body.firstElementChild;
+    if (!root) return text;
+
+    // Preserve emphasis, sub/superscript, bold, underline, span, and links in titles
+    const allowed = new Set(['I', 'EM', 'B', 'STRONG', 'SUB', 'SUP', 'U', 'MARK', 'SPAN', 'A']);
+    const remove = new Set(['SCRIPT', 'STYLE', 'IFRAME', 'OBJECT', 'EMBED']);
+
+    Array.from(root.childNodes).forEach((n) => sanitizeNodeTree(n, allowed, remove, false));
+    return root.innerHTML.replace(/\s{2,}/g, ' ').trim();
   }
 
   function cleanAbstractHtml(raw) {

@@ -420,25 +420,46 @@
       color: var(--c-navy);
     }
 
-    /* mockup-toggle-btn */
-    .mockup-toggle-btn {
-      font-size: 0.625rem;
-      font-weight: 600;
-      color: var(--c-text-muted);
-      background: none;
-      border: 1px solid var(--c-border);
-      padding: 2px 6px;
+    /* Abstract toggle tabs: 整形後 (Cleaned) / 原文 (Raw JATS/HTML) */
+    .mockup-abstract-tabs {
+      display: flex;
+      overflow: hidden;
       border-radius: var(--radius-sm);
+    }
+
+    .mockup-abstract-tab {
+      padding: 3px 9px;
+      font-family: var(--font-mono);
+      font-size: 0.5625rem;
+      font-weight: 600;
+      letter-spacing: 0.03em;
+      color: var(--c-text-subtle);
+      background-color: #ffffff;
+      border: 1px solid var(--c-border);
+      border-right: none;
       cursor: pointer;
-      transition: color 0.15s ease, background-color 0.15s ease;
+      white-space: nowrap;
+      transition: color 0.15s ease, background-color 0.15s ease, border-color 0.15s ease;
+      user-select: none;
     }
 
-    .mockup-toggle-btn:hover {
-      background-color: var(--c-bg-surface-alt);
+    .mockup-abstract-tab:last-child {
+      border-right: 1px solid var(--c-border);
+    }
+
+    .mockup-abstract-tab.active {
       color: var(--c-navy);
+      background-color: var(--c-navy-subtle);
+      border-color: rgba(0, 64, 128, 0.35);
     }
 
-    /* mockup-tabs-bar and mockup-tab */
+    .mockup-abstract-tab.is-raw-active {
+      color: var(--c-text-subtle);
+      background-color: var(--c-bg-surface-alt);
+      border-color: var(--c-border-strong);
+    }
+
+
     .mockup-tabs-bar {
       display: flex;
       gap: 0;
@@ -498,19 +519,6 @@
       line-height: 1.7;
     }
 
-    /* Abstract bar status indicator */
-    .mockup-tag-clean {
-      font-family: var(--font-mono);
-      font-size: 0.625rem;
-      font-weight: 700;
-      letter-spacing: 0.06em;
-      text-transform: uppercase;
-      color: var(--c-navy);
-    }
-
-    .mockup-tag-clean.is-raw-label {
-      color: var(--c-text-subtle);
-    }
 
     /* Citation code block header row (tabs + copy btn) */
     .mockup-code-header {
@@ -1006,12 +1014,14 @@
                 
                 <div class="mockup-abstract-box">
                   <div class="mockup-abstract-bar">
-                    <span class="mockup-tag-clean" id="demoAbstractLabel">CLEANED</span>
-                    <button type="button" class="mockup-toggle-btn" id="demoToggleTag">RAW を表示</button>
+                    <div class="mockup-abstract-tabs">
+                      <button type="button" class="mockup-abstract-tab active" data-abstract="clean">整形後 (Cleaned)</button>
+                      <button type="button" class="mockup-abstract-tab" data-abstract="raw">原文 (Raw JATS/HTML)</button>
+                    </div>
                   </div>
                   <div class="mockup-abstract-text" id="demoAbstractText">母音フォルマント軌跡（<em>F</em><sub>1</sub>・<em>F</em><sub>2</sub>）の遷移区間を動的パラメータとして抽出し、音響的特徴量の弁別精度を検証した。</div>
-
                 </div>
+
 
                 <div class="mockup-code-header">
                   <div class="mockup-tabs-bar">
@@ -1283,36 +1293,35 @@
     (() => {
       'use strict';
 
-      // Demo Citation Data (仕様書指定の表示例)
+      // ── Demo Citation Data ────────────────────────────────────────────────
       const DEMO_CITATIONS = {
         bibtex: `@article{jouhou2026,\n  author = {情報 太郎 and 音声 花子},\n  title = {音響音声学におけるフォルマント軌跡の数理モデル},\n  journal = {音響学会誌},\n  year = {2026}\n}`,
         sist02: `情報 太郎, 音声 花子. 音響音声学におけるフォルマント軌跡の数理モデル. 音響学会誌. 2026.`,
-        apa: `情報 太郎, & 音声 花子. (2026). 音響音声学におけるフォルマント軌跡の数理モデル. 音響学会誌.`
+        apa:    `情報 太郎, & 音声 花子. (2026). 音響音声学におけるフォルマント軌跡の数理モデル. 音響学会誌.`
       };
 
-      const codeEl       = document.getElementById('demoCodePreview');
-      const tabs         = document.querySelectorAll('.mockup-tab');
-      const quickBtn     = document.getElementById('demoQuickCopy');
-      const btnLabel     = document.getElementById('demoBtnLabel');
-      const toggleTagBtn = document.getElementById('demoToggleTag');
-      const abstractText = document.getElementById('demoAbstractText');
-      const abstractLabel = document.getElementById('demoAbstractLabel');
+      // ── Abstract content ──────────────────────────────────────────────────
+      // RAW: エスケープ済みJATSタグ文字列（生タグが画面に表示される）
+      const RAW_ABSTRACT  = `&lt;jats:p&gt;母音フォルマント軌跡（&lt;jats:italic&gt;F&lt;/jats:italic&gt;&lt;jats:sub&gt;1&lt;/jats:sub&gt;・&lt;jats:italic&gt;F&lt;/jats:italic&gt;&lt;jats:sub&gt;2&lt;/jats:sub&gt;）の遷移区間を動的パラメータとして抽出し、音響的特徴量の弁別精度を検証した。&lt;/jats:p&gt;`;
+      // CLEAN: タグがパースされイタリック・添字として整形表示
+      const CLEAN_ABSTRACT = `母音フォルマント軌跡（<em>F</em><sub>1</sub>・<em>F</em><sub>2</sub>）の遷移区間を動的パラメータとして抽出し、音響的特徴量の弁別精度を検証した。`;
+
+      // ── DOM references ────────────────────────────────────────────────────
+      const codeEl        = document.getElementById('demoCodePreview');
+      const citeTabs      = document.querySelectorAll('.mockup-tab');
+      const quickBtn      = document.getElementById('demoQuickCopy');
+      const btnLabel      = document.getElementById('demoBtnLabel');
+      const abstractText  = document.getElementById('demoAbstractText');
+      const abstractTabs  = document.querySelectorAll('.mockup-abstract-tab');
       const inlineCopyBtn = document.getElementById('demoInlineCopy');
       const inlineCopyLabel = document.getElementById('demoInlineCopyLabel');
 
       let currentFormat = 'bibtex';
-      let isTagClean = true;
 
-      // RAW: エスケープ済みJATSタグ文字列（生タグが見えるコード風表示）
-      const RAW_ABSTRACT = `&lt;jats:p&gt;母音フォルマント軌跡（&lt;jats:italic&gt;F&lt;/jats:italic&gt;&lt;jats:sub&gt;1&lt;/jats:sub&gt;・&lt;jats:italic&gt;F&lt;/jats:italic&gt;&lt;jats:sub&gt;2&lt;/jats:sub&gt;）の遷移区間を動的パラメータとして抽出し、音響的特徴量の弁別精度を検証した。&lt;/jats:p&gt;`;
-      // CLEAN: タグをパースしてイタリック・添字として整形済みのHTML
-      const CLEAN_ABSTRACT = `母音フォルマント軌跡（<em>F</em><sub>1</sub>・<em>F</em><sub>2</sub>）の遷移区間を動的パラメータとして抽出し、音響的特徴量の弁別精度を検証した。`;
-
-
-      // ── Tab switching (citation format) ──────────────────────────────────
-      tabs.forEach((tab) => {
+      // ── Citation format tab switching ─────────────────────────────────────
+      citeTabs.forEach((tab) => {
         tab.addEventListener('click', () => {
-          tabs.forEach((t) => t.classList.remove('active'));
+          citeTabs.forEach((t) => t.classList.remove('active'));
           tab.classList.add('active');
 
           const fmt = tab.getAttribute('data-fmt');
@@ -1321,24 +1330,18 @@
             codeEl.textContent = DEMO_CITATIONS[fmt];
           }
 
-          const labelMap = {
-            bibtex: 'BibTeX コピー',
-            sist02: 'SIST02 コピー',
-            apa:    'APA コピー'
-          };
+          const labelMap = { bibtex: 'BibTeX コピー', sist02: 'SIST02 コピー', apa: 'APA コピー' };
           if (btnLabel) btnLabel.textContent = labelMap[fmt] || '引用コピー';
-          // Reset inline copy label on tab change
           if (inlineCopyLabel) inlineCopyLabel.textContent = 'COPY';
           if (inlineCopyBtn) inlineCopyBtn.classList.remove('is-copied');
         });
       });
 
-      // ── Helper: clipboard copy with feedback ─────────────────────────────
+      // ── Clipboard copy helper ─────────────────────────────────────────────
       async function copyWithFeedback(btn, labelEl, originalLabel, successLabel) {
-        const textToCopy = DEMO_CITATIONS[currentFormat] || '';
         try {
           if (navigator.clipboard && navigator.clipboard.writeText) {
-            await navigator.clipboard.writeText(textToCopy);
+            await navigator.clipboard.writeText(DEMO_CITATIONS[currentFormat] || '');
           }
         } catch (_) {}
         btn.classList.add('is-copied');
@@ -1349,47 +1352,48 @@
         }, 1500);
       }
 
-      // ── Quick Copy (title row button) ─────────────────────────────────────
+      // ── Quick copy (title row) ────────────────────────────────────────────
       if (quickBtn) {
         quickBtn.addEventListener('click', () => {
-          const originalText = btnLabel ? btnLabel.textContent : 'BibTeX コピー';
-          copyWithFeedback(quickBtn, btnLabel, originalText, 'コピー完了');
+          const orig = btnLabel ? btnLabel.textContent : 'BibTeX コピー';
+          copyWithFeedback(quickBtn, btnLabel, orig, 'コピー完了');
         });
       }
 
-      // ── Inline Copy (code block corner button) ────────────────────────────
+      // ── Inline copy (code block corner) ──────────────────────────────────
       if (inlineCopyBtn) {
         inlineCopyBtn.addEventListener('click', () => {
           copyWithFeedback(inlineCopyBtn, inlineCopyLabel, 'COPY', 'DONE');
         });
       }
 
-      // ── Toggle Raw / Cleaned abstract ─────────────────────────────────────
-      if (toggleTagBtn && abstractText) {
-        toggleTagBtn.addEventListener('click', () => {
-          isTagClean = !isTagClean;
-          if (isTagClean) {
-            // Cleaned: em/sub タグをレンダリング
-            abstractText.innerHTML = CLEAN_ABSTRACT;
-            abstractText.classList.remove('is-raw');
-            if (abstractLabel) {
-              abstractLabel.textContent = 'CLEANED';
-              abstractLabel.classList.remove('is-raw-label');
+      // ── Abstract tabs: 整形後 (Cleaned) / 原文 (Raw JATS/HTML) ───────────
+      if (abstractText && abstractTabs.length) {
+        abstractTabs.forEach((tab) => {
+          tab.addEventListener('click', () => {
+            const mode = tab.getAttribute('data-abstract');
+
+            // Update tab active states
+            abstractTabs.forEach((t) => {
+              t.classList.remove('active', 'is-raw-active');
+            });
+
+            if (mode === 'raw') {
+              tab.classList.add('active', 'is-raw-active');
+              // Raw: &lt;jats:p&gt; などの生タグ文字列をそのまま表示
+              abstractText.innerHTML = RAW_ABSTRACT;
+              abstractText.classList.add('is-raw');
+            } else {
+              tab.classList.add('active');
+              // Cleaned: em/sub でイタリック・添字をレンダリング
+              abstractText.innerHTML = CLEAN_ABSTRACT;
+              abstractText.classList.remove('is-raw');
             }
-            toggleTagBtn.textContent = 'RAW を表示';
-          } else {
-            // Raw: エスケープ済みJATSタグを文字として表示
-            abstractText.innerHTML = RAW_ABSTRACT;
-            abstractText.classList.add('is-raw');
-            if (abstractLabel) {
-              abstractLabel.textContent = 'RAW / JATS';
-              abstractLabel.classList.add('is-raw-label');
-            }
-            toggleTagBtn.textContent = '整形表示に戻す';
-          }
+          });
         });
       }
     })();
+
   </script>
 </body>
 </html>
