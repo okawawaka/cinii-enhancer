@@ -1,0 +1,10 @@
+# OS generated files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Node modules / temp files
+node_modules/
+npm-debug.log
+*.tmp
+*.log

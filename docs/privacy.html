@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>プライバシーポリシー - CiNii Research Enhancer</title>
+  <link rel="icon" type="image/png" sizes="128x128" href="icons/icon128.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=Noto+Sans+JP:wght@400;500;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --cinii-navy: #002b66;
+      --cinii-blue: #004098;
+      --cinii-blue-light: #f0f5fc;
+      --cinii-blue-border: #b8d2f5;
+      --text-main: #1e293b;
+      --text-secondary: #475569;
+      --text-muted: #64748b;
+      --bg-page: #f8fafc;
+      --bg-card: #ffffff;
+      --border-color: #e2e8f0;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg-page);
+      color: var(--text-main);
+      font-family: 'Noto Sans JP', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      line-height: 1.7;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Top Strip */
+    .top-strip {
+      height: 6px;
+      background: var(--cinii-blue);
+      width: 100%;
+    }
+
+    /* Header */
+    header {
+      background: #ffffff;
+      border-bottom: 1px solid var(--border-color);
+      padding: 16px 24px;
+    }
+
+    .header-inner {
+      max-width: 860px;
+      margin: 0 auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .brand-link {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      text-decoration: none;
+      color: var(--cinii-navy);
+      font-weight: 800;
+      font-size: 18px;
+    }
+
+    .brand-logo {
+      width: 32px;
+      height: 32px;
+    }
+
+    .back-link {
+      font-size: 13.5px;
+      color: var(--cinii-blue);
+      text-decoration: none;
+      font-weight: 600;
+    }
+
+    .back-link:hover {
+      text-decoration: underline;
+    }
+
+    /* Main Container */
+    main {
+      max-width: 860px;
+      margin: 40px auto 80px;
+      padding: 0 24px;
+    }
+
+    .policy-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+      padding: 48px 48px;
+      box-shadow: 0 4px 16px rgba(0, 43, 102, 0.04);
+    }
+
+    h1 {
+      font-size: 32px;
+      font-weight: 800;
+      color: var(--cinii-navy);
+      letter-spacing: -0.02em;
+      margin-bottom: 8px;
+    }
+
+    .policy-meta {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-bottom: 32px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    h2 {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--cinii-navy);
+      margin: 32px 0 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    h2::before {
+      content: '';
+      display: inline-block;
+      width: 4px;
+      height: 20px;
+      background: var(--cinii-blue);
+      border-radius: 1px;
+    }
+
+    p {
+      color: var(--text-secondary);
+      font-size: 15px;
+      margin-bottom: 16px;
+    }
+
+    /* Highlight Banner */
+    .highlight-box {
+      background: var(--cinii-blue-light);
+      border: 1px solid var(--cinii-blue-border);
+      border-left: 4px solid var(--cinii-blue);
+      padding: 16px 20px;
+      border-radius: 2px;
+      margin: 20px 0;
+    }
+
+    .highlight-box p {
+      color: var(--cinii-navy);
+      font-weight: 600;
+      margin-bottom: 0;
+      font-size: 14.5px;
+    }
+
+    /* Table */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 20px 0;
+      font-size: 14px;
+    }
+
+    th, td {
+      border: 1px solid var(--border-color);
+      padding: 12px 16px;
+      text-align: left;
+    }
+
+    th {
+      background: #f8fafc;
+      font-weight: 700;
+      color: var(--cinii-navy);
+      width: 25%;
+    }
+
+    td {
+      color: var(--text-secondary);
+    }
+
+    code {
+      font-family: 'JetBrains Mono', Consolas, monospace;
+      font-size: 13px;
+      background: #f1f5f9;
+      padding: 2px 6px;
+      border-radius: 2px;
+      color: var(--cinii-blue);
+    }
+
+    ul {
+      margin-left: 20px;
+      margin-bottom: 16px;
+      color: var(--text-secondary);
+      font-size: 15px;
+    }
+
+    li {
+      margin-bottom: 6px;
+    }
+
+    a {
+      color: var(--cinii-blue);
+      text-decoration: underline;
+    }
+
+    /* Footer */
+    footer {
+      border-top: 1px solid var(--border-color);
+      background: #ffffff;
+      padding: 24px;
+      text-align: center;
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+  </style>
+</head>
+<body>
+
+  <div class="top-strip"></div>
+
+  <header>
+    <div class="header-inner">
+      <a href="index.html" class="brand-link">
+        <img src="icons/icon128.png" alt="Logo" class="brand-logo">
+        <span>CiNii Research Enhancer</span>
+      </a>
+      <a href="index.html" class="back-link">← ホームに戻る</a>
+    </div>
+  </header>
+
+  <main>
+    <article class="policy-card">
+      <h1>プライバシーポリシー</h1>
+      <div class="policy-meta">
+        最終更新日: 2026年9月30日 ｜ 対象: CiNii Research Enhancer (Chrome拡張機能)
+      </div>
+
+      <div class="highlight-box">
+        <p>CiNii Research Enhancer は、ユーザーの個人情報、閲覧履歴、検索クエリ等を一切収集・送信しません。完全無料で広告やトラッキングのないオープンソースツールです。</p>
+      </div>
+
+      <h2>1. 収集する情報について</h2>
+      <p>本拡張機能は、ユーザーに関するいかなる個人情報やアクセスデータも収集・保存・外部送信しません。</p>
+      <ul>
+        <li>アクセス解析や行動トラッキング（Google Analytics等）は一切導入されていません。</li>
+        <li>外部サーバーへのいかなるネットワークリクエストも行いません。</li>
+        <li>クッキーやセッション情報を外部に送信することはありません。</li>
+      </ul>
+
+      <h2>2. 要求する権限とその利用目的</h2>
+      <p>本拡張機能は、動作に必要な最小限の権限のみを要求します（Manifest V3 準拠）。</p>
+
+      <table>
+        <thead>
+          <tr>
+            <th>要求権限</th>
+            <th>利用目的</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>storage</code></td>
+            <td>ユーザーが選択した優先引用形式（BibTeX, APA等）や機能の有効/無効設定を、お使いのブラウザのローカル領域（<code>chrome.storage.local</code>）に保存するためにのみ使用します。外部サーバーへ送信されることはありません。</td>
+          </tr>
+          <tr>
+            <td><code>clipboardWrite</code></td>
+            <td>文献詳細画面や検索一覧で引用コピーボタンをクリックした際に、生成した書誌データ（BibTeX, APA, SIST02等）をクリップボードにコピーするためにのみ使用します。クリップボードの内容を読み取ることはありません。</td>
+          </tr>
+          <tr>
+            <td><code>https://cir.nii.ac.jp/*</code><br>(ホスト権限)</td>
+            <td>CiNii Researchのウェブページから標題、著者名、出版年等の書誌情報を抽出し、引用ボタンを挿入したり、抄録に混入した生XMLタグ（JATS XML）を整形表示するためにのみ使用します。他のサイトへのアクセス権限はありません。</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h2>3. データの第三者提供について</h2>
+      <p>本拡張機能はいかなるユーザーデータも取得しないため、第三者への販売、提供、共有、広告への利用は一切行いません。</p>
+
+      <h2>4. ソースコードの公開と透明性</h2>
+      <p>本拡張機能はオープンソースソフトウェア（MITライセンス）として開発されており、すべてのソースコードがGitHub上で一般公開されています。</p>
+      <p>ソースコードリポジトリ: <a href="https://github.com/okawawaka/cinii-enhancer" target="_blank" rel="noopener noreferrer">https://github.com/okawawaka/cinii-enhancer</a></p>
+
+      <h2>5. お問い合わせ</h2>
+      <p>本プライバシーポリシーに関するご質問やご不明な点がございましたら、以下のGitHub Issuesよりお問い合わせください。</p>
+      <p><a href="https://github.com/okawawaka/cinii-enhancer/issues" target="_blank" rel="noopener noreferrer">https://github.com/okawawaka/cinii-enhancer/issues</a></p>
+    </article>
+  </main>
+
+  <footer>
+    &copy; 2026 CiNii Research Enhancer ｜ Released under the MIT License
+  </footer>
+
+</body>
+</html>
