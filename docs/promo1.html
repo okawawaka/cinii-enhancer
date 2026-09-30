@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=1280, height=800, initial-scale=1.0">
+  <title>CiNii Research Enhancer - 大プロモーション 1枚目</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@600;700;800&family=Noto+Sans+JP:wght@500;700;800&display=swap" rel="stylesheet">
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html, body {
+      width: 1280px;
+      height: 800px;
+      overflow: hidden;
+      background-color: #ffffff;
+      font-family: 'Noto Sans JP', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      -webkit-font-smoothing: antialiased;
+      color: #1e293b;
+    }
+
+    .container {
+      width: 1280px;
+      height: 800px;
+      display: grid;
+      grid-template-columns: 500px 1fr;
+      align-items: center;
+      padding: 0 80px;
+      gap: 60px;
+      position: relative;
+      background: #ffffff;
+    }
+
+    /* Top Accent Line */
+    .container::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 8px;
+      background-color: #004098;
+    }
+
+    /* Left: Text Description (50 characters or less) */
+    .desc-area {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .brand-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .brand-logo {
+      width: 36px;
+      height: 36px;
+    }
+
+    .brand-name {
+      font-size: 16px;
+      font-weight: 700;
+      color: #004098;
+      letter-spacing: -0.01em;
+    }
+
+    .main-title {
+      font-size: 40px;
+      font-weight: 800;
+      color: #002b66;
+      line-height: 1.25;
+      letter-spacing: -0.02em;
+    }
+
+    .main-text {
+      font-size: 18px;
+      line-height: 1.65;
+      color: #475569;
+    }
+
+    .format-pills {
+      display: flex;
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    .format-pill {
+      font-size: 12px;
+      font-weight: 700;
+      color: #004098;
+      background: #f0f5fc;
+      border: 1px solid #b8d2f5;
+      padding: 4px 10px;
+      border-radius: 2px;
+    }
+
+    /* Right: Mock of Extension Settings (Popup UI) */
+    .mock-wrapper {
+      display: flex;
+      justify-content: center;
+    }
+
+    .popup-mock {
+      width: 460px;
+      background: #ffffff;
+      border: 1px solid #cbd5e1;
+      border-radius: 2px;
+      box-shadow: 0 12px 32px rgba(0, 43, 102, 0.08), 0 1px 3px rgba(0, 0, 0, 0.05);
+      overflow: hidden;
+    }
+
+    .mock-header {
+      background: #002b66;
+      padding: 16px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .mock-header-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: #ffffff;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .mock-version {
+      font-size: 11px;
+      color: #94a3b8;
+    }
+
+    .mock-body {
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      background: #ffffff;
+    }
+
+    .setting-section-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: #64748b;
+      margin-bottom: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .select-box {
+      width: 100%;
+      padding: 12px 14px;
+      font-size: 15px;
+      font-weight: 700;
+      color: #004098;
+      background: #f8fafc;
+      border: 1px solid #004098;
+      border-radius: 2px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .select-arrow {
+      color: #004098;
+      font-size: 12px;
+    }
+
+    .toggle-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .toggle-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 14px;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 2px;
+    }
+
+    .toggle-info {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .toggle-name {
+      font-size: 14px;
+      font-weight: 700;
+      color: #1e293b;
+    }
+
+    .toggle-desc {
+      font-size: 12px;
+      color: #64748b;
+    }
+
+    .toggle-status {
+      font-size: 12px;
+      font-weight: 700;
+      color: #ffffff;
+      background: #004098;
+      padding: 3px 10px;
+      border-radius: 2px;
+    }
+
+    .mock-btn-save {
+      background: #004098;
+      color: #ffffff;
+      border: none;
+      padding: 12px;
+      font-size: 14px;
+      font-weight: 700;
+      border-radius: 2px;
+      text-align: center;
+      margin-top: 4px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    
+    <!-- Left Column: Description (50 characters or less) -->
+    <div class="desc-area">
+      <div class="brand-row">
+        <svg class="brand-logo" viewBox="0 0 128 128" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="ciniiGradP1" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#003580"/>
+              <stop offset="100%" stop-color="#001f4d"/>
+            </linearGradient>
+          </defs>
+          <rect x="8" y="8" width="112" height="112" rx="2" fill="url(#ciniiGradP1)"/>
+          <path d="M34 26 H80 L94 40 V102 H34 Z" fill="#ffffff" stroke="#cbd5e1" stroke-width="2"/>
+          <path d="M80 26 V40 H94 Z" fill="#e2e8f0"/>
+          <circle cx="82" cy="82" r="18" fill="#004098" stroke="#ffffff" stroke-width="2.5"/>
+          <path d="M75 80 C75 76 77 74 80 74 V77 C78 77 77.5 78 77.5 80 H80 V85 H75 Z" fill="#ffffff"/>
+          <path d="M83 80 C83 76 85 74 88 74 V77 C86 77 85.5 78 85.5 80 H88 V85 H83 Z" fill="#ffffff"/>
+        </svg>
+        <span class="brand-name">CiNii Research Enhancer</span>
+      </div>
+
+      <h1 class="main-title">ワンクリックで<br>引用コピー</h1>
+
+      <p class="main-text">
+        設定画面で優先形式を選択し、書誌情報をワンクリックで直接コピー。
+      </p>
+
+      <div class="format-pills">
+        <span class="format-pill">BibTeX</span>
+        <span class="format-pill">SIST02</span>
+        <span class="format-pill">APA</span>
+        <span class="format-pill">RIS</span>
+      </div>
+    </div>
+
+    <!-- Right Column: Settings Screen Mock -->
+    <div class="mock-wrapper">
+      <div class="popup-mock">
+        <div class="mock-header">
+          <span class="mock-header-title">CiNii Enhancer 設定</span>
+          <span class="mock-version">v1.0.0</span>
+        </div>
+
+        <div class="mock-body">
+          <div>
+            <div class="setting-section-title">クイックコピー優先フォーマット</div>
+            <div class="select-box">
+              <span>BibTeX (LaTeX / Typst)</span>
+              <span class="select-arrow">▼</span>
+            </div>
+          </div>
+
+          <div>
+            <div class="setting-section-title">機能のオン/オフ</div>
+            <div class="toggle-list">
+              <div class="toggle-item">
+                <div class="toggle-info">
+                  <span class="toggle-name">詳細画面の引用ツールバー</span>
+                  <span class="toggle-desc">タイトル横に引用ボタンを配置</span>
+                </div>
+                <span class="toggle-status">有効</span>
+              </div>
+              <div class="toggle-item">
+                <div class="toggle-info">
+                  <span class="toggle-name">検索結果の引用ボタン</span>
+                  <span class="toggle-desc">一覧から直接ワンクリックコピー</span>
+                </div>
+                <span class="toggle-status">有効</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="mock-btn-save">設定を保存</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+</body>
+</html>

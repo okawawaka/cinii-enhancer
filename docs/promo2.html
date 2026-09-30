@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=1280, height=800, initial-scale=1.0">
+  <title>CiNii Research Enhancer - 大プロモーション 2枚目</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@600;700;800&family=Noto+Sans+JP:wght@500;700;800&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html, body {
+      width: 1280px;
+      height: 800px;
+      overflow: hidden;
+      background-color: #ffffff;
+      font-family: 'Noto Sans JP', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      -webkit-font-smoothing: antialiased;
+      color: #1e293b;
+    }
+
+    .container {
+      width: 1280px;
+      height: 800px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 0 80px;
+      gap: 44px;
+      position: relative;
+      background: #ffffff;
+    }
+
+    /* Top Accent Line */
+    .container::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 8px;
+      background-color: #004098;
+    }
+
+    /* Top Area: Description (50 characters or less) */
+    .top-area {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      border-bottom: 2px solid #e2e8f0;
+      padding-bottom: 20px;
+    }
+
+    .brand-group {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .brand-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .brand-logo {
+      width: 28px;
+      height: 28px;
+    }
+
+    .brand-name {
+      font-size: 14px;
+      font-weight: 700;
+      color: #004098;
+      letter-spacing: -0.01em;
+    }
+
+    .main-title {
+      font-size: 38px;
+      font-weight: 800;
+      color: #002b66;
+      line-height: 1.15;
+      letter-spacing: -0.02em;
+    }
+
+    .main-desc {
+      font-size: 17px;
+      line-height: 1.6;
+      color: #475569;
+      max-width: 520px;
+      text-align: right;
+    }
+
+    /* Bottom Area: Side-by-Side Comparison Cards (Left: Before, Right: After) */
+    .comparison-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 36px;
+    }
+
+    .card {
+      background: #ffffff;
+      border: 1px solid #cbd5e1;
+      border-radius: 2px;
+      box-shadow: 0 8px 24px rgba(0, 43, 102, 0.06);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .card-header {
+      padding: 14px 22px;
+      font-size: 15px;
+      font-weight: 700;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .card-header.before {
+      background: #fff5f5;
+      color: #991b1b;
+      border-bottom: 1px solid #fee2e2;
+    }
+
+    .card-header.after {
+      background: #f0f5fc;
+      color: #002b66;
+      border-bottom: 1px solid #b8d2f5;
+    }
+
+    .badge {
+      font-size: 12px;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 2px;
+      border: 1px solid;
+    }
+
+    .badge.before {
+      background: #ffffff;
+      color: #dc2626;
+      border-color: #fca5a5;
+    }
+
+    .badge.after {
+      background: #ffffff;
+      color: #004098;
+      border-color: #93c5fd;
+    }
+
+    .card-body {
+      padding: 24px 22px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      background: #ffffff;
+    }
+
+    .mock-title {
+      font-size: 16px;
+      font-weight: 700;
+      line-height: 1.4;
+      padding-bottom: 12px;
+      border-bottom: 1px solid #e2e8f0;
+    }
+
+    .mock-title.before {
+      color: #64748b;
+      font-family: 'JetBrains Mono', Consolas, monospace;
+      font-size: 13.5px;
+    }
+
+    .mock-title.after {
+      color: #002b66;
+    }
+
+    .mock-content {
+      font-size: 14.5px;
+      line-height: 1.8;
+      padding: 18px 20px;
+      border-radius: 2px;
+    }
+
+    .mock-content.before {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-left: 4px solid #ef4444;
+      font-family: 'JetBrains Mono', Consolas, monospace;
+      font-size: 12.5px;
+      color: #334155;
+      word-break: break-all;
+    }
+
+    .mock-content.after {
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-left: 4px solid #004098;
+      color: #1e293b;
+    }
+
+    .tag-red {
+      color: #b91c1c;
+      font-weight: 700;
+      background: #fee2e2;
+      padding: 0 2px;
+    }
+
+    .mock-content.after em {
+      font-style: italic;
+      color: #004098;
+      font-weight: 700;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    
+    <!-- Top Area: Heading & Description (50 characters or less) -->
+    <div class="top-area">
+      <div class="brand-group">
+        <div class="brand-row">
+          <svg class="brand-logo" viewBox="0 0 128 128" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <linearGradient id="ciniiGradP2" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#003580"/>
+                <stop offset="100%" stop-color="#001f4d"/>
+              </linearGradient>
+            </defs>
+            <rect x="8" y="8" width="112" height="112" rx="2" fill="url(#ciniiGradP2)"/>
+            <path d="M34 26 H80 L94 40 V102 H34 Z" fill="#ffffff" stroke="#cbd5e1" stroke-width="2"/>
+            <path d="M80 26 V40 H94 Z" fill="#e2e8f0"/>
+            <circle cx="82" cy="82" r="18" fill="#004098" stroke="#ffffff" stroke-width="2.5"/>
+            <path d="M75 80 C75 76 77 74 80 74 V77 C78 77 77.5 78 77.5 80 H80 V85 H75 Z" fill="#ffffff"/>
+            <path d="M83 80 C83 76 85 74 88 74 V77 C86 77 85.5 78 85.5 80 H88 V85 H83 Z" fill="#ffffff"/>
+          </svg>
+          <span class="brand-name">CiNii Research Enhancer</span>
+        </div>
+        <h1 class="main-title">生XMLタグを自動消去</h1>
+      </div>
+
+      <p class="main-desc">
+        抄録や標題の不要なJATS XMLタグを除去し、読みやすく整形。
+      </p>
+    </div>
+
+    <!-- Bottom Area: Side-by-Side Comparison -->
+    <div class="comparison-grid">
+      
+      <!-- LEFT: BEFORE -->
+      <div class="card">
+        <div class="card-header before">
+          <span>消去前（未整形データ）</span>
+          <span class="badge before">タグ混入</span>
+        </div>
+        <div class="card-body">
+          <div class="mock-title before">
+            &lt;jats:title&gt;音声知覚における&lt;jats:italic&gt;F0&lt;/jats:italic&gt;の効果&lt;/jats:title&gt;
+          </div>
+          <div class="mock-content before">
+            <span class="tag-red">&lt;jats:p&gt;</span>本稿では日本語母音の知覚特性を検討した。<span class="tag-red">&lt;jats:italic&gt;</span>基本周波数 (F0)<span class="tag-red">&lt;/jats:italic&gt;</span>の変化に伴い、弁別閾値が有意に変化することが判明した。<span class="tag-red">&lt;sec&gt;</span>詳細は実験結果を参照。<span class="tag-red">&lt;/sec&gt;&lt;/jats:p&gt;</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- RIGHT: AFTER -->
+      <div class="card">
+        <div class="card-header after">
+          <span>消去後（自動整形表示）</span>
+          <span class="badge after">整形完了</span>
+        </div>
+        <div class="card-body">
+          <div class="mock-title after">
+            音声知覚における <em>F0</em> の効果
+          </div>
+          <div class="mock-content after">
+            本稿では日本語母音の知覚特性を検討した。<em>基本周波数 (F0)</em> の変化に伴い、弁別閾値が有意に変化することが判明した。詳細は実験結果を参照。
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+</body>
+</html>
