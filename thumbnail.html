@@ -3,40 +3,41 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>CiNii Research Enhancer - ストア掲載用画像作成</title>
+  <title>CiNii Research Enhancer - ストア掲載用アセット</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700;800&family=Noto+Sans+JP:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <style>
     /* ==============================================================================
-     * CiNii Research Academic Design Tokens
-     * Authentic palette from CiNii Research (National Institute of Informatics)
-     * Strict Rules:
-     *  - NO Unicode emojis
-     *  - NO neon glows, cyber gradients, or rounded pills
-     *  - Strict institutional palette: #004098, #333333, #666666, #cccccc, #f6f6f6, #ffffff
-     *  - Sharp borders (0px - 2px border radius only)
+     * Professional Academic Graphic Design System
+     * Strictly based on CiNii Research (National Institute of Informatics) visual identity.
+     * ZERO emojis, ZERO AI tropes (no neon, no glassmorphism, no round pills).
+     * High typographic hierarchy, balanced composition, precise institutional aesthetic.
      * ============================================================================== */
     :root {
+      --cinii-navy: #002b66;
       --cinii-blue: #004098;
-      --cinii-blue-dark: #002d6b;
-      --cinii-blue-subtle: #f0f5fc;
-      --cinii-blue-border: #004098;
+      --cinii-blue-dark: #001f4d;
+      --cinii-blue-light: #eef4fc;
+      --cinii-blue-border: #b8d2f5;
 
-      --cinii-text-heading: #111111;
-      --cinii-text-main: #333333;
-      --cinii-text-muted: #555555;
-      --cinii-text-subtle: #777777;
+      --cinii-text-primary: #1e293b;
+      --cinii-text-secondary: #475569;
+      --cinii-text-tertiary: #64748b;
+      --cinii-text-caption: #94a3b8;
 
-      --cinii-bg-pure: #ffffff;
-      --cinii-bg-neutral: #f6f6f6;
-      --cinii-bg-subtle: #fcfcfc;
-      --cinii-bg-header: #003366;
+      --cinii-bg-page: #f1f5f9;
+      --cinii-bg-surface: #ffffff;
+      --cinii-bg-muted: #f8fafc;
+      --cinii-bg-tinted: #f0f4f9;
 
-      --cinii-border-light: #e5e5e5;
-      --cinii-border-medium: #cccccc;
-      --cinii-border-dark: #999999;
+      --cinii-border-light: #e2e8f0;
+      --cinii-border-default: #cbd5e1;
+      --cinii-border-strong: #94a3b8;
 
-      --cinii-font: -apple-system, BlinkMacSystemFont, "Segoe UI", "Hiragino Kaku Gothic ProN", "BIZ UDPGothic", Meiryo, sans-serif;
-      --cinii-font-mono: Consolas, "Courier New", Courier, Monaco, monospace;
+      --font-base: 'Noto Sans JP', 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      --font-mono: 'JetBrains Mono', Consolas, "Courier New", monospace;
     }
 
     * {
@@ -46,80 +47,80 @@
     }
 
     body {
-      background-color: #e5e7eb;
-      color: var(--cinii-text-main);
-      font-family: var(--cinii-font);
+      background-color: #cbd5e1;
+      color: var(--cinii-text-primary);
+      font-family: var(--font-base);
       min-height: 100vh;
       display: flex;
       flex-direction: column;
       align-items: center;
-      padding: 24px 16px 60px;
+      padding: 24px 16px 80px;
+      -webkit-font-smoothing: antialiased;
     }
 
-    /* Operation Bar (Outside of export canvas) */
-    .ctrl-bar {
+    /* Top Control Bar */
+    .ctrl-strip {
       display: flex;
       align-items: center;
       gap: 12px;
-      margin-bottom: 20px;
-      background: #ffffff;
-      padding: 10px 16px;
-      border: 1px solid var(--cinii-border-medium);
-      border-radius: 2px;
-      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
-      z-index: 100;
+      margin-bottom: 24px;
+      background: var(--cinii-bg-surface);
+      padding: 10px 18px;
+      border: 1px solid var(--cinii-border-default);
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+      z-index: 50;
     }
 
     .ctrl-btn {
-      padding: 7px 16px;
+      padding: 8px 18px;
       font-size: 13px;
       font-weight: 600;
       border-radius: 2px;
-      border: 1px solid var(--cinii-border-medium);
+      border: 1px solid var(--cinii-border-default);
       cursor: pointer;
       background: #ffffff;
-      color: var(--cinii-text-main);
+      color: var(--cinii-text-secondary);
       font-family: inherit;
+      transition: all 0.15s ease;
     }
 
     .ctrl-btn:hover {
-      background: #f0f0f0;
+      background: var(--cinii-bg-muted);
+      color: var(--cinii-text-primary);
     }
 
     .ctrl-btn.active {
-      background: var(--cinii-blue);
+      background: var(--cinii-navy);
       color: #ffffff;
       border-color: var(--cinii-blue-dark);
     }
 
     .ctrl-btn-save {
-      background: #2e7d32;
+      background: #15803d;
       color: #ffffff;
-      border-color: #1b5e20;
+      border-color: #166534;
+      font-weight: 700;
     }
 
     .ctrl-btn-save:hover {
-      background: #1b5e20;
+      background: #166534;
     }
 
-    .ctrl-note {
+    .ctrl-caption {
       font-size: 12px;
-      color: var(--cinii-text-muted);
+      color: var(--cinii-text-tertiary);
       margin-left: 8px;
     }
 
-    /* Outer Frame Container */
-    .canvas-stage {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
-      border: 1px solid #bbbbbb;
+    /* Main Showcase Stage */
+    .viewport-frame {
+      box-shadow: 0 10px 30px -5px rgba(0, 31, 77, 0.12), 0 0 0 1px rgba(0, 0, 0, 0.06);
       background: #ffffff;
+      overflow: hidden;
     }
 
     /* =========================================================================
-       1280 x 800 Canvas (Large Promo / Screenshot Size)
+       1280 x 800 Canvas: Balanced Academic Editorial Composition
        ========================================================================= */
     .canvas-1280 {
       width: 1280px;
@@ -127,144 +128,219 @@
       background: #ffffff;
       position: relative;
       overflow: hidden;
-      display: flex;
-      flex-direction: column;
+      display: grid;
+      grid-template-rows: 76px 1fr 56px;
       user-select: none;
     }
 
-    /* Top Institutional Header Bar */
-    .cinii-top-strip {
-      background: var(--cinii-bg-header);
-      height: 8px;
-      width: 100%;
-    }
-
-    .cinii-header-bar {
+    /* Header Bar */
+    .header-1280 {
+      border-bottom: 2px solid var(--cinii-blue);
+      background: #ffffff;
+      padding: 0 56px;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 24px 48px 20px;
-      border-bottom: 2px solid var(--cinii-blue);
-      background: #ffffff;
     }
 
-    .cinii-brand {
+    .brand-group {
       display: flex;
       align-items: center;
-      gap: 18px;
+      gap: 16px;
     }
 
-    .cinii-logo-svg {
-      width: 58px;
-      height: 58px;
+    .brand-symbol {
+      width: 44px;
+      height: 44px;
       flex-shrink: 0;
     }
 
-    .cinii-title-block {
+    .brand-titles {
+      display: flex;
+      align-items: baseline;
+      gap: 12px;
+    }
+
+    .brand-main {
+      font-size: 24px;
+      font-weight: 800;
+      color: var(--cinii-navy);
+      letter-spacing: -0.02em;
+    }
+
+    .brand-sub {
+      font-size: 13px;
+      color: var(--cinii-text-tertiary);
+      font-weight: 500;
+    }
+
+    .brand-meta {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .meta-tag {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--cinii-navy);
+      background: var(--cinii-blue-light);
+      border: 1px solid var(--cinii-blue-border);
+      padding: 4px 10px;
+      border-radius: 2px;
+    }
+
+    /* Middle Main Content: Split Grid Layout */
+    .content-split-1280 {
+      display: grid;
+      grid-template-columns: 460px 1fr;
+      background: var(--cinii-bg-muted);
+      overflow: hidden;
+    }
+
+    /* Left Side: Editorial & Value Proposition */
+    .left-editorial {
+      padding: 48px 48px 40px 56px;
+      background: #ffffff;
+      border-right: 1px solid var(--cinii-border-light);
       display: flex;
       flex-direction: column;
+      justify-content: space-between;
     }
 
-    .cinii-title-main {
-      font-size: 32px;
+    .hero-lead-section {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .academic-kicker {
+      font-size: 12px;
       font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
       color: var(--cinii-blue);
-      letter-spacing: -0.01em;
-      line-height: 1.15;
+      display: flex;
+      align-items: center;
+      gap: 8px;
     }
 
-    .cinii-title-sub {
-      font-size: 14px;
-      color: var(--cinii-text-muted);
+    .academic-kicker::before {
+      content: '';
+      display: inline-block;
+      width: 16px;
+      height: 2px;
+      background: var(--cinii-blue);
+    }
+
+    .hero-heading {
+      font-size: 34px;
+      font-weight: 800;
+      line-height: 1.25;
+      color: var(--cinii-text-primary);
+      letter-spacing: -0.02em;
+    }
+
+    .hero-heading span.focus {
+      color: var(--cinii-blue);
+      border-bottom: 3px solid var(--cinii-blue);
+      padding-bottom: 2px;
+    }
+
+    .hero-description {
+      font-size: 14.5px;
+      line-height: 1.7;
+      color: var(--cinii-text-secondary);
       margin-top: 4px;
     }
 
-    .cinii-spec-badge {
-      display: inline-flex;
-      align-items: center;
-      padding: 6px 14px;
-      border: 1px solid var(--cinii-border-medium);
-      background: var(--cinii-bg-neutral);
-      font-size: 13px;
-      font-weight: 600;
-      color: var(--cinii-text-main);
-      border-radius: 2px;
-    }
-
-    /* Main Content Body */
-    .canvas-body {
-      flex: 1;
-      padding: 32px 48px;
-      background: #fafafa;
+    .feature-pillars {
       display: flex;
       flex-direction: column;
-      justify-content: space-between;
+      gap: 14px;
+      margin-top: 24px;
+      border-top: 1px solid var(--cinii-border-light);
+      padding-top: 24px;
     }
 
-    /* Catch Banner Section */
-    .catch-heading-box {
-      background: #ffffff;
-      border: 1px solid var(--cinii-border-medium);
-      border-left: 6px solid var(--cinii-blue);
-      padding: 16px 24px;
-      margin-bottom: 24px;
-    }
-
-    .catch-title {
-      font-size: 26px;
-      font-weight: 700;
-      color: var(--cinii-text-heading);
-      line-height: 1.3;
-    }
-
-    .catch-desc {
-      font-size: 14px;
-      color: var(--cinii-text-muted);
-      margin-top: 6px;
-      line-height: 1.5;
-    }
-
-    /* Comparison Area */
-    .comparison-area {
-      display: grid;
-      grid-template-columns: 1fr 48px 1fr;
-      align-items: stretch;
-      gap: 16px;
-      flex: 1;
-      max-height: 380px;
-    }
-
-    .academic-panel {
-      background: #ffffff;
-      border: 1px solid var(--cinii-border-medium);
-      border-radius: 2px;
+    .pillar-row {
       display: flex;
-      flex-direction: column;
+      gap: 14px;
+      align-items: flex-start;
     }
 
-    .panel-header {
-      padding: 10px 16px;
-      font-size: 14px;
-      font-weight: 700;
-      border-bottom: 1px solid var(--cinii-border-medium);
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-
-    .panel-header.before {
-      background: #fdf2f2;
-      color: #991b1b;
-      border-bottom-color: #fca5a5;
-    }
-
-    .panel-header.after {
-      background: var(--cinii-blue-subtle);
+    .pillar-num {
+      font-size: 12px;
+      font-weight: 800;
       color: var(--cinii-blue);
-      border-bottom-color: #b9d1f3;
+      background: var(--cinii-blue-light);
+      width: 22px;
+      height: 22px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 2px;
+      flex-shrink: 0;
+      margin-top: 2px;
     }
 
-    .status-tag {
+    .pillar-content {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .pillar-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--cinii-text-primary);
+    }
+
+    .pillar-desc {
+      font-size: 12.5px;
+      color: var(--cinii-text-tertiary);
+      line-height: 1.45;
+    }
+
+    /* Right Side: Authentic Visual UI Showcase */
+    .right-visual {
+      padding: 36px 48px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 16px;
+      position: relative;
+    }
+
+    /* Before and After Mockup Cards */
+    .ui-showcase-card {
+      background: #ffffff;
+      border: 1px solid var(--cinii-border-default);
+      box-shadow: 0 4px 12px rgba(0, 31, 77, 0.04);
+      border-radius: 2px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .ui-card-header {
+      padding: 10px 18px;
+      font-size: 12.5px;
+      font-weight: 700;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--cinii-border-light);
+    }
+
+    /* Card Before Header */
+    .ui-card-header.before {
+      background: #fff5f5;
+      color: #991b1b;
+      border-bottom-color: #fee2e2;
+    }
+
+    .ui-card-badge {
       font-size: 11px;
       font-weight: 600;
       padding: 2px 8px;
@@ -272,146 +348,183 @@
       border: 1px solid;
     }
 
-    .status-tag.danger {
+    .ui-card-badge.before-badge {
       background: #ffffff;
-      border-color: #f87171;
-      color: #b91c1c;
+      color: #dc2626;
+      border-color: #fca5a5;
     }
 
-    .status-tag.success {
+    .ui-card-badge.after-badge {
       background: #ffffff;
-      border-color: #60a5fa;
       color: var(--cinii-blue);
+      border-color: var(--cinii-blue-border);
     }
 
-    .panel-content {
-      padding: 20px;
-      flex: 1;
+    /* Card After Header */
+    .ui-card-header.after {
+      background: var(--cinii-blue-light);
+      color: var(--cinii-navy);
+      border-bottom-color: var(--cinii-blue-border);
+    }
+
+    .ui-card-body {
+      padding: 16px 18px;
       display: flex;
       flex-direction: column;
-      gap: 14px;
-      overflow: hidden;
+      gap: 10px;
     }
 
-    .meta-row {
+    .cinii-mock-title-row {
       display: flex;
-      gap: 8px;
-      font-size: 13px;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 12px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--cinii-border-light);
     }
 
-    .meta-label {
-      width: 60px;
-      color: var(--cinii-text-muted);
-      font-weight: 600;
+    .cinii-mock-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--cinii-text-primary);
+      line-height: 1.4;
+    }
+
+    /* Simulated Extension Action Buttons in After card */
+    .cinii-injected-actions {
+      display: flex;
+      align-items: center;
+      gap: 6px;
       flex-shrink: 0;
     }
 
-    .meta-value {
-      color: var(--cinii-text-heading);
+    .injected-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 11px;
       font-weight: 600;
-      line-height: 1.4;
+      padding: 3px 8px;
+      background: #ffffff;
+      border: 1px solid var(--cinii-blue);
+      color: var(--cinii-blue);
+      border-radius: 2px;
     }
 
-    .abstract-box {
-      border: 1px solid var(--cinii-border-light);
-      background: #ffffff;
-      padding: 14px;
+    .injected-btn.primary {
+      background: var(--cinii-blue);
+      color: #ffffff;
+    }
+
+    .cinii-mock-abstract {
       font-size: 13.5px;
       line-height: 1.7;
-      flex: 1;
+      color: var(--cinii-text-secondary);
     }
 
-    /* Raw XML Formatting */
-    .raw-xml-view {
-      font-family: var(--cinii-font-mono);
-      background: #fcfcfc;
-      color: #4b5563;
-      word-break: break-all;
+    /* Raw XML tag styling (Before) */
+    .xml-code-block {
+      font-family: var(--font-mono);
+      font-size: 12.5px;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      padding: 10px 14px;
+      line-height: 1.65;
+      color: #334155;
+      border-left: 3px solid #ef4444;
     }
 
-    .tag-highlight {
-      color: #dc2626;
+    .xml-raw-tag {
+      color: #b91c1c;
       font-weight: 600;
-      background: #fee2e2;
+      background: #fef2f2;
       padding: 0 2px;
     }
 
-    /* Cleaned Academic Typography */
-    .cleaned-view {
-      color: var(--cinii-text-main);
+    /* Cleaned Typography (After) */
+    .clean-text-block {
+      font-size: 13.5px;
+      line-height: 1.7;
+      color: var(--cinii-text-primary);
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-left: 3px solid var(--cinii-blue);
+      padding: 10px 14px;
     }
 
-    .cleaned-view em {
+    .clean-text-block em {
       font-style: italic;
-      color: #000000;
+      color: var(--cinii-navy);
+      font-weight: 600;
     }
 
-    .cleaned-view sub {
-      font-size: 11px;
+    .clean-text-block sub {
+      font-size: 10.5px;
     }
 
-    .panel-footer-note {
-      padding: 8px 16px;
-      background: var(--cinii-bg-neutral);
-      border-top: 1px solid var(--cinii-border-light);
-      font-size: 12px;
-      color: var(--cinii-text-muted);
-    }
-
-    /* Center Transition Arrow */
-    .transform-col {
+    /* Central Elegant Transition Divider */
+    .flow-bridge {
       display: flex;
-      flex-direction: column;
       align-items: center;
       justify-content: center;
-      gap: 6px;
-    }
-
-    .arrow-icon-svg {
-      width: 32px;
-      height: 32px;
-      color: var(--cinii-blue);
-    }
-
-    .arrow-label-text {
-      font-size: 11px;
-      font-weight: 700;
-      color: var(--cinii-text-muted);
-    }
-
-    /* Bottom Capability Grid */
-    .capability-grid {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
       gap: 12px;
-      margin-top: 20px;
+      padding: 4px 0;
     }
 
-    .cap-item {
+    .flow-line {
+      height: 1px;
+      background: var(--cinii-border-default);
+      flex: 1;
+    }
+
+    .flow-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
       background: #ffffff;
-      border: 1px solid var(--cinii-border-medium);
+      border: 1px solid var(--cinii-blue);
+      color: var(--cinii-blue);
+      font-size: 11.5px;
+      font-weight: 700;
+      padding: 4px 14px;
       border-radius: 2px;
-      padding: 12px 14px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    }
+
+    /* Bottom Status Bar */
+    .footer-1280 {
+      border-top: 1px solid var(--cinii-border-light);
+      background: #ffffff;
+      padding: 0 56px;
       display: flex;
-      flex-direction: column;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 12.5px;
+      color: var(--cinii-text-tertiary);
+    }
+
+    .footer-formats {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      font-weight: 600;
+      color: var(--cinii-text-secondary);
+    }
+
+    .format-item {
+      display: flex;
+      align-items: center;
       gap: 4px;
     }
 
-    .cap-title {
-      font-size: 13px;
-      font-weight: 700;
+    .format-item::before {
+      content: '■';
+      font-size: 8px;
       color: var(--cinii-blue);
     }
 
-    .cap-desc {
-      font-size: 11.5px;
-      color: var(--cinii-text-muted);
-      line-height: 1.4;
-    }
-
-
     /* =========================================================================
-       440 x 280 Canvas (Small Promo Tile Size)
+       440 x 280 Canvas: Small Promo Tile (Balanced, Compact)
        ========================================================================= */
     .canvas-440 {
       width: 440px;
@@ -419,128 +532,150 @@
       background: #ffffff;
       position: relative;
       overflow: hidden;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
+      display: grid;
+      grid-template-rows: 46px 1fr 34px;
       user-select: none;
-      border: 1px solid var(--cinii-border-medium);
+      border: 1px solid var(--cinii-border-default);
     }
 
-    .canvas-440 .header-440 {
-      background: var(--cinii-bg-header);
-      padding: 10px 14px;
+    /* 440 Header */
+    .header-440 {
+      background: var(--cinii-navy);
+      padding: 0 16px;
       display: flex;
       align-items: center;
       justify-content: space-between;
     }
 
-    .canvas-440 .brand-440 {
+    .brand-440 {
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 8px;
     }
 
-    .canvas-440 .logo-440 {
-      width: 28px;
-      height: 28px;
+    .symbol-440 {
+      width: 24px;
+      height: 24px;
     }
 
-    .canvas-440 .title-440 {
+    .title-440 {
+      font-size: 14px;
+      font-weight: 800;
       color: #ffffff;
-      font-size: 15px;
-      font-weight: 700;
       letter-spacing: -0.01em;
     }
 
-    .canvas-440 .tag-440 {
+    .badge-440 {
       font-size: 10px;
       color: #ffffff;
-      border: 1px solid rgba(255, 255, 255, 0.4);
+      background: rgba(255, 255, 255, 0.15);
+      border: 1px solid rgba(255, 255, 255, 0.25);
       padding: 2px 6px;
       border-radius: 2px;
+      font-weight: 500;
     }
 
-    .canvas-440 .body-440 {
-      flex: 1;
-      padding: 12px 14px;
-      background: #fafafa;
+    /* 440 Body */
+    .body-440 {
+      padding: 14px 16px;
+      background: var(--cinii-bg-muted);
       display: flex;
       flex-direction: column;
       justify-content: space-between;
     }
 
-    .canvas-440 .lead-440 {
-      font-size: 13.5px;
-      font-weight: 700;
-      color: var(--cinii-text-heading);
+    .headline-440 {
+      font-size: 15px;
+      font-weight: 800;
+      color: var(--cinii-text-primary);
       line-height: 1.35;
-      border-left: 4px solid var(--cinii-blue);
-      padding-left: 8px;
+      letter-spacing: -0.01em;
     }
 
-    .canvas-440 .diff-row-440 {
-      display: grid;
-      grid-template-columns: 1fr 20px 1fr;
-      align-items: center;
+    .headline-440 span.hl {
+      color: var(--cinii-blue);
+    }
+
+    /* 440 Compare Pill Box */
+    .compare-container-440 {
+      display: flex;
+      flex-direction: column;
       gap: 6px;
-      margin: 8px 0;
+      margin: 4px 0;
     }
 
-    .canvas-440 .box-440 {
-      border: 1px solid var(--cinii-border-medium);
+    .compare-row-440 {
+      display: flex;
+      align-items: center;
+      gap: 8px;
       background: #ffffff;
-      padding: 8px 10px;
-      font-size: 11px;
+      border: 1px solid var(--cinii-border-light);
+      padding: 6px 10px;
+      border-radius: 2px;
+      font-size: 11.5px;
+    }
+
+    .compare-row-440.before {
+      border-left: 3px solid #ef4444;
+      font-family: var(--font-mono);
+      color: #b91c1c;
+      background: #fffbfa;
+    }
+
+    .compare-row-440.after {
+      border-left: 3px solid var(--cinii-blue);
+      color: var(--cinii-navy);
+      font-weight: 600;
+      background: #ffffff;
+    }
+
+    .row-tag-440 {
+      font-size: 10px;
+      font-weight: 700;
+      flex-shrink: 0;
+      padding: 1px 4px;
       border-radius: 2px;
     }
 
-    .canvas-440 .box-440.before {
-      background: #fdf2f2;
-      border-color: #fca5a5;
-      font-family: var(--cinii-font-mono);
-      color: #991b1b;
+    .row-tag-440.bf {
+      background: #fee2e2;
+      color: #b91c1c;
+    }
+
+    .row-tag-440.af {
+      background: var(--cinii-blue-light);
+      color: var(--cinii-blue);
+    }
+
+    .row-text-440 {
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
+      flex: 1;
     }
 
-    .canvas-440 .box-440.after {
-      background: var(--cinii-blue-subtle);
-      border-color: #b9d1f3;
-      color: var(--cinii-blue);
-      font-weight: 600;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    .canvas-440 .arrow-440 {
-      color: var(--cinii-blue);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .canvas-440 .footer-440 {
+    /* 440 Footer */
+    .footer-440 {
       background: #ffffff;
       border-top: 1px solid var(--cinii-border-light);
-      padding: 8px 14px;
+      padding: 0 16px;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      font-size: 11px;
-      color: var(--cinii-text-muted);
+      font-size: 10.5px;
+      color: var(--cinii-text-tertiary);
     }
 
-    .canvas-440 .footer-440 strong {
-      color: var(--cinii-text-main);
+    .footer-440 strong {
+      color: var(--cinii-blue);
+      font-weight: 700;
     }
   </style>
 </head>
 <body>
 
-  <!-- Controls (Outside exported image) -->
-  <div class="ctrl-bar">
+  <!-- Controls -->
+  <div class="ctrl-strip">
     <button class="ctrl-btn active" id="btn1280" onclick="switchCanvas('1280')">
       大プロモーション / スクリーンショット (1280 × 800)
     </button>
@@ -550,23 +685,22 @@
     <button class="ctrl-btn ctrl-btn-save" onclick="exportPNG()">
       PNG画像として保存
     </button>
-    <span class="ctrl-note" id="sizeDesc">Chrome Web Store 掲載サイズ (1280 × 800)</span>
+    <span class="ctrl-caption" id="sizeCaption">Chrome Web Store 掲載サイズ (1280 × 800)</span>
   </div>
 
   <!-- Stage -->
-  <div class="canvas-stage">
+  <div class="viewport-frame">
 
     <!-- ===================================================================
-         1280 x 800: Academic Store Banner / Screenshot
+         1280 x 800: Balanced Academic Editorial Showcase
          =================================================================== -->
     <div id="canvas1280" class="canvas-1280">
-      <div class="cinii-top-strip"></div>
       
-      <!-- Institutional Header -->
-      <div class="cinii-header-bar">
-        <div class="cinii-brand">
+      <!-- Top Institutional Header -->
+      <header class="header-1280">
+        <div class="brand-group">
           <!-- CiNii Blue Official SVG Logo -->
-          <svg class="cinii-logo-svg" viewBox="0 0 128 128" xmlns="http://www.w3.org/2000/svg">
+          <svg class="brand-symbol" viewBox="0 0 128 128" xmlns="http://www.w3.org/2000/svg">
             <defs>
               <linearGradient id="ciniiGrad1280" x1="0%" y1="0%" x2="100%" y2="100%">
                 <stop offset="0%" stop-color="#003580"/>
@@ -584,110 +718,144 @@
             <path d="M75 80 C75 76 77 74 80 74 V77 C78 77 77.5 78 77.5 80 H80 V85 H75 Z" fill="#ffffff"/>
             <path d="M83 80 C83 76 85 74 88 74 V77 C86 77 85.5 78 85.5 80 H88 V85 H83 Z" fill="#ffffff"/>
           </svg>
-          <div class="cinii-title-block">
-            <h1 class="cinii-title-main">CiNii Research Enhancer</h1>
-            <p class="cinii-title-sub">学術情報ナビゲータ（CiNii Research）書誌引用・抄録整形 拡張機能</p>
+          <div class="brand-titles">
+            <span class="brand-main">CiNii Research Enhancer</span>
+            <span class="brand-sub">国立情報学研究所 CiNii Research 最適化拡張機能</span>
           </div>
         </div>
-        <div class="cinii-spec-badge">
-          Chromium 拡張機能 / Manifest V3 準拠
+        <div class="brand-meta">
+          <span class="meta-tag">Manifest V3 準拠</span>
+          <span class="meta-tag">Chromium 対応</span>
         </div>
-      </div>
+      </header>
 
-      <!-- Main Body -->
-      <div class="canvas-body">
+      <!-- Center Split Area -->
+      <main class="content-split-1280">
         
-        <!-- Summary Box -->
-        <div class="catch-heading-box">
-          <h2 class="catch-title">抄録・タイトルの生XMLタグ自動除去と書誌データ引用出力</h2>
-          <p class="catch-desc">CiNii Research上のJATS XMLタグ混入（&lt;jats:p&gt;, &lt;jats:italic&gt;等）を自動除去し、可読性の高い本文表示に整形。各種引用フォーマット（BibTeX, APA, SIST02, RIS）の直接コピーに対応。</p>
-        </div>
+        <!-- Left Column: Editorial Value Proposition -->
+        <section class="left-editorial">
+          <div class="hero-lead-section">
+            <div class="academic-kicker">Research Workflow Enhancement</div>
+            <h1 class="hero-heading">
+              抄録の<span class="focus">生XMLタグを自動除去</span>し、<br>
+              書誌引用を高速化。
+            </h1>
+            <p class="hero-description">
+              CiNii Researchの文献情報からJATS XMLタグのノイズを自動除去し、論文本来の可読性を回復。BibTeXやAPAなどの主要引用形式を即座に取得できます。
+            </p>
+          </div>
 
-        <!-- Academic Comparison Showcase -->
-        <div class="comparison-area">
+          <div class="feature-pillars">
+            <div class="pillar-row">
+              <span class="pillar-num">1</span>
+              <div class="pillar-content">
+                <span class="pillar-title">生XML/HTMLタグの自動除去</span>
+                <span class="pillar-desc">&lt;jats:p&gt;や&lt;italic&gt;等の混入を消去し、イタリック・下付き文字を正しく再現</span>
+              </div>
+            </div>
+            <div class="pillar-row">
+              <span class="pillar-num">2</span>
+              <div class="pillar-content">
+                <span class="pillar-title">文献種別の自動判別引用</span>
+                <span class="pillar-desc">論文（@article）、図書（@book）、学位論文（@phdthesis）を自動識別</span>
+              </div>
+            </div>
+            <div class="pillar-row">
+              <span class="pillar-num">3</span>
+              <div class="pillar-content">
+                <span class="pillar-title">ワンクリック直接コピー</span>
+                <span class="pillar-desc">検索結果一覧および詳細画面から各種書誌フォーマットを直接取得</span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Right Column: Before & After UI Showcase -->
+        <section class="right-visual">
           
-          <!-- BEFORE PANEL -->
-          <div class="academic-panel">
-            <div class="panel-header before">
-              <span>処理前：生XMLタグ混入状態（原文）</span>
-              <span class="status-tag danger">タグ混入</span>
+          <!-- BEFORE CARD -->
+          <div class="ui-showcase-card">
+            <div class="ui-card-header before">
+              <span>【原文データ】生XMLタグ混入状態</span>
+              <span class="ui-card-badge before-badge">未整形</span>
             </div>
-            <div class="panel-content">
-              <div class="meta-row">
-                <span class="meta-label">標題:</span>
-                <span class="meta-value">&lt;jats:title&gt;音声知覚における&lt;jats:italic&gt;F0&lt;/jats:italic&gt;の効果&lt;/jats:title&gt;</span>
+            <div class="ui-card-body">
+              <div class="cinii-mock-title-row">
+                <div class="cinii-mock-title" style="color: #64748b;">
+                  &lt;jats:title&gt;音声知覚における&lt;jats:italic&gt;F0&lt;/jats:italic&gt;の効果&lt;/jats:title&gt;
+                </div>
               </div>
-              <div class="abstract-box raw-xml-view">
-                <span class="tag-highlight">&lt;jats:p&gt;</span>本稿では日本語母音の知覚特性を検討した。<span class="tag-highlight">&lt;jats:italic&gt;</span>基本周波数 (F0)<span class="tag-highlight">&lt;/jats:italic&gt;</span>の連続変化に伴い、第1フォルマント<span class="tag-highlight">&lt;jats:sub&gt;</span>(F1)<span class="tag-highlight">&lt;/jats:sub&gt;</span>弁別閾値が有意に変化することが判明した。<span class="tag-highlight">&lt;sec&gt;</span>詳細は実験結果を参照。<span class="tag-highlight">&lt;/sec&gt;&lt;/jats:p&gt;</span>
+              <div class="xml-code-block">
+                <span class="xml-raw-tag">&lt;jats:p&gt;</span>本稿では日本語母音の知覚特性を検討した。<span class="xml-raw-tag">&lt;jats:italic&gt;</span>基本周波数 (F0)<span class="xml-raw-tag">&lt;/jats:italic&gt;</span>の変化に伴い、第1フォルマント<span class="xml-raw-tag">&lt;jats:sub&gt;</span>(F1)<span class="xml-raw-tag">&lt;/jats:sub&gt;</span>弁別閾値が有意に変化することが判明した。<span class="xml-raw-tag">&lt;sec&gt;</span>詳細は実験結果を参照。<span class="xml-raw-tag">&lt;/sec&gt;&lt;/jats:p&gt;</span>
               </div>
-            </div>
-            <div class="panel-footer-note">
-              課題：J-STAGE等のJATS XMLタグがエスケープされずテキストとして露出
             </div>
           </div>
 
-          <!-- ARROW -->
-          <div class="transform-col">
-            <svg class="arrow-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="square">
-              <polyline points="9 18 15 12 9 6"/>
-            </svg>
-            <span class="arrow-label-text">自動除去</span>
+          <!-- TRANSITION DIVIDER -->
+          <div class="flow-bridge">
+            <div class="flow-line"></div>
+            <div class="flow-badge">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <polyline points="7 13 12 18 17 13"/>
+                <line x1="12" y1="6" x2="12" y2="18"/>
+              </svg>
+              <span>拡張機能による自動タグ消去・整形</span>
+            </div>
+            <div class="flow-line"></div>
           </div>
 
-          <!-- AFTER PANEL -->
-          <div class="academic-panel">
-            <div class="panel-header after">
-              <span>処理後：タグ除去・タイポグラフィ整形</span>
-              <span class="status-tag success">整形完了</span>
+          <!-- AFTER CARD -->
+          <div class="ui-showcase-card">
+            <div class="ui-card-header after">
+              <span>【適用後】タグ除去・書誌引用ボタン追加</span>
+              <span class="ui-card-badge after-badge">整形完了</span>
             </div>
-            <div class="panel-content">
-              <div class="meta-row">
-                <span class="meta-label">標題:</span>
-                <span class="meta-value" style="color: var(--cinii-blue);">音声知覚における <em>F0</em> の効果</span>
+            <div class="ui-card-body">
+              <div class="cinii-mock-title-row">
+                <div class="cinii-mock-title" style="color: var(--cinii-navy);">
+                  音声知覚における <em>F0</em> の効果
+                </div>
+                <div class="cinii-injected-actions">
+                  <span class="injected-btn primary">BibTeX コピー</span>
+                  <span class="injected-btn">引用 ▼</span>
+                </div>
               </div>
-              <div class="abstract-box cleaned-view">
-                <p>本稿では日本語母音の知覚特性を検討した。<em>基本周波数 (F0)</em> の連続変化に伴い、第1フォルマント <sub>(F1)</sub> 弁別閾値が有意に変化することが判明した。</p>
-                <p style="margin-top: 6px; color: var(--cinii-text-muted); font-size: 12.5px;">詳細は実験結果を参照。</p>
+              <div class="clean-text-block">
+                本稿では日本語母音の知覚特性を検討した。<em>基本周波数 (F0)</em> の変化に伴い、第1フォルマント <sub>(F1)</sub> 弁別閾値が有意に変化することが判明した。詳細は実験結果を参照。
               </div>
-            </div>
-            <div class="panel-footer-note">
-              効果：生XMLタグを完全除去し、イタリック・下付き文字・段落構造を正しく維持
             </div>
           </div>
 
+        </section>
+
+      </main>
+
+      <!-- Bottom Bar -->
+      <footer class="footer-1280">
+        <div class="footer-formats">
+          <span class="format-item">BibTeX</span>
+          <span class="format-item">SIST02</span>
+          <span class="format-item">APA (第7版)</span>
+          <span class="format-item">RIS (EndNote / Zotero)</span>
+          <span class="format-item">TSV書き出し直接取得</span>
         </div>
-
-        <!-- Capability Badges -->
-        <div class="capability-grid">
-          <div class="cap-item">
-            <div class="cap-title">XML/HTMLタグ自動除去</div>
-            <div class="cap-desc">JATS XML等の不要コードを除去し、整形・原文のワンクリック切替に対応</div>
-          </div>
-          <div class="cap-item">
-            <div class="cap-title">文献種別の自動判別</div>
-            <div class="cap-desc">論文・図書・学位論文を自動判別し、適切な書誌項目（BibTeX @book等）を出力</div>
-          </div>
-          <div class="cap-item">
-            <div class="cap-title">ワンクリック引用コピー</div>
-            <div class="cap-desc">BibTeX, SIST02, APA, RIS, Markdown形式を詳細および検索一覧から直接コピー</div>
-          </div>
-          <div class="cap-item">
-            <div class="cap-title">書誌書き出し直接取得</div>
-            <div class="cap-desc">TSV, BibTeX, RIS書き出しデータを別ウィンドウを開かずにクリップボードへ取得</div>
-          </div>
+        <div>
+          CiNii Research (cir.nii.ac.jp) 対応
         </div>
+      </footer>
 
-      </div>
     </div>
 
 
     <!-- ===================================================================
-         440 x 280: Small Promo Tile
+         440 x 280: Small Promo Tile (Balanced, Crisp)
          =================================================================== -->
     <div id="canvas440" class="canvas-440" style="display: none;">
+      
+      <!-- Top Navy Bar -->
       <div class="header-440">
         <div class="brand-440">
-          <svg class="logo-440" viewBox="0 0 128 128" xmlns="http://www.w3.org/2000/svg">
+          <svg class="symbol-440" viewBox="0 0 128 128" xmlns="http://www.w3.org/2000/svg">
             <defs>
               <linearGradient id="ciniiGrad440" x1="0%" y1="0%" x2="100%" y2="100%">
                 <stop offset="0%" stop-color="#003580"/>
@@ -703,72 +871,75 @@
           </svg>
           <span class="title-440">CiNii Research Enhancer</span>
         </div>
-        <span class="tag-440">拡張機能</span>
+        <span class="badge-440">Chrome 拡張機能</span>
       </div>
 
+      <!-- Main Body -->
       <div class="body-440">
-        <div class="lead-440">
-          抄録・標題の生XMLタグ自動除去と<br>書誌データの引用出力
+        <div class="headline-440">
+          抄録の<span class="hl">生XMLタグを自動除去</span>、<br>
+          書誌データをワンクリック引用。
         </div>
 
-        <div class="diff-row-440">
-          <div class="box-440 before">
-            &lt;jats:p&gt;抄録本文...
+        <div class="compare-container-440">
+          <div class="compare-row-440 before">
+            <span class="row-tag-440 bf">原文</span>
+            <span class="row-text-440">&lt;jats:p&gt;抄録本文...&lt;jats:italic&gt;F0&lt;/jats:italic&gt;&lt;/jats:p&gt;</span>
           </div>
-          <div class="arrow-440">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
-          </div>
-          <div class="box-440 after">
-            タグ除去・整形表示
+          <div class="compare-row-440 after">
+            <span class="row-tag-440 af">整形後</span>
+            <span class="row-text-440">抄録本文... <em>F0</em>（タグ自動消去完了）</span>
           </div>
         </div>
 
-        <div style="font-size: 11px; color: var(--cinii-text-muted); line-height: 1.4;">
-          JATS XMLタグを消去し可読性を向上。BibTeX / APA / SIST02の直接コピーに対応。
+        <div style="font-size: 11px; color: var(--cinii-text-secondary); line-height: 1.4;">
+          BibTeX / APA / SIST02 / RIS の直接コピーに対応
         </div>
       </div>
 
+      <!-- Footer Bar -->
       <div class="footer-440">
-        <span>BibTeX / APA / SIST02 / RIS</span>
-        <strong>CiNii Research 対応</strong>
+        <span>CiNii Research (cir.nii.ac.jp) 対応</span>
+        <strong>Manifest V3 準拠</strong>
       </div>
+
     </div>
 
   </div>
 
   <script>
-    let activeMode = '1280';
+    let currentCanvas = '1280';
 
     function switchCanvas(mode) {
-      activeMode = mode;
+      currentCanvas = mode;
       const c1280 = document.getElementById('canvas1280');
       const c440 = document.getElementById('canvas440');
       const b1280 = document.getElementById('btn1280');
       const b440 = document.getElementById('btn440');
-      const note = document.getElementById('sizeDesc');
+      const caption = document.getElementById('sizeCaption');
 
       if (mode === '1280') {
-        c1280.style.display = 'flex';
+        c1280.style.display = 'grid';
         c440.style.display = 'none';
         b1280.classList.add('active');
         b440.classList.remove('active');
-        note.textContent = 'Chrome Web Store 掲載サイズ (1280 × 800)';
+        caption.textContent = 'Chrome Web Store 掲載サイズ (1280 × 800)';
       } else {
         c1280.style.display = 'none';
-        c440.style.display = 'flex';
+        c440.style.display = 'grid';
         b1280.classList.remove('active');
         b440.classList.add('active');
-        note.textContent = 'Chrome Web Store 小プロモーションタイル (440 × 280)';
+        caption.textContent = 'Chrome Web Store 小プロモーションタイル (440 × 280)';
       }
     }
 
     async function exportPNG() {
-      const target = activeMode === '1280' ? document.getElementById('canvas1280') : document.getElementById('canvas440');
-      const w = activeMode === '1280' ? 1280 : 440;
-      const h = activeMode === '1280' ? 800 : 280;
+      const target = currentCanvas === '1280' ? document.getElementById('canvas1280') : document.getElementById('canvas440');
+      const w = currentCanvas === '1280' ? 1280 : 440;
+      const h = currentCanvas === '1280' ? 800 : 280;
 
       const btn = event.currentTarget;
-      const origin = btn.textContent;
+      const originalText = btn.textContent;
       btn.textContent = '出力中...';
 
       try {
@@ -781,14 +952,14 @@
         });
 
         const link = document.createElement('a');
-        link.download = `cinii-enhancer-store-${activeMode}x${h}.png`;
+        link.download = `cinii-enhancer-store-${currentCanvas}x${h}.png`;
         link.href = canvas.toDataURL('image/png');
         link.click();
       } catch (err) {
         console.error('Export failed:', err);
-        alert('画像出力に失敗しました。');
+        alert('画像の書き出しに失敗しました。');
       } finally {
-        btn.textContent = origin;
+        btn.textContent = originalText;
       }
     }
   </script>
