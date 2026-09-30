@@ -1,0 +1,984 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CiNii Research Enhancer - Store Thumbnail Generator</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&family=Noto+Sans+JP:wght@400;500;700;900&family=Fira+Code:wght@400;600&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <style>
+    :root {
+      --cinii-dark: #001738;
+      --cinii-deep: #002b66;
+      --cinii-blue: #0045a5;
+      --cinii-accent: #2563eb;
+      --cinii-cyan: #38bdf8;
+      --tag-red: #ef4444;
+      --tag-bg: rgba(239, 68, 68, 0.12);
+      --clean-green: #10b981;
+      --clean-bg: rgba(16, 185, 129, 0.12);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: #0b0f19;
+      color: #f1f5f9;
+      font-family: 'Noto Sans JP', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 24px 16px 60px;
+    }
+
+    /* Top Control Bar */
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      margin-bottom: 24px;
+      padding: 12px 20px;
+      background: rgba(30, 41, 59, 0.8);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+      z-index: 100;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 9px 18px;
+      font-size: 14px;
+      font-weight: 600;
+      border-radius: 8px;
+      border: 1px solid transparent;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      background: #334155;
+      color: #f8fafc;
+      font-family: inherit;
+    }
+
+    .btn:hover {
+      background: #475569;
+      transform: translateY(-1px);
+    }
+
+    .btn.active {
+      background: #2563eb;
+      color: #ffffff;
+      border-color: #60a5fa;
+      box-shadow: 0 0 16px rgba(37, 99, 235, 0.4);
+    }
+
+    .btn-download {
+      background: linear-gradient(135deg, #10b981, #059669);
+      color: white;
+      box-shadow: 0 4px 14px rgba(16, 185, 129, 0.35);
+    }
+
+    .btn-download:hover {
+      background: linear-gradient(135deg, #059669, #047857);
+      box-shadow: 0 6px 20px rgba(16, 185, 129, 0.45);
+    }
+
+    .info-badge {
+      font-size: 13px;
+      color: #94a3b8;
+      margin-left: 8px;
+    }
+
+    /* Thumbnail Wrapper Stage */
+    .preview-container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.7);
+      border-radius: 16px;
+      overflow: hidden;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      background: #000;
+      transition: transform 0.2s ease;
+    }
+
+    /* Base Canvas Canvas (1280x800) */
+    .canvas-1280 {
+      width: 1280px;
+      height: 800px;
+      position: relative;
+      background: radial-gradient(circle at 10% 20%, #00337c 0%, #001a40 50%, #000c1e 100%);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      padding: 56px 64px;
+      user-select: none;
+    }
+
+    /* Subtle Background Grid & Glows */
+    .bg-grid {
+      position: absolute;
+      inset: 0;
+      background-image: 
+        linear-gradient(to right, rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none;
+    }
+
+    .bg-glow-1 {
+      position: absolute;
+      top: -120px;
+      right: -80px;
+      width: 600px;
+      height: 600px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(56, 189, 248, 0.18) 0%, rgba(37, 99, 235, 0.08) 50%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .bg-glow-2 {
+      position: absolute;
+      bottom: -150px;
+      left: 10%;
+      width: 700px;
+      height: 500px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(16, 185, 129, 0.12) 0%, transparent 60%);
+      pointer-events: none;
+    }
+
+    /* Top Header Bar inside Canvas */
+    .thumb-header {
+      position: relative;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 36px;
+      z-index: 10;
+    }
+
+    .logo-container {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+
+    .logo-svg {
+      width: 76px;
+      height: 76px;
+      filter: drop-shadow(0 8px 20px rgba(0, 31, 77, 0.6));
+    }
+
+    .brand-text {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .brand-title {
+      font-size: 38px;
+      font-weight: 900;
+      letter-spacing: -0.02em;
+      color: #ffffff;
+      line-height: 1.1;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .brand-title span.accent {
+      background: linear-gradient(135deg, #60a5fa, #38bdf8);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .brand-subtitle {
+      font-size: 16px;
+      font-weight: 500;
+      color: #94a3b8;
+      letter-spacing: 0.02em;
+      margin-top: 4px;
+    }
+
+    .tag-badge-group {
+      display: flex;
+      gap: 10px;
+    }
+
+    .pill-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 16px;
+      border-radius: 9999px;
+      font-size: 14px;
+      font-weight: 700;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: #e2e8f0;
+      backdrop-filter: blur(8px);
+    }
+
+    .pill-badge.highlight {
+      background: linear-gradient(135deg, rgba(37, 99, 235, 0.3), rgba(56, 189, 248, 0.2));
+      border-color: rgba(56, 189, 248, 0.4);
+      color: #7dd3fc;
+    }
+
+    /* Main Catchphrase */
+    .catch-section {
+      position: relative;
+      z-index: 10;
+      margin-bottom: 32px;
+      text-align: center;
+    }
+
+    .main-catch {
+      font-size: 42px;
+      font-weight: 900;
+      line-height: 1.25;
+      letter-spacing: -0.01em;
+      color: #ffffff;
+      text-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+    }
+
+    .main-catch .tag-strike {
+      display: inline-block;
+      position: relative;
+      color: #f87171;
+      padding: 0 6px;
+      font-family: 'Fira Code', monospace;
+      font-size: 36px;
+      background: rgba(239, 68, 68, 0.15);
+      border-radius: 8px;
+      border: 1px dashed rgba(239, 68, 68, 0.4);
+      margin: 0 4px;
+    }
+
+    .main-catch .tag-strike::after {
+      content: '';
+      position: absolute;
+      left: -2px;
+      right: -2px;
+      top: 50%;
+      height: 4px;
+      background: #ef4444;
+      transform: translateY(-50%) rotate(-4deg);
+      border-radius: 2px;
+      box-shadow: 0 2px 6px rgba(239, 68, 68, 0.8);
+    }
+
+    .main-catch .clean-highlight {
+      background: linear-gradient(135deg, #34d399, #10b981);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      position: relative;
+      display: inline-block;
+    }
+
+    .catch-sub {
+      font-size: 18px;
+      color: #cbd5e1;
+      margin-top: 8px;
+      font-weight: 500;
+    }
+
+    /* Comparison Showdown Cards (Before vs After) */
+    .showcase-grid {
+      position: relative;
+      z-index: 10;
+      display: grid;
+      grid-template-columns: 1fr 64px 1fr;
+      align-items: center;
+      gap: 16px;
+      flex: 1;
+    }
+
+    /* Card Box */
+    .compare-card {
+      height: 100%;
+      max-height: 380px;
+      border-radius: 20px;
+      padding: 24px 28px;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      box-shadow: 0 16px 36px rgba(0, 0, 0, 0.35);
+      overflow: hidden;
+      backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+    }
+
+    /* Before Card */
+    .card-before {
+      background: linear-gradient(145deg, rgba(30, 15, 25, 0.85), rgba(20, 10, 20, 0.95));
+      border-color: rgba(239, 68, 68, 0.35);
+    }
+
+    .card-before::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 4px;
+      background: linear-gradient(90deg, #ef4444, #f87171);
+    }
+
+    /* After Card */
+    .card-after {
+      background: linear-gradient(145deg, rgba(15, 30, 45, 0.9), rgba(10, 20, 35, 0.95));
+      border-color: rgba(16, 185, 129, 0.45);
+      box-shadow: 0 16px 40px rgba(16, 185, 129, 0.15);
+    }
+
+    .card-after::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 4px;
+      background: linear-gradient(90deg, #10b981, #38bdf8);
+    }
+
+    .card-header-label {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .label-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 14px;
+      font-weight: 800;
+      padding: 5px 12px;
+      border-radius: 6px;
+      letter-spacing: 0.04em;
+    }
+
+    .label-badge.danger {
+      background: rgba(239, 68, 68, 0.2);
+      color: #fca5a5;
+      border: 1px solid rgba(239, 68, 68, 0.4);
+    }
+
+    .label-badge.success {
+      background: rgba(16, 185, 129, 0.2);
+      color: #6ee7b7;
+      border: 1px solid rgba(16, 185, 129, 0.4);
+    }
+
+    .card-subtext {
+      font-size: 13px;
+      color: #94a3b8;
+    }
+
+    /* Content Previews */
+    .sample-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: #f8fafc;
+      margin-bottom: 12px;
+      line-height: 1.4;
+    }
+
+    .sample-body {
+      font-size: 14px;
+      line-height: 1.7;
+      color: #cbd5e1;
+      flex: 1;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .raw-xml-code {
+      font-family: 'Fira Code', monospace;
+      font-size: 13px;
+      color: #e2e8f0;
+      background: rgba(0, 0, 0, 0.45);
+      padding: 12px;
+      border-radius: 8px;
+      border-left: 3px solid #ef4444;
+      line-height: 1.6;
+      word-break: break-all;
+    }
+
+    .raw-xml-code .xml-tag {
+      color: #f87171;
+      font-weight: 600;
+    }
+
+    .raw-xml-code .xml-entity {
+      color: #fbbf24;
+    }
+
+    .cleaned-text-box {
+      background: rgba(255, 255, 255, 0.05);
+      padding: 14px;
+      border-radius: 8px;
+      border-left: 3px solid #10b981;
+      line-height: 1.7;
+      color: #f1f5f9;
+      font-size: 14px;
+    }
+
+    .cleaned-text-box p {
+      margin-bottom: 6px;
+    }
+
+    .cleaned-text-box em {
+      color: #38bdf8;
+      font-style: italic;
+      font-weight: 600;
+    }
+
+    .feature-tag-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 14px;
+    }
+
+    .f-tag {
+      font-size: 12px;
+      font-weight: 600;
+      padding: 4px 10px;
+      border-radius: 6px;
+      background: rgba(56, 189, 248, 0.12);
+      color: #7dd3fc;
+      border: 1px solid rgba(56, 189, 248, 0.25);
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    /* Transform Arrow in Center */
+    .arrow-divider {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .arrow-circle {
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #2563eb, #10b981);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 0 24px rgba(37, 99, 235, 0.6);
+      color: white;
+    }
+
+    .arrow-circle svg {
+      width: 26px;
+      height: 26px;
+      filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+    }
+
+    .arrow-text {
+      font-size: 11px;
+      font-weight: 800;
+      color: #94a3b8;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    /* Bottom Features Strip */
+    .bottom-features {
+      position: relative;
+      z-index: 10;
+      margin-top: 24px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 32px;
+      padding-top: 16px;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .feat-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 15px;
+      font-weight: 600;
+      color: #e2e8f0;
+    }
+
+    .feat-icon-bubble {
+      width: 28px;
+      height: 28px;
+      border-radius: 8px;
+      background: rgba(37, 99, 235, 0.25);
+      border: 1px solid rgba(56, 189, 248, 0.3);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #38bdf8;
+    }
+
+    /* =========================================================================
+       440x280 Small Promo Mode 
+       ========================================================================= */
+    .canvas-440 {
+      width: 440px;
+      height: 280px;
+      position: relative;
+      background: radial-gradient(circle at 15% 20%, #00337c 0%, #001a40 60%, #000c1e 100%);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 20px 22px;
+      user-select: none;
+    }
+
+    .canvas-440 .bg-glow-small {
+      position: absolute;
+      top: -40px;
+      right: -30px;
+      width: 220px;
+      height: 220px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(56, 189, 248, 0.22) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .canvas-440 .top-bar-440 {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      z-index: 10;
+    }
+
+    .canvas-440 .logo-grp {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .canvas-440 .logo-svg-sm {
+      width: 38px;
+      height: 38px;
+      filter: drop-shadow(0 4px 10px rgba(0, 31, 77, 0.5));
+    }
+
+    .canvas-440 .brand-name-sm {
+      font-size: 17px;
+      font-weight: 900;
+      color: #ffffff;
+      line-height: 1.1;
+      letter-spacing: -0.01em;
+    }
+
+    .canvas-440 .brand-name-sm span {
+      color: #38bdf8;
+    }
+
+    .canvas-440 .badge-sm {
+      font-size: 10px;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 9999px;
+      background: rgba(37, 99, 235, 0.3);
+      border: 1px solid rgba(56, 189, 248, 0.4);
+      color: #7dd3fc;
+    }
+
+    .canvas-440 .center-block {
+      z-index: 10;
+      margin: 8px 0;
+    }
+
+    .canvas-440 .catch-title-sm {
+      font-size: 20px;
+      font-weight: 900;
+      line-height: 1.25;
+      color: #ffffff;
+      text-align: center;
+      margin-bottom: 10px;
+    }
+
+    .canvas-440 .strike-tag {
+      font-family: 'Fira Code', monospace;
+      color: #f87171;
+      font-size: 17px;
+      text-decoration: line-through;
+      text-decoration-thickness: 3px;
+      text-decoration-color: #ef4444;
+      background: rgba(239, 68, 68, 0.18);
+      padding: 0 4px;
+      border-radius: 4px;
+    }
+
+    .canvas-440 .clean-txt {
+      background: linear-gradient(135deg, #34d399, #10b981);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .canvas-440 .diff-pill-box {
+      display: grid;
+      grid-template-columns: 1fr 24px 1fr;
+      align-items: center;
+      gap: 6px;
+      background: rgba(15, 23, 42, 0.7);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 10px;
+      padding: 8px 10px;
+    }
+
+    .canvas-440 .box-bf {
+      font-family: 'Fira Code', monospace;
+      font-size: 10.5px;
+      color: #fca5a5;
+      line-height: 1.35;
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+    }
+
+    .canvas-440 .box-af {
+      font-size: 11px;
+      color: #6ee7b7;
+      font-weight: 600;
+      line-height: 1.35;
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+    }
+
+    .canvas-440 .arr-sm {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #38bdf8;
+    }
+
+    .canvas-440 .footer-sm {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 10.5px;
+      color: #94a3b8;
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+      padding-top: 8px;
+      z-index: 10;
+    }
+
+    .canvas-440 .footer-sm strong {
+      color: #e2e8f0;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Controls -->
+  <div class="toolbar">
+    <button class="btn active" id="btn1280" onclick="switchMode('1280')">
+      <span>📐 大プロモ / スクリーンショット (1280 × 800)</span>
+    </button>
+    <button class="btn" id="btn440" onclick="switchMode('440')">
+      <span>📐 小プロモ (440 × 280)</span>
+    </button>
+    <button class="btn btn-download" onclick="downloadImage()">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+        <polyline points="7 10 12 15 17 10"/>
+        <line x1="12" y1="15" x2="12" y2="3"/>
+      </svg>
+      <span>高画質PNGとして保存</span>
+    </button>
+    <span class="info-badge" id="sizeNote">Chrome Web Store 掲載推奨サイズ</span>
+  </div>
+
+  <!-- Preview Container -->
+  <div class="preview-container">
+    
+    <!-- ===================================================================
+         VIEW 1: 1280 x 800 Large Promo / Showcase Banner
+         =================================================================== -->
+    <div id="canvas1280" class="canvas-1280">
+      <div class="bg-grid"></div>
+      <div class="bg-glow-1"></div>
+      <div class="bg-glow-2"></div>
+
+      <!-- Header: Official Logo + Title + Badges -->
+      <div class="thumb-header">
+        <div class="logo-container">
+          <!-- Embedded Icon SVG -->
+          <svg class="logo-svg" viewBox="0 0 128 128" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <linearGradient id="ciniiBg1280" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#003580"/>
+                <stop offset="100%" stop-color="#001f4d"/>
+              </linearGradient>
+            </defs>
+            <rect x="8" y="8" width="112" height="112" rx="20" fill="url(#ciniiBg1280)"/>
+            <rect x="8.5" y="8.5" width="111" height="111" rx="19.5" fill="none" stroke="#2563eb" stroke-width="2" stroke-opacity="0.4"/>
+            <path d="M34 26 H80 L94 40 V102 H34 Z" fill="#ffffff" stroke="#cbd5e1" stroke-width="2" stroke-linejoin="round"/>
+            <path d="M80 26 V40 H94 Z" fill="#e2e8f0" stroke="#cbd5e1" stroke-width="1.5" stroke-linejoin="round"/>
+            <line x1="44" y1="46" x2="70" y2="46" stroke="#94a3b8" stroke-width="3" stroke-linecap="round"/>
+            <line x1="44" y1="56" x2="84" y2="56" stroke="#cbd5e1" stroke-width="2.5" stroke-linecap="round"/>
+            <line x1="44" y1="64" x2="84" y2="64" stroke="#cbd5e1" stroke-width="2.5" stroke-linecap="round"/>
+            <line x1="44" y1="72" x2="72" y2="72" stroke="#cbd5e1" stroke-width="2.5" stroke-linecap="round"/>
+            <circle cx="82" cy="82" r="18" fill="#004098" stroke="#ffffff" stroke-width="2.5"/>
+            <path d="M75 80 C75 76 77 74 80 74 V77 C78 77 77.5 78 77.5 80 H80 V85 H75 Z" fill="#ffffff"/>
+            <path d="M83 80 C83 76 85 74 88 74 V77 C86 77 85.5 78 85.5 80 H88 V85 H83 Z" fill="#ffffff"/>
+          </svg>
+          <div class="brand-text">
+            <h1 class="brand-title">CiNii Research <span class="accent">Enhancer</span></h1>
+            <p class="brand-subtitle">学術文献の引用取得・書誌コピー・抄録整形ブラウザ拡張機能</p>
+          </div>
+        </div>
+
+        <div class="tag-badge-group">
+          <div class="pill-badge highlight">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+            Manifest V3
+          </div>
+          <div class="pill-badge">
+            Chrome / Edge 対応
+          </div>
+        </div>
+      </div>
+
+      <!-- Main Catchphrase: Highlights XML Tag Elimination -->
+      <div class="catch-section">
+        <h2 class="main-catch">
+          抄録・タイトルの <span class="tag-strike">&lt;jats:p&gt;</span> 生XMLタグを <span class="clean-highlight">自動消去＆美しく整形</span>
+        </h2>
+        <p class="catch-sub">
+          J-STAGE等のJATS XML混入ノイズを瞬時にクリーンアップ。読みたい文章がそのまますぐ読める！
+        </p>
+      </div>
+
+      <!-- Before / After Visual Showdown -->
+      <div class="showcase-grid">
+        
+        <!-- BEFORE CARD -->
+        <div class="compare-card card-before">
+          <div class="card-header-label">
+            <span class="label-badge danger">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              消去前：生タグ混入で読みにくい
+            </span>
+            <span class="card-subtext">生XML / HTMLタグが露出</span>
+          </div>
+          <div class="sample-title">【タイトル】&lt;jats:title&gt;音声知覚における&lt;jats:italic&gt;F0&lt;/jats:italic&gt;の効果&lt;/jats:title&gt;</div>
+          <div class="sample-body">
+            <div class="raw-xml-code">
+              <span class="xml-tag">&lt;jats:p&gt;</span>本稿では日本語の母音知覚について検討した。<span class="xml-tag">&lt;jats:italic&gt;</span>基本周波数 (F0)<span class="xml-tag">&lt;/jats:italic&gt;</span>の変化に伴い、第1フォルマント<span class="xml-tag">&lt;jats:sub&gt;</span>(F1)<span class="xml-tag">&lt;/jats:sub&gt;</span>の弁別閾値が有意に変化することが判明した。<span class="xml-tag">&lt;sec&gt;</span>詳細は以下に報告する。<span class="xml-tag">&lt;/sec&gt;&lt;/jats:p&gt;</span>
+            </div>
+          </div>
+          <div class="feature-tag-list">
+            <span class="f-tag" style="color: #fca5a5; border-color: rgba(239, 68, 68, 0.3);">⚠️ 読解の妨げになるタグノイズ</span>
+            <span class="f-tag" style="color: #fca5a5; border-color: rgba(239, 68, 68, 0.3);">⚠️ 改行や装飾が崩れる</span>
+          </div>
+        </div>
+
+        <!-- ARROW DIVIDER -->
+        <div class="arrow-divider">
+          <div class="arrow-circle">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="9 18 15 12 9 6"/>
+            </svg>
+          </div>
+          <span class="arrow-text">Clean</span>
+        </div>
+
+        <!-- AFTER CARD -->
+        <div class="compare-card card-after">
+          <div class="card-header-label">
+            <span class="label-badge success">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+              消去後：クリーンで美しい本文
+            </span>
+            <span class="card-subtext">自動消去 ＆ タイポグラフィ整形</span>
+          </div>
+          <div class="sample-title" style="color: #60a5fa;">音声知覚における <em>F0</em> の効果</div>
+          <div class="sample-body">
+            <div class="cleaned-text-box">
+              <p>本稿では日本語の母音知覚について検討した。<em>基本周波数 (F0)</em> の変化に伴い、第1フォルマント <sub>(F1)</sub> の弁別閾値が有意に変化することが判明した。</p>
+              <p style="color: #94a3b8; font-size: 13px;">詳細は以下に報告する。</p>
+            </div>
+          </div>
+          <div class="feature-tag-list">
+            <span class="f-tag">✔ 生XMLタグ完全除去</span>
+            <span class="f-tag">✔ イタリック・下付き文字を維持</span>
+            <span class="f-tag">✔ 原文・整形ワンクリック切替</span>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Bottom Feature Badges -->
+      <div class="bottom-features">
+        <div class="feat-item">
+          <div class="feat-icon-bubble">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+          </div>
+          <span>ワンクリック直接引用コピー</span>
+        </div>
+        <div class="feat-item">
+          <div class="feat-icon-bubble">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+          </div>
+          <span>BibTeX / SIST02 / APA / RIS 対応</span>
+        </div>
+        <div class="feat-item">
+          <div class="feat-icon-bubble">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+          </div>
+          <span>JATS XML / HTML自動消去</span>
+        </div>
+        <div class="feat-item">
+          <div class="feat-icon-bubble">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+          </div>
+          <span>文献種別（論文・図書）自動判別</span>
+        </div>
+      </div>
+    </div>
+
+
+    <!-- ===================================================================
+         VIEW 2: 440 x 280 Small Promo Tile (Hidden by default)
+         =================================================================== -->
+    <div id="canvas440" class="canvas-440" style="display: none;">
+      <div class="bg-grid"></div>
+      <div class="bg-glow-small"></div>
+
+      <!-- Header: Logo & Title -->
+      <div class="top-bar-440">
+        <div class="logo-grp">
+          <svg class="logo-svg-sm" viewBox="0 0 128 128" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <linearGradient id="ciniiBg440" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#003580"/>
+                <stop offset="100%" stop-color="#001f4d"/>
+              </linearGradient>
+            </defs>
+            <rect x="8" y="8" width="112" height="112" rx="20" fill="url(#ciniiBg440)"/>
+            <path d="M34 26 H80 L94 40 V102 H34 Z" fill="#ffffff" stroke="#cbd5e1" stroke-width="2"/>
+            <path d="M80 26 V40 H94 Z" fill="#e2e8f0"/>
+            <circle cx="82" cy="82" r="18" fill="#004098" stroke="#ffffff" stroke-width="2.5"/>
+            <path d="M75 80 C75 76 77 74 80 74 V77 C78 77 77.5 78 77.5 80 H80 V85 H75 Z" fill="#ffffff"/>
+            <path d="M83 80 C83 76 85 74 88 74 V77 C86 77 85.5 78 85.5 80 H88 V85 H83 Z" fill="#ffffff"/>
+          </svg>
+          <div class="brand-name-sm">CiNii Research <span>Enhancer</span></div>
+        </div>
+        <span class="badge-sm">Chrome 拡張</span>
+      </div>
+
+      <!-- Center: Key Message -->
+      <div class="center-block">
+        <h2 class="catch-title-sm">
+          生XMLタグ <span class="strike-tag">&lt;jats:p&gt;</span> を<br>
+          <span class="clean-txt">一瞬で消去＆美麗整形！</span>
+        </h2>
+        
+        <!-- Mini Before / After Pill Box -->
+        <div class="diff-pill-box">
+          <div class="box-bf">
+            &lt;jats:p&gt;研究抄録...
+          </div>
+          <div class="arr-sm">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="9 18 15 12 9 6"/></svg>
+          </div>
+          <div class="box-af">
+            ✨ タグなしで美しく整形
+          </div>
+        </div>
+      </div>
+
+      <!-- Footer: Secondary Feature Highlights -->
+      <div class="footer-sm">
+        <span>📑 <strong>BibTeX / APA / SIST02</strong> ワンクリック引用</span>
+        <span>⚡ <strong>完全無料</strong></span>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    let currentMode = '1280';
+
+    function switchMode(mode) {
+      currentMode = mode;
+      const c1280 = document.getElementById('canvas1280');
+      const c440 = document.getElementById('canvas440');
+      const b1280 = document.getElementById('btn1280');
+      const b440 = document.getElementById('btn440');
+      const note = document.getElementById('sizeNote');
+
+      if (mode === '1280') {
+        c1280.style.display = 'flex';
+        c440.style.display = 'none';
+        b1280.classList.add('active');
+        b440.classList.remove('active');
+        note.textContent = 'Chrome Web Store 大プロモーション / スクリーンショット推奨 (1280×800)';
+      } else {
+        c1280.style.display = 'none';
+        c440.style.display = 'flex';
+        b1280.classList.remove('active');
+        b440.classList.add('active');
+        note.textContent = 'Chrome Web Store 小プロモーションタイル推奨 (440×280)';
+      }
+    }
+
+    async function downloadImage() {
+      const activeEl = currentMode === '1280' ? document.getElementById('canvas1280') : document.getElementById('canvas440');
+      const width = currentMode === '1280' ? 1280 : 440;
+      const height = currentMode === '1280' ? 800 : 280;
+
+      const btn = event.currentTarget;
+      const originalText = btn.innerHTML;
+      btn.innerHTML = '<span>⏳ レンダリング中...</span>';
+
+      try {
+        const canvas = await html2canvas(activeEl, {
+          scale: 2, // 2x scale for crisp retina quality
+          useCORS: true,
+          backgroundColor: null,
+          width: width,
+          height: height
+        });
+
+        const link = document.createElement('a');
+        link.download = `cinii-enhancer-promo-${currentMode}x${height === 800 ? 800 : 280}.png`;
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+      } catch (err) {
+        console.error('Image export failed:', err);
+        alert('画像の生成に失敗しました。ブラウザの開発者ツールでスクリーンショットを撮影することも可能です。');
+      } finally {
+        btn.innerHTML = originalText;
+      }
+    }
+  </script>
+</body>
+</html>
